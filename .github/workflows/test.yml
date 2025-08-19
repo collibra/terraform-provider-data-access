@@ -36,8 +36,6 @@ jobs:
         with:
           version: latest
           skip-cache: false
-          skip-pkg-cache: true
-          skip-build-cache: true
 
   generate:
     runs-on: ubuntu-latest

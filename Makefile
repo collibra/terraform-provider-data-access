@@ -1,4 +1,4 @@
-gotestsum := go run gotest.tools/gotestsum@latest
+make gotestsum := go run gotest.tools/gotestsum@latest
 
 generate:
 	go generate ./...
