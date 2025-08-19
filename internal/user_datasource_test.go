@@ -41,7 +41,7 @@ data "raito_user" "angelica" {
 					}),
 
 					resource.TestCheckResourceAttr("data.raito_user.angelica", "name", "Angelica Abbot Atkinson"),
-					resource.TestCheckResourceAttr("data.raito_user.angelica", "type", "Human"),
+					resource.TestCheckResourceAttr("data.raito_user.angelica", "type", "Machine"),
 					resource.TestCheckResourceAttr("data.raito_user.angelica", "raito_user", "false"),
 					resource.TestCheckResourceAttrWith("data.raito_user.angelica", "id", func(value string) error {
 						if value == "" {
