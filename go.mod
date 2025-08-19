@@ -1,6 +1,6 @@
 module github.com/raito-io/terraform-provider-raito
 
-go 1.24.0
+go 1.25.0
 
 tool (
 	github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs
