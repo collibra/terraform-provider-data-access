@@ -154,7 +154,7 @@ func (u *UserResource) Schema(ctx context.Context, request resource.SchemaReques
 				Description:         "Version of the password_wo. This is used to force the password to be updated.",
 				MarkdownDescription: "Version of the password_wo. This is used to force the password to be updated.",
 				PlanModifiers: []planmodifier.Int32{
-					int32planmodifier.RequiresReplace(),
+					int32planmodifier.UseStateForUnknown(),
 				},
 				Default: nil,
 			},
