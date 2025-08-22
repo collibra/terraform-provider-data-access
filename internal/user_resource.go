@@ -341,6 +341,13 @@ func (u *UserResource) Update(ctx context.Context, request resource.UpdateReques
 
 			return
 		}
+	} else if !planData.PasswordWo.IsNull() && !planData.PasswordWoVersion.IsNull() && !stateData.PasswordWoVersion.Equal(planData.PasswordWoVersion) {
+		user, err = u.client.User().SetUserPassword(ctx, user.Id, planData.PasswordWo.ValueString())
+		if err != nil {
+			response.Diagnostics.AddError("Failed to set user password_wo", err.Error())
+
+			return
+		}
 	}
 
 	planData.RaitoUser = types.BoolValue(user.IsRaitoUser)
