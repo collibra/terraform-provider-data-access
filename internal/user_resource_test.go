@@ -108,7 +108,7 @@ resource "raito_user" "u1" {
 				AccProviderPreCheck(t)
 			},
 			TerraformVersionChecks: []tfversion.TerraformVersionCheck{
-				tfversion.SkipBelow(tfversion.Version1_0_0),
+				tfversion.SkipBelow(tfversion.Version1_11_0),
 			},
 			ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 			Steps: []resource.TestStep{
