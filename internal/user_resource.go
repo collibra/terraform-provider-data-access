@@ -282,12 +282,13 @@ func (u *UserResource) Read(ctx context.Context, request resource.ReadRequest, r
 	}
 
 	actualData := UserResourceModel{
-		Id:        types.StringValue(user.Id),
-		Name:      types.StringValue(user.Name),
-		Email:     types.StringPointerValue(user.Email),
-		Type:      types.StringValue(string(user.Type)),
-		Password:  stateData.Password,
-		RaitoUser: types.BoolValue(user.IsRaitoUser),
+		Id:                types.StringValue(user.Id),
+		Name:              types.StringValue(user.Name),
+		Email:             types.StringPointerValue(user.Email),
+		Type:              types.StringValue(string(user.Type)),
+		Password:          stateData.Password,
+		PasswordWoVersion: stateData.PasswordWoVersion,
+		RaitoUser:         types.BoolValue(user.IsRaitoUser),
 	}
 
 	response.Diagnostics.Append(response.State.Set(ctx, &actualData)...)
