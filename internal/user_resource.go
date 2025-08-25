@@ -154,7 +154,7 @@ func (u *UserResource) Schema(ctx context.Context, request resource.SchemaReques
 				Description:         "Version of the password_wo. This is used to force the password to be updated.",
 				MarkdownDescription: "Version of the password_wo. This is used to force the password to be updated.",
 				PlanModifiers: []planmodifier.Int32{
-					int32planmodifier.RequiresReplace(),
+					int32planmodifier.UseStateForUnknown(),
 				},
 				Default: nil,
 			},
@@ -282,12 +282,13 @@ func (u *UserResource) Read(ctx context.Context, request resource.ReadRequest, r
 	}
 
 	actualData := UserResourceModel{
-		Id:        types.StringValue(user.Id),
-		Name:      types.StringValue(user.Name),
-		Email:     types.StringPointerValue(user.Email),
-		Type:      types.StringValue(string(user.Type)),
-		Password:  stateData.Password,
-		RaitoUser: types.BoolValue(user.IsRaitoUser),
+		Id:                types.StringValue(user.Id),
+		Name:              types.StringValue(user.Name),
+		Email:             types.StringPointerValue(user.Email),
+		Type:              types.StringValue(string(user.Type)),
+		Password:          stateData.Password,
+		PasswordWoVersion: stateData.PasswordWoVersion,
+		RaitoUser:         types.BoolValue(user.IsRaitoUser),
 	}
 
 	response.Diagnostics.Append(response.State.Set(ctx, &actualData)...)
@@ -338,6 +339,13 @@ func (u *UserResource) Update(ctx context.Context, request resource.UpdateReques
 		user, err = u.client.User().SetUserPassword(ctx, user.Id, planData.Password.ValueString())
 		if err != nil {
 			response.Diagnostics.AddError("Failed to set user password", err.Error())
+
+			return
+		}
+	} else if !planData.PasswordWo.IsNull() && !planData.PasswordWoVersion.IsNull() && !stateData.PasswordWoVersion.Equal(planData.PasswordWoVersion) {
+		user, err = u.client.User().SetUserPassword(ctx, user.Id, planData.PasswordWo.ValueString())
+		if err != nil {
+			response.Diagnostics.AddError("Failed to set user password_wo", err.Error())
 
 			return
 		}

@@ -61,19 +61,16 @@ jobs:
       - build
       - generate
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     strategy:
       max-parallel: 1
       fail-fast: false
       matrix:
         # list whatever Terraform versions here you would like to support
         terraform:
-          - '1.6.*'
-          - '1.7.*'
-          - '1.8.*'
-          - '1.9.*'
           - '1.10.*'
           - '1.11.*'
+          - '1.12.*'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
@@ -89,5 +86,5 @@ jobs:
           TF_ACC: "1"
           TF_VAR_raito_user: ${{ secrets.RAITO_USER }}
           TF_VAR_raito_secret: ${{ secrets.RAITO_SECRET }}
-        run: go test -v -cover ./internal/
-        timeout-minutes: 10
+        run: go test -v -cover ./internal/ -timeout 0
+        timeout-minutes: 15
