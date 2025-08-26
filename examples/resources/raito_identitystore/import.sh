@@ -1,0 +1,1 @@
+terraform import raito_identitystore.example IdentityStoreId
