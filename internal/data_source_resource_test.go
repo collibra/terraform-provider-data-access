@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"testing"
 
+	raitoType "github.com/collibra/access-governance-go-sdk/types"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/tfversion"
 	gonanoid "github.com/matoous/go-nanoid/v2"
-	raitoType "github.com/raito-io/sdk-go/types"
 )
 
 func TestAccDataSourceResource(t *testing.T) {
@@ -34,7 +34,7 @@ resource "raito_datasource" "test" {
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("raito_datasource.test", "name", "tfTestDataSource-"+testId),
 						resource.TestCheckResourceAttr("raito_datasource.test", "description", "test description"),
-						resource.TestCheckResourceAttr("raito_datasource.test", "sync_method", string(raitoType.DataSourceSyncMethodOnPrem)),
+						resource.TestCheckResourceAttr("raito_datasource.test", "sync_method", string(raitoType.DataSourceSyncMethodOnprem)),
 						resource.TestCheckResourceAttr("raito_datasource.test", "identity_stores.#", "0"),
 						resource.TestCheckNoResourceAttr("raito_datasource.test", "parent"),
 						resource.TestCheckResourceAttrWith("raito_datasource.test", "native_identity_store", func(value string) error {
@@ -62,7 +62,7 @@ resource "raito_datasource" "test" {
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("raito_datasource.test", "name", "tfTestDataSourceUpdateName-"+testId),
 						resource.TestCheckResourceAttr("raito_datasource.test", "description", "test update description"),
-						resource.TestCheckResourceAttr("raito_datasource.test", "sync_method", string(raitoType.DataSourceSyncMethodCloudManualTrigger)),
+						resource.TestCheckResourceAttr("raito_datasource.test", "sync_method", string(raitoType.DataSourceSyncMethodCloudmanualtrigger)),
 					),
 				},
 				// Resource are automatically deleted
@@ -170,7 +170,7 @@ resource "raito_datasource" "test" {
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("raito_datasource.test", "name", "tfTestDataSource-"+testId),
 						resource.TestCheckResourceAttr("raito_datasource.test", "description", "test description"),
-						resource.TestCheckResourceAttr("raito_datasource.test", "sync_method", string(raitoType.DataSourceSyncMethodOnPrem)),
+						resource.TestCheckResourceAttr("raito_datasource.test", "sync_method", string(raitoType.DataSourceSyncMethodOnprem)),
 						resource.TestCheckResourceAttr("raito_datasource.test", "identity_stores.#", "0"),
 						resource.TestCheckNoResourceAttr("raito_datasource.test", "parent"),
 						resource.TestCheckResourceAttrWith("raito_datasource.test", "native_identity_store", func(value string) error {
@@ -214,7 +214,7 @@ resource "raito_datasource" "test" {
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("raito_datasource.test", "name", "tfTestDataSource-"+testId),
 						resource.TestCheckResourceAttr("raito_datasource.test", "description", "test description"),
-						resource.TestCheckResourceAttr("raito_datasource.test", "sync_method", string(raitoType.DataSourceSyncMethodOnPrem)),
+						resource.TestCheckResourceAttr("raito_datasource.test", "sync_method", string(raitoType.DataSourceSyncMethodOnprem)),
 						resource.TestCheckResourceAttr("raito_datasource.test", "identity_stores.#", "0"),
 						resource.TestCheckNoResourceAttr("raito_datasource.test", "parent"),
 						resource.TestCheckResourceAttrWith("raito_datasource.test", "native_identity_store", func(value string) error {

@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"regexp"
 
+	"github.com/collibra/access-governance-go-sdk"
+	raitoTypes "github.com/collibra/access-governance-go-sdk/types"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -17,9 +19,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/raito-io/sdk-go"
-	"github.com/raito-io/sdk-go/services"
-	raitoTypes "github.com/raito-io/sdk-go/types"
 
 	"github.com/raito-io/terraform-provider-raito/internal/utils"
 )
@@ -34,7 +33,6 @@ type UserResourceModel struct {
 	Password          types.String `tfsdk:"password"`
 	PasswordWo        types.String `tfsdk:"password_wo"`
 	PasswordWoVersion types.Int32  `tfsdk:"password_wo_version"`
-	RaitoUser         types.Bool   `tfsdk:"raito_user"`
 }
 
 func (m *UserResourceModel) ToUserInput() raitoTypes.UserInput {
@@ -46,7 +44,7 @@ func (m *UserResourceModel) ToUserInput() raitoTypes.UserInput {
 }
 
 type UserResource struct {
-	client *sdk.RaitoClient
+	client *sdk.CollibraClient
 }
 
 func NewUserResource() resource.Resource {
@@ -174,87 +172,6 @@ func (u *UserResource) Schema(ctx context.Context, request resource.SchemaReques
 	}
 }
 
-func (u *UserResource) Create(ctx context.Context, request resource.CreateRequest, response *resource.CreateResponse) {
-	var data UserResourceModel
-
-	response.Diagnostics.Append(request.Plan.Get(ctx, &data)...)
-
-	if response.Diagnostics.HasError() {
-		return
-	}
-
-	user, err := u.client.User().GetUserByEmail(ctx, data.Email.ValueString())
-	if err != nil {
-		var notFoundErr *raitoTypes.ErrNotFound
-		if !errors.As(err, &notFoundErr) {
-			response.Diagnostics.AddError("Failed to check if user already exists", err.Error())
-
-			return
-		}
-	}
-
-	if user != nil {
-		// Update user
-		user, err = u.client.User().UpdateUser(ctx, user.Id, data.ToUserInput())
-		if err != nil {
-			response.Diagnostics.AddError("Failed to update user", err.Error())
-
-			return
-		}
-	} else {
-		// Create user
-		user, err = u.client.User().CreateUser(ctx, data.ToUserInput())
-		if err != nil {
-			response.Diagnostics.AddError("Failed to create user", err.Error())
-
-			return
-		}
-	}
-
-	data.Id = types.StringValue(user.Id)
-	response.Diagnostics.Append(response.State.Set(ctx, &data)...)
-
-	if data.RaitoUser.ValueBool() && !user.IsRaitoUser {
-		options := make([]func(options *services.InviteAsRaitoUserOptions), 0, 1)
-
-		if data.Password.IsNull() && data.PasswordWo.IsNull() {
-			options = append(options, services.WithInviteAsRaitoUserNoPassword())
-		}
-
-		user, err = u.client.User().InviteAsRaitoUser(ctx, user.Id, options...)
-		if err != nil {
-			response.Diagnostics.AddError("Failed to invite user as Raito user", err.Error())
-
-			return
-		}
-	} else if user.IsRaitoUser && !data.RaitoUser.ValueBool() {
-		user, err = u.client.User().RemoveAsRaitoUser(ctx, user.Id)
-		if err != nil {
-			response.Diagnostics.AddError("Failed to revoke user as Raito user", err.Error())
-		}
-	}
-
-	data.RaitoUser = types.BoolValue(user.IsRaitoUser)
-	response.Diagnostics.Append(response.State.Set(ctx, &data)...)
-
-	if !data.Password.IsNull() || !data.PasswordWo.IsNull() {
-		var password string
-
-		if !data.PasswordWo.IsNull() {
-			password = data.PasswordWo.ValueString()
-		} else {
-			password = data.Password.ValueString()
-		}
-
-		_, err = u.client.User().SetUserPassword(ctx, user.Id, password)
-		if err != nil {
-			response.Diagnostics.AddError("Failed to set user password", err.Error())
-
-			return
-		}
-	}
-}
-
 func (u *UserResource) Read(ctx context.Context, request resource.ReadRequest, response *resource.ReadResponse) {
 	var stateData UserResourceModel
 
@@ -288,118 +205,9 @@ func (u *UserResource) Read(ctx context.Context, request resource.ReadRequest, r
 		Type:              types.StringValue(string(user.Type)),
 		Password:          stateData.Password,
 		PasswordWoVersion: stateData.PasswordWoVersion,
-		RaitoUser:         types.BoolValue(user.IsRaitoUser),
 	}
 
 	response.Diagnostics.Append(response.State.Set(ctx, &actualData)...)
-}
-
-func (u *UserResource) Update(ctx context.Context, request resource.UpdateRequest, response *resource.UpdateResponse) {
-	var planData UserResourceModel
-	var stateData UserResourceModel
-
-	response.Diagnostics.Append(request.Plan.Get(ctx, &planData)...)
-	response.Diagnostics.Append(request.State.Get(ctx, &stateData)...)
-
-	if response.Diagnostics.HasError() {
-		return
-	}
-
-	// Update user
-	user, err := u.client.User().UpdateUser(ctx, planData.Id.ValueString(), planData.ToUserInput())
-	if err != nil {
-		response.Diagnostics.AddError("Failed to update user", err.Error())
-
-		return
-	}
-
-	if (planData.RaitoUser.ValueBool() && !stateData.RaitoUser.ValueBool()) || (!planData.Password.IsNull() && stateData.Password.IsNull() && planData.RaitoUser.ValueBool()) {
-		user, err = u.client.User().InviteAsRaitoUser(ctx, user.Id)
-		if err != nil {
-			response.Diagnostics.AddError("Failed to invite user as Raito user", err.Error())
-
-			return
-		}
-
-		stateData.RaitoUser = types.BoolValue(user.IsRaitoUser)
-		response.Diagnostics.Append(response.State.Set(ctx, &stateData)...)
-	} else if !planData.RaitoUser.ValueBool() && stateData.RaitoUser.ValueBool() {
-		user, err = u.client.User().RemoveAsRaitoUser(ctx, user.Id)
-		if err != nil {
-			response.Diagnostics.AddError("Failed to revoke user as Raito user", err.Error())
-
-			return
-		}
-
-		stateData.RaitoUser = types.BoolValue(user.IsRaitoUser)
-		response.Diagnostics.Append(response.State.Set(ctx, &stateData)...)
-	}
-
-	if !planData.Password.IsNull() && planData.Password.ValueString() != stateData.Password.ValueString() {
-		user, err = u.client.User().SetUserPassword(ctx, user.Id, planData.Password.ValueString())
-		if err != nil {
-			response.Diagnostics.AddError("Failed to set user password", err.Error())
-
-			return
-		}
-	} else if !planData.PasswordWo.IsNull() && !planData.PasswordWoVersion.IsNull() && !stateData.PasswordWoVersion.Equal(planData.PasswordWoVersion) {
-		user, err = u.client.User().SetUserPassword(ctx, user.Id, planData.PasswordWo.ValueString())
-		if err != nil {
-			response.Diagnostics.AddError("Failed to set user password_wo", err.Error())
-
-			return
-		}
-	}
-
-	planData.RaitoUser = types.BoolValue(user.IsRaitoUser)
-	response.Diagnostics.Append(response.State.Set(ctx, &planData)...)
-}
-
-func (u *UserResource) Delete(ctx context.Context, request resource.DeleteRequest, response *resource.DeleteResponse) {
-	var stateData UserResourceModel
-
-	response.Diagnostics.Append(request.State.Get(ctx, &stateData)...)
-
-	if response.Diagnostics.HasError() {
-		return
-	}
-
-	if stateData.RaitoUser.ValueBool() {
-		_, err := u.client.User().RemoveAsRaitoUser(ctx, stateData.Id.ValueString())
-		if err != nil {
-			var notFoundErr *raitoTypes.ErrNotFound
-			if errors.As(err, &notFoundErr) {
-				response.State.RemoveResource(ctx)
-			} else {
-				response.Diagnostics.AddError("Failed to remove user", err.Error())
-			}
-
-			return
-		}
-
-		tmpU, err := u.client.User().GetUser(ctx, stateData.Id.ValueString())
-		if err != nil {
-			response.State.RemoveResource(ctx)
-
-			return
-		}
-
-		_ = tmpU
-	}
-
-	err := u.client.User().DeleteUser(ctx, stateData.Id.ValueString())
-	if err != nil {
-		var notFoundErr *raitoTypes.ErrNotFound
-		if errors.As(err, &notFoundErr) {
-			response.State.RemoveResource(ctx)
-		} else {
-			response.Diagnostics.AddError("Failed to delete user "+stateData.Id.ValueString(), err.Error())
-		}
-
-		return
-	}
-
-	response.State.RemoveResource(ctx)
 }
 
 func (u *UserResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
@@ -408,7 +216,7 @@ func (u *UserResource) Configure(_ context.Context, req resource.ConfigureReques
 		return
 	}
 
-	client, ok := req.ProviderData.(*sdk.RaitoClient)
+	client, ok := req.ProviderData.(*sdk.CollibraClient)
 
 	if !ok {
 		resp.Diagnostics.AddError(

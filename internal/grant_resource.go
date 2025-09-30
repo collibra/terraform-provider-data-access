@@ -6,6 +6,8 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/collibra/access-governance-go-sdk"
+	raitoType "github.com/collibra/access-governance-go-sdk/types"
 	"github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -18,9 +20,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/raito-io/sdk-go"
-	raitoType "github.com/raito-io/sdk-go/types"
-	"github.com/raito-io/sdk-go/types/models"
 
 	types2 "github.com/raito-io/terraform-provider-raito/internal/types"
 	"github.com/raito-io/terraform-provider-raito/internal/types/abac_expression"
@@ -75,7 +74,7 @@ func (m *GrantResourceModel) SetAccessProviderResourceModel(ap *AccessProviderRe
 	m.InheritanceLocked = ap.InheritanceLocked
 }
 
-func (m *GrantResourceModel) ToAccessProviderInput(ctx context.Context, client *sdk.RaitoClient, result *raitoType.AccessProviderInput) diag.Diagnostics {
+func (m *GrantResourceModel) ToAccessProviderInput(ctx context.Context, client *sdk.CollibraClient, result *raitoType.AccessControlInput) diag.Diagnostics {
 	diagnostics := m.GetAccessProviderResourceModel().ToAccessProviderInput(ctx, client, result)
 
 	if diagnostics.HasError() {
@@ -85,7 +84,7 @@ func (m *GrantResourceModel) ToAccessProviderInput(ctx context.Context, client *
 	if !m.DataSource.IsNull() && !m.DataSource.IsUnknown() {
 		dataSourceElements := m.DataSource.Elements()
 
-		result.DataSources = make([]raitoType.AccessProviderDataSourceInput, 0, len(dataSourceElements))
+		result.DataSources = make([]raitoType.AccessControlDataSourceInput, 0, len(dataSourceElements))
 
 		for _, dsElement := range dataSourceElements {
 			dsAttributes := dsElement.(types.Object).Attributes()
@@ -96,14 +95,14 @@ func (m *GrantResourceModel) ToAccessProviderInput(ctx context.Context, client *
 				apType = dsAttributes["type"].(types.String).ValueStringPointer()
 			}
 
-			result.DataSources = append(result.DataSources, raitoType.AccessProviderDataSourceInput{
+			result.DataSources = append(result.DataSources, raitoType.AccessControlDataSourceInput{
 				DataSource: dsAttributes["data_source"].(types.String).ValueString(),
 				Type:       apType,
 			})
 		}
 	}
 
-	result.Action = utils.Ptr(models.AccessProviderActionGrant)
+	result.Action = utils.Ptr(raitoType.AccessControlActionGrant)
 	result.WhatType = utils.Ptr(raitoType.WhoAndWhatTypeStatic)
 
 	if !m.WhatDataObjects.IsNull() && !m.WhatDataObjects.IsUnknown() {
@@ -117,9 +116,9 @@ func (m *GrantResourceModel) ToAccessProviderInput(ctx context.Context, client *
 	}
 
 	if m.WhatLocked.ValueBool() {
-		result.Locks = append(result.Locks, raitoType.AccessProviderLockDataInput{
-			LockKey: raitoType.AccessProviderLockWhatlock,
-			Details: &raitoType.AccessProviderLockDetailsInput{
+		result.Locks = append(result.Locks, raitoType.AccessControlLockDataInput{
+			LockKey: raitoType.AccessControlLockWhatlock,
+			Details: &raitoType.AccessControlLockDetailsInput{
 				Reason: utils.Ptr(lockMsg),
 			},
 		})
@@ -132,10 +131,10 @@ func (m *GrantResourceModel) ToAccessProviderInput(ctx context.Context, client *
 	return diagnostics
 }
 
-func (m *GrantResourceModel) whatDoToApInput(result *raitoType.AccessProviderInput) {
+func (m *GrantResourceModel) whatDoToApInput(result *raitoType.AccessControlInput) {
 	elements := m.WhatDataObjects.Elements()
 
-	result.WhatDataObjects = make([]raitoType.AccessProviderWhatInputDO, 0, len(elements))
+	result.WhatDataObjects = make([]raitoType.AccessControlWhatInputDO, 0, len(elements))
 
 	for _, whatDataObject := range elements {
 		whatDataObjectObject := whatDataObject.(types.Object)
@@ -160,10 +159,10 @@ func (m *GrantResourceModel) whatDoToApInput(result *raitoType.AccessProviderInp
 			globalPermissions = append(globalPermissions, permission.ValueStringPointer())
 		}
 
-		result.WhatDataObjects = append(result.WhatDataObjects, raitoType.AccessProviderWhatInputDO{
-			DataObjectByName: []raitoType.AccessProviderWhatDoByNameInput{{
-				Fullname:   fullname,
-				Datasource: dataSource,
+		result.WhatDataObjects = append(result.WhatDataObjects, raitoType.AccessControlWhatInputDO{
+			DataObjectByName: []raitoType.AccessControlWhatDoByNameInput{{
+				FullName:   fullname,
+				DataSource: dataSource,
 			},
 			},
 			Permissions:       permissions,
@@ -172,7 +171,7 @@ func (m *GrantResourceModel) whatDoToApInput(result *raitoType.AccessProviderInp
 	}
 }
 
-func (m *GrantResourceModel) FromAccessProvider(ctx context.Context, client *sdk.RaitoClient, ap *raitoType.AccessProvider) diag.Diagnostics {
+func (m *GrantResourceModel) FromAccessProvider(ctx context.Context, client *sdk.CollibraClient, ap *raitoType.AccessControl) diag.Diagnostics {
 	apResourceModel := m.GetAccessProviderResourceModel()
 	diagnostics := apResourceModel.FromAccessProvider(ap)
 
@@ -187,7 +186,7 @@ func (m *GrantResourceModel) FromAccessProvider(ctx context.Context, client *sdk
 	for i := range ap.SyncData {
 		ds := &ap.SyncData[i]
 		dsId := types.StringValue(ds.DataSource.Id)
-		dsType := types.StringPointerValue(ds.AccessProviderType.Type)
+		dsType := types.StringPointerValue(ds.AccessControlType.Type)
 
 		dataSource, diag := types.ObjectValue(map[string]attr.Type{
 			"data_source": types.StringType,
@@ -222,8 +221,8 @@ func (m *GrantResourceModel) FromAccessProvider(ctx context.Context, client *sdk
 
 	m.DataSource = dataSources
 
-	m.WhatLocked = types.BoolValue(slices.ContainsFunc(ap.Locks, func(l raitoType.AccessProviderLocksAccessProviderLockData) bool {
-		return l.LockKey == raitoType.AccessProviderLockWhatlock
+	m.WhatLocked = types.BoolValue(slices.ContainsFunc(ap.Locks, func(l raitoType.AccessControlLocksAccessControlLockData) bool {
+		return l.LockKey == raitoType.AccessControlLockWhatlock
 	}))
 
 	if ap.WhatType == raitoType.WhoAndWhatTypeDynamic && ap.WhatAbacRule != nil {
@@ -246,7 +245,7 @@ func (m *GrantResourceModel) UpdateOwners(owners types.Set) {
 	m.Owners = owners
 }
 
-func (m *GrantResourceModel) abacWhatToAccessProviderInput(ctx context.Context, client *sdk.RaitoClient, result *raitoType.AccessProviderInput) (diagnostics diag.Diagnostics) {
+func (m *GrantResourceModel) abacWhatToAccessProviderInput(ctx context.Context, client *sdk.CollibraClient, result *raitoType.AccessControlInput) (diagnostics diag.Diagnostics) {
 	attributes := m.WhatAbacRule.Attributes()
 
 	doTypes, doDiagnostics := utils.StringSetToSlice(ctx, attributes["do_types"].(types.Set))
@@ -318,7 +317,7 @@ func (m *GrantResourceModel) abacWhatToAccessProviderInput(ctx context.Context, 
 	return diagnostics
 }
 
-func (m *GrantResourceModel) abacWhatFromAccessProvider(ctx context.Context, client *sdk.RaitoClient, ap *raitoType.AccessProvider) (_ types.Object, diagnostics diag.Diagnostics) {
+func (m *GrantResourceModel) abacWhatFromAccessProvider(ctx context.Context, client *sdk.CollibraClient, ap *raitoType.AccessControl) (_ types.Object, diagnostics diag.Diagnostics) {
 	scopeType := types.ObjectType{AttrTypes: map[string]attr.Type{"data_source": types.StringType, "fullname": types.StringType}}
 	objectTypes := map[string]attr.Type{
 		"do_types":           types.SetType{ElemType: types.StringType},
@@ -358,7 +357,7 @@ func (m *GrantResourceModel) abacWhatFromAccessProvider(ctx context.Context, cli
 	cancelCtx, cancelFunc := context.WithCancel(ctx)
 	defer cancelFunc()
 
-	for scopeItem := range client.AccessProvider().GetAccessProviderAbacWhatScope(cancelCtx, ap.Id) {
+	for scopeItem := range client.AccessControl().GetAccessControlAbacWhatScope(cancelCtx, ap.Id) {
 		if scopeItem.HasError() {
 			diagnostics.AddError("Failed to load access provider abac scope", scopeItem.GetError().Error())
 
@@ -633,12 +632,12 @@ func (g *GrantResource) Schema(_ context.Context, _ resource.SchemaRequest, resp
 	}
 }
 
-func readGrantWhatItems(ctx context.Context, client *sdk.RaitoClient, data *GrantResourceModel) (diagnostics diag.Diagnostics) {
+func readGrantWhatItems(ctx context.Context, client *sdk.CollibraClient, data *GrantResourceModel) (diagnostics diag.Diagnostics) {
 	if !data.WhatDataObjects.IsNull() {
 		cancelCtx, cancelFunc := context.WithCancel(ctx)
 		defer cancelFunc()
 
-		whatItemsChannel := client.AccessProvider().GetAccessProviderWhatDataObjectList(cancelCtx, data.Id.ValueString())
+		whatItemsChannel := client.AccessControl().GetAccessControlWhatDataObjectList(cancelCtx, data.Id.ValueString())
 
 		stateWhatItems := make([]attr.Value, 0)
 

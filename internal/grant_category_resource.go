@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/collibra/access-governance-go-sdk"
+	raitoType "github.com/collibra/access-governance-go-sdk/types"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -19,8 +21,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/raito-io/sdk-go"
-	raitoType "github.com/raito-io/sdk-go/types"
 )
 
 var _ resource.Resource = (*GrantCategoryResource)(nil)
@@ -87,7 +87,7 @@ func (m *GrantCategoryResourceModel) ToGrantCategoryInput() raitoType.GrantCateg
 }
 
 type GrantCategoryResource struct {
-	client *sdk.RaitoClient
+	client *sdk.CollibraClient
 }
 
 func NewGrantCategoryResource() resource.Resource {
@@ -424,7 +424,7 @@ func (g *GrantCategoryResource) Configure(_ context.Context, req resource.Config
 		return
 	}
 
-	client, ok := req.ProviderData.(*sdk.RaitoClient)
+	client, ok := req.ProviderData.(*sdk.CollibraClient)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",

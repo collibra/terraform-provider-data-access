@@ -4,17 +4,17 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/collibra/access-governance-go-sdk"
+	"github.com/collibra/access-governance-go-sdk/services"
+	raitoType "github.com/collibra/access-governance-go-sdk/types"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/raito-io/sdk-go"
-	"github.com/raito-io/sdk-go/services"
-	raitoType "github.com/raito-io/sdk-go/types"
 
 	"github.com/raito-io/terraform-provider-raito/internal/utils"
 )
 
-func getOwners(ctx context.Context, id string, client *sdk.RaitoClient) (result types.Set, diagnostics diag.Diagnostics) {
+func getOwners(ctx context.Context, id string, client *sdk.CollibraClient) (result types.Set, diagnostics diag.Diagnostics) {
 	ownersList := client.Role().ListRoleAssignments(ctx, services.WithRoleAssignmentListFilter(
 		&raitoType.RoleAssignmentFilterInput{
 			Role:               utils.Ptr(ownerRole),

@@ -4,13 +4,13 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/collibra/access-governance-go-sdk"
+	types2 "github.com/collibra/access-governance-go-sdk/types"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/raito-io/sdk-go"
-	types2 "github.com/raito-io/sdk-go/types"
 )
 
 var _ datasource.DataSource = (*GrantCategoryDataSource)(nil)
@@ -30,7 +30,7 @@ type GrantCategoryDataSourceModel struct {
 }
 
 type GrantCategoryDataSource struct {
-	client *sdk.RaitoClient
+	client *sdk.CollibraClient
 }
 
 func NewGrantCategoryDataSource() datasource.DataSource {
@@ -251,7 +251,7 @@ func (g *GrantCategoryDataSource) Configure(_ context.Context, req datasource.Co
 		return
 	}
 
-	client, ok := req.ProviderData.(*sdk.RaitoClient)
+	client, ok := req.ProviderData.(*sdk.CollibraClient)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",

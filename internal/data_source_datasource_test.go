@@ -4,9 +4,9 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/collibra/access-governance-go-sdk/types"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/tfversion"
-	"github.com/raito-io/sdk-go/types"
 )
 
 func TestAccDataSourceDataSource(t *testing.T) {
@@ -34,7 +34,7 @@ func TestAccDataSourceDataSource(t *testing.T) {
 
 						return nil
 					}),
-					resource.TestCheckResourceAttr("data.raito_datasource.test", "sync_method", string(types.DataSourceSyncMethodOnPrem)),
+					resource.TestCheckResourceAttr("data.raito_datasource.test", "sync_method", string(types.DataSourceSyncMethodOnprem)),
 					resource.TestCheckResourceAttrSet("data.raito_datasource.test", "owners.0"),
 				),
 			},

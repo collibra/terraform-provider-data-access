@@ -4,14 +4,14 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/collibra/access-governance-go-sdk"
+	"github.com/collibra/access-governance-go-sdk/services"
+	types2 "github.com/collibra/access-governance-go-sdk/types"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/raito-io/sdk-go"
-	"github.com/raito-io/sdk-go/services"
-	types2 "github.com/raito-io/sdk-go/types"
 )
 
 var _ datasource.DataSource = (*IdentityStoreDataSource)(nil)
@@ -26,7 +26,7 @@ type IdentityStoreDataSourceModel struct {
 }
 
 type IdentityStoreDataSource struct {
-	client *sdk.RaitoClient
+	client *sdk.CollibraClient
 }
 
 func NewIdentityStoreDataSource() datasource.DataSource {
@@ -153,7 +153,7 @@ func (i *IdentityStoreDataSource) Configure(_ context.Context, req datasource.Co
 		return
 	}
 
-	client, ok := req.ProviderData.(*sdk.RaitoClient)
+	client, ok := req.ProviderData.(*sdk.CollibraClient)
 
 	if !ok {
 		resp.Diagnostics.AddError(

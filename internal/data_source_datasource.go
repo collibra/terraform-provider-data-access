@@ -4,12 +4,12 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/collibra/access-governance-go-sdk"
+	"github.com/collibra/access-governance-go-sdk/services"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/raito-io/sdk-go"
-	"github.com/raito-io/sdk-go/services"
 )
 
 var _ datasource.DataSource = (*DataSourceDataSource)(nil)
@@ -26,7 +26,7 @@ type DataSourceDataSourceModel struct {
 }
 
 type DataSourceDataSource struct {
-	client *sdk.RaitoClient
+	client *sdk.CollibraClient
 }
 
 func NewDataSourceDataSource() datasource.DataSource {
@@ -193,7 +193,7 @@ func (d *DataSourceDataSource) Configure(_ context.Context, req datasource.Confi
 		return
 	}
 
-	client, ok := req.ProviderData.(*sdk.RaitoClient)
+	client, ok := req.ProviderData.(*sdk.CollibraClient)
 
 	if !ok {
 		resp.Diagnostics.AddError(

@@ -4,24 +4,23 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/collibra/access-governance-go-sdk"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/raito-io/sdk-go"
 )
 
 var _ datasource.DataSource = (*UserDataSource)(nil)
 
 type UserDataSourceModel struct {
-	Id        types.String `tfsdk:"id"`
-	Name      types.String `tfsdk:"name"`
-	Email     types.String `tfsdk:"email"`
-	Type      types.String `tfsdk:"type"`
-	RaitoUser types.Bool   `tfsdk:"raito_user"`
+	Id    types.String `tfsdk:"id"`
+	Name  types.String `tfsdk:"name"`
+	Email types.String `tfsdk:"email"`
+	Type  types.String `tfsdk:"type"`
 }
 
 type UserDataSource struct {
-	client *sdk.RaitoClient
+	client *sdk.CollibraClient
 }
 
 func NewUserDataSource() datasource.DataSource {
@@ -100,7 +99,6 @@ func (u *UserDataSource) Read(ctx context.Context, request datasource.ReadReques
 	data.Id = types.StringValue(user.Id)
 	data.Name = types.StringValue(user.Name)
 	data.Type = types.StringValue(string(user.Type))
-	data.RaitoUser = types.BoolValue(user.IsRaitoUser)
 
 	response.Diagnostics.Append(response.State.Set(ctx, data)...)
 }
@@ -110,7 +108,7 @@ func (u *UserDataSource) Configure(_ context.Context, req datasource.ConfigureRe
 		return
 	}
 
-	client, ok := req.ProviderData.(*sdk.RaitoClient)
+	client, ok := req.ProviderData.(*sdk.CollibraClient)
 
 	if !ok {
 		resp.Diagnostics.AddError(

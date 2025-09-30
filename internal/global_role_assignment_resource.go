@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/collibra/access-governance-go-sdk"
+	"github.com/collibra/access-governance-go-sdk/services"
+	types2 "github.com/collibra/access-governance-go-sdk/types"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -13,9 +16,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/raito-io/sdk-go"
-	"github.com/raito-io/sdk-go/services"
-	types2 "github.com/raito-io/sdk-go/types"
 
 	"github.com/raito-io/terraform-provider-raito/internal/utils"
 )
@@ -52,7 +52,7 @@ func _getRoleAndUserFromId(id string) (role, user string) {
 }
 
 type GlobalRoleAssignmentResource struct {
-	client *sdk.RaitoClient
+	client *sdk.CollibraClient
 }
 
 func (g *GlobalRoleAssignmentResource) Metadata(ctx context.Context, request resource.MetadataRequest, response *resource.MetadataResponse) {
@@ -211,7 +211,7 @@ func (g *GlobalRoleAssignmentResource) Configure(_ context.Context, req resource
 		return
 	}
 
-	client, ok := req.ProviderData.(*sdk.RaitoClient)
+	client, ok := req.ProviderData.(*sdk.CollibraClient)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",

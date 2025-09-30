@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/collibra/access-governance-go-sdk"
+	raitoType "github.com/collibra/access-governance-go-sdk/types"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -18,8 +20,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/raito-io/golang-set/set"
-	"github.com/raito-io/sdk-go"
-	raitoType "github.com/raito-io/sdk-go/types"
 
 	"github.com/raito-io/terraform-provider-raito/internal/utils"
 )
@@ -47,7 +47,7 @@ func (m *DataSourceResourceModel) ToDataSourceInput() raitoType.DataSourceInput 
 }
 
 type DataSourceResource struct {
-	client *sdk.RaitoClient
+	client *sdk.CollibraClient
 }
 
 func NewDataSourceResource() resource.Resource {
@@ -97,8 +97,8 @@ func (d *DataSourceResource) Schema(_ context.Context, _ resource.SchemaRequest,
 				Sensitive:           false,
 				Description:         "The sync method of the data source (should be ON_PREM for now)",
 				MarkdownDescription: "The sync method of the data source (should be `ON_PREM` for now)",
-				Default:             stringdefault.StaticString(string(raitoType.DataSourceSyncMethodOnPrem)),
-				Validators:          []validator.String{stringvalidator.OneOf(string(raitoType.DataSourceSyncMethodOnPrem), string(raitoType.DataSourceSyncMethodCloudManualTrigger))},
+				Default:             stringdefault.StaticString(string(raitoType.DataSourceSyncMethodOnprem)),
+				Validators:          []validator.String{stringvalidator.OneOf(string(raitoType.DataSourceSyncMethodOnprem), string(raitoType.DataSourceSyncMethodCloudmanualtrigger))},
 			},
 			"parent": schema.StringAttribute{
 				Required:            false,
@@ -470,7 +470,7 @@ func (d *DataSourceResource) Configure(_ context.Context, req resource.Configure
 		return
 	}
 
-	client, ok := req.ProviderData.(*sdk.RaitoClient)
+	client, ok := req.ProviderData.(*sdk.CollibraClient)
 
 	if !ok {
 		resp.Diagnostics.AddError(

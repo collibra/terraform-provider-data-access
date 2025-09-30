@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"slices"
 
+	"github.com/collibra/access-governance-go-sdk"
+	raitoType "github.com/collibra/access-governance-go-sdk/types"
 	"github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -12,10 +14,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/raito-io/sdk-go"
-	raitoType "github.com/raito-io/sdk-go/types"
-	"github.com/raito-io/sdk-go/types/models"
-
 	"github.com/raito-io/terraform-provider-raito/internal/utils"
 )
 
@@ -66,17 +64,17 @@ func (f *FilterResourceModel) SetAccessProviderResourceModel(ap *AccessProviderR
 	f.InheritanceLocked = ap.InheritanceLocked
 }
 
-func (f *FilterResourceModel) ToAccessProviderInput(ctx context.Context, client *sdk.RaitoClient, result *raitoType.AccessProviderInput) diag.Diagnostics {
+func (f *FilterResourceModel) ToAccessProviderInput(ctx context.Context, client *sdk.CollibraClient, result *raitoType.AccessControlInput) diag.Diagnostics {
 	diagnostics := f.GetAccessProviderResourceModel().ToAccessProviderInput(ctx, client, result)
 
 	if diagnostics.HasError() {
 		return diagnostics
 	}
 
-	result.Action = utils.Ptr(models.AccessProviderActionFiltered)
+	result.Action = utils.Ptr(raitoType.AccessControlActionFilter)
 
 	if !f.DataSource.IsNull() && !f.DataSource.IsUnknown() {
-		result.DataSources = []raitoType.AccessProviderDataSourceInput{
+		result.DataSources = []raitoType.AccessControlDataSourceInput{
 			{
 				DataSource: f.DataSource.ValueString(),
 			},
@@ -86,27 +84,27 @@ func (f *FilterResourceModel) ToAccessProviderInput(ctx context.Context, client 
 	result.PolicyRule = f.FilterPolicy.ValueStringPointer()
 
 	if !f.Table.IsNull() && !f.Table.IsUnknown() {
-		result.Locks = append(result.Locks, raitoType.AccessProviderLockDataInput{
-			LockKey: raitoType.AccessProviderLockWhatlock,
-			Details: &raitoType.AccessProviderLockDetailsInput{
+		result.Locks = append(result.Locks, raitoType.AccessControlLockDataInput{
+			LockKey: raitoType.AccessControlLockWhatlock,
+			Details: &raitoType.AccessControlLockDetailsInput{
 				Reason: utils.Ptr(lockMsg),
 			},
 		})
 
-		result.WhatDataObjects = []raitoType.AccessProviderWhatInputDO{
+		result.WhatDataObjects = []raitoType.AccessControlWhatInputDO{
 			{
-				DataObjectByName: []raitoType.AccessProviderWhatDoByNameInput{
+				DataObjectByName: []raitoType.AccessControlWhatDoByNameInput{
 					{
-						Fullname:   f.Table.ValueString(),
-						Datasource: f.DataSource.ValueString(),
+						FullName:   f.Table.ValueString(),
+						DataSource: f.DataSource.ValueString(),
 					},
 				},
 			},
 		}
 	} else if !f.WhatLocked.IsNull() && f.WhatLocked.ValueBool() {
-		result.Locks = append(result.Locks, raitoType.AccessProviderLockDataInput{
-			LockKey: raitoType.AccessProviderLockWhatlock,
-			Details: &raitoType.AccessProviderLockDetailsInput{
+		result.Locks = append(result.Locks, raitoType.AccessControlLockDataInput{
+			LockKey: raitoType.AccessControlLockWhatlock,
+			Details: &raitoType.AccessControlLockDetailsInput{
 				Reason: utils.Ptr(lockMsg),
 			},
 		})
@@ -115,7 +113,7 @@ func (f *FilterResourceModel) ToAccessProviderInput(ctx context.Context, client 
 	return diagnostics
 }
 
-func (f *FilterResourceModel) FromAccessProvider(_ context.Context, _ *sdk.RaitoClient, input *raitoType.AccessProvider) diag.Diagnostics {
+func (f *FilterResourceModel) FromAccessProvider(_ context.Context, _ *sdk.CollibraClient, input *raitoType.AccessControl) diag.Diagnostics {
 	apResourceModel := f.GetAccessProviderResourceModel()
 	diagnostics := apResourceModel.FromAccessProvider(input)
 
@@ -133,8 +131,8 @@ func (f *FilterResourceModel) FromAccessProvider(_ context.Context, _ *sdk.Raito
 
 	f.DataSource = types.StringValue(input.SyncData[0].DataSource.Id)
 	f.FilterPolicy = types.StringPointerValue(input.PolicyRule)
-	f.WhatLocked = types.BoolValue(slices.ContainsFunc(input.Locks, func(data raitoType.AccessProviderLocksAccessProviderLockData) bool {
-		return data.LockKey == raitoType.AccessProviderLockWhatlock
+	f.WhatLocked = types.BoolValue(slices.ContainsFunc(input.Locks, func(data raitoType.AccessControlLocksAccessControlLockData) bool {
+		return data.LockKey == raitoType.AccessControlLockWhatlock
 	}))
 
 	return diagnostics
@@ -214,12 +212,12 @@ func (f *FilterResource) Schema(ctx context.Context, request resource.SchemaRequ
 	}
 }
 
-func readFilterResourceTable(ctx context.Context, client *sdk.RaitoClient, data *FilterResourceModel) (diagnostics diag.Diagnostics) {
+func readFilterResourceTable(ctx context.Context, client *sdk.CollibraClient, data *FilterResourceModel) (diagnostics diag.Diagnostics) {
 	if !data.Table.IsNull() {
 		cancelCtx, cancelFunc := context.WithCancel(ctx)
 		defer cancelFunc()
 
-		whatItemChannel := client.AccessProvider().GetAccessProviderWhatDataObjectList(cancelCtx, data.Id.ValueString())
+		whatItemChannel := client.AccessControl().GetAccessControlWhatDataObjectList(cancelCtx, data.Id.ValueString())
 
 		first := true
 
