@@ -146,7 +146,7 @@ func (g *GlobalRoleAssignmentResource) Read(ctx context.Context, request resourc
 
 	defer cancel()
 
-	roleAssignmentChannel := g.client.Role().ListRoleAssignments(cancelCtx, services.WithRoleAssignmentListFilter(
+	roleAssignments := g.client.Role().ListRoleAssignments(cancelCtx, services.WithRoleAssignmentListFilter(
 		&types2.RoleAssignmentFilterInput{
 			Role: utils.Ptr(roleId(roleName)),
 			User: &userId,
@@ -154,20 +154,20 @@ func (g *GlobalRoleAssignmentResource) Read(ctx context.Context, request resourc
 
 	var ra *types2.RoleAssignment
 
-	for roleAssignment := range roleAssignmentChannel {
-		if roleAssignment.HasError() {
-			response.Diagnostics.AddError("Failed to list role assignment", roleAssignment.GetError().Error())
+	for roleAssignment, err := range roleAssignments {
+		if err != nil {
+			response.Diagnostics.AddError("Failed to list role assignment", err.Error())
 
 			return
 		} else if ra != nil {
 			response.Diagnostics.AddError("Multiple role assignment found", "Multiple role assignment found")
 
 			return
-		} else if roleAssignment.GetItem() == nil {
+		} else if roleAssignment == nil {
 			continue
 		}
 
-		ra = roleAssignment.GetItem()
+		ra = roleAssignment
 	}
 
 	if ra == nil {

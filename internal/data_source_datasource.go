@@ -127,16 +127,14 @@ func (d *DataSourceDataSource) Read(ctx context.Context, request datasource.Read
 	cancelCtx, cancelFunc := context.WithCancel(ctx)
 	defer cancelFunc()
 
-	dsChan := d.client.DataSource().ListDataSources(cancelCtx, services.WithDataSourceListSearch(&name))
+	dsSeq := d.client.DataSource().ListDataSources(cancelCtx, services.WithDataSourceListSearch(&name))
 
-	for ds := range dsChan {
-		if ds.HasError() {
-			response.Diagnostics.AddError("Failed to list data sources", ds.GetError().Error())
+	for dsItem, err := range dsSeq {
+		if err != nil {
+			response.Diagnostics.AddError("Failed to list data sources", err.Error())
 
 			return
 		}
-
-		dsItem := ds.GetItem()
 
 		if dsItem.Name == name {
 			identityStores, err := d.client.DataSource().ListIdentityStores(cancelCtx, dsItem.Id)

@@ -21,11 +21,14 @@ variable "raito_secret" {
     type = string
 }
 
+variable "raito_url" {
+    type = string
+}
+
 provider "raito" {
-  domain       = "e2e"
   user         = var.raito_user
   secret       = var.raito_secret
-  url_override = "https://api.raito.dev"
+  url          = var.raito_url
 }
 `
 
@@ -36,5 +39,9 @@ func AccProviderPreCheck(t *testing.T) {
 
 	if v := os.Getenv("TF_VAR_raito_secret"); v == "" {
 		t.Fatal("TF_VAR_raito_secret must be set for acceptance testing")
+	}
+
+	if v := os.Getenv("TF_VAR_raito_url"); v == "" {
+		t.Fatal("TF_VAR_raito_url must be set for acceptance testing")
 	}
 }

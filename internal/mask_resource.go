@@ -250,14 +250,14 @@ func (m *MaskResourceModel) abacWhatFromAccessProvider(ctx context.Context, clie
 	cancelCtx, cancelFunc := context.WithCancel(ctx)
 	defer cancelFunc()
 
-	for scopeItem := range client.AccessControl().GetAccessControlAbacWhatScope(cancelCtx, ap.Id) {
-		if scopeItem.HasError() {
-			diagnostics.AddError("Failed to load access provider abac scope", scopeItem.GetError().Error())
+	for scopeItem, err := range client.AccessControl().GetAccessControlAbacWhatScope(cancelCtx, ap.Id) {
+		if err != nil {
+			diagnostics.AddError("Failed to load access provider abac scope", err.Error())
 
 			return types.ObjectNull(objectTypes), diagnostics
 		}
 
-		scopeItems = append(scopeItems, types.StringValue(scopeItem.MustGetItem().FullName))
+		scopeItems = append(scopeItems, types.StringValue(scopeItem.FullName))
 	}
 
 	scope, scopeDiagnostics := types.SetValue(types.StringType, scopeItems)
@@ -387,21 +387,17 @@ func readMaskResourceColumns(ctx context.Context, client *sdk.CollibraClient, da
 		cancelCtx, cancelFunc := context.WithCancel(ctx)
 		defer cancelFunc()
 
-		whatItemsChannel := client.AccessControl().GetAccessControlWhatDataObjectList(cancelCtx, data.Id.ValueString())
-
 		stateWhatItems := make([]attr.Value, 0)
 
-		for whatItem := range whatItemsChannel {
-			if whatItem.HasError() {
-				diagnostics.AddError("Fauled to get what data objects", whatItem.GetError().Error())
+		for whatItem, err := range client.AccessControl().GetAccessControlWhatDataObjectList(cancelCtx, data.Id.ValueString()) {
+			if err != nil {
+				diagnostics.AddError("Fauled to get what data objects", err.Error())
 
 				return diagnostics
 			}
 
-			what := whatItem.GetItem()
-
-			if what.DataObject != nil {
-				stateWhatItems = append(stateWhatItems, types.StringValue(what.DataObject.FullName))
+			if whatItem.DataObject != nil {
+				stateWhatItems = append(stateWhatItems, types.StringValue(whatItem.DataObject.FullName))
 			} else {
 				diagnostics.AddError("Invalid what data object", "Received data object is nil")
 			}

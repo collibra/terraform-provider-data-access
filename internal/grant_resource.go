@@ -357,16 +357,16 @@ func (m *GrantResourceModel) abacWhatFromAccessProvider(ctx context.Context, cli
 	cancelCtx, cancelFunc := context.WithCancel(ctx)
 	defer cancelFunc()
 
-	for scopeItem := range client.AccessControl().GetAccessControlAbacWhatScope(cancelCtx, ap.Id) {
-		if scopeItem.HasError() {
-			diagnostics.AddError("Failed to load access provider abac scope", scopeItem.GetError().Error())
+	for scopeItem, err := range client.AccessControl().GetAccessControlAbacWhatScope(cancelCtx, ap.Id) {
+		if err != nil {
+			diagnostics.AddError("Failed to load access provider abac scope", err.Error())
 
 			return types.ObjectNull(objectTypes), diagnostics
 		}
 
 		scopeItems = append(scopeItems, types.ObjectValueMust(scopeType.AttrTypes, map[string]attr.Value{
-			"fullname":    types.StringValue(scopeItem.MustGetItem().FullName),
-			"data_source": types.StringValue(scopeItem.MustGetItem().DataSource.Id),
+			"fullname":    types.StringValue(scopeItem.FullName),
+			"data_source": types.StringValue(scopeItem.DataSource.Id),
 		}))
 	}
 
@@ -637,38 +637,36 @@ func readGrantWhatItems(ctx context.Context, client *sdk.CollibraClient, data *G
 		cancelCtx, cancelFunc := context.WithCancel(ctx)
 		defer cancelFunc()
 
-		whatItemsChannel := client.AccessControl().GetAccessControlWhatDataObjectList(cancelCtx, data.Id.ValueString())
+		whatItems := client.AccessControl().GetAccessControlWhatDataObjectList(cancelCtx, data.Id.ValueString())
 
 		stateWhatItems := make([]attr.Value, 0)
 
-		for whatItem := range whatItemsChannel {
-			if whatItem.HasError() {
-				diagnostics.AddError("Failed to get what data objects", whatItem.GetError().Error())
+		for whatItem, err := range whatItems {
+			if err != nil {
+				diagnostics.AddError("Failed to get what data objects", err.Error())
 
 				return diagnostics
 			}
 
-			what := whatItem.GetItem()
-
 			var id *string
 			var dataSourceId *string
 
-			if what.DataObject != nil {
-				id = &what.DataObject.FullName
-				dataSourceId = &what.DataObject.DataSource.Id
+			if whatItem.DataObject != nil {
+				id = &whatItem.DataObject.FullName
+				dataSourceId = &whatItem.DataObject.DataSource.Id
 			} else {
 				diagnostics.AddError("Invalid what data object", "Received data object is nil")
 
 				continue
 			}
 
-			permissions := make([]attr.Value, 0, len(what.Permissions))
-			for _, p := range what.Permissions {
+			permissions := make([]attr.Value, 0, len(whatItem.Permissions))
+			for _, p := range whatItem.Permissions {
 				permissions = append(permissions, types.StringPointerValue(p))
 			}
 
-			globalPermissions := make([]attr.Value, 0, len(what.GlobalPermissions))
-			for _, p := range what.GlobalPermissions {
+			globalPermissions := make([]attr.Value, 0, len(whatItem.GlobalPermissions))
+			for _, p := range whatItem.GlobalPermissions {
 				globalPermissions = append(globalPermissions, types.StringValue(strings.ToUpper(*p)))
 			}
 

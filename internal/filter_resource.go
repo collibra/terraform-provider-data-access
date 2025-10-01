@@ -217,11 +217,11 @@ func readFilterResourceTable(ctx context.Context, client *sdk.CollibraClient, da
 		cancelCtx, cancelFunc := context.WithCancel(ctx)
 		defer cancelFunc()
 
-		whatItemChannel := client.AccessControl().GetAccessControlWhatDataObjectList(cancelCtx, data.Id.ValueString())
+		whatItems := client.AccessControl().GetAccessControlWhatDataObjectList(cancelCtx, data.Id.ValueString())
 
 		first := true
 
-		for whatItem := range whatItemChannel {
+		for whatItem, err := range whatItems {
 			if !first {
 				diagnostics.AddError("Received multiple tables. Expect exactly one", "Filter resource only supports one table")
 
@@ -230,14 +230,13 @@ func readFilterResourceTable(ctx context.Context, client *sdk.CollibraClient, da
 
 			first = false
 
-			if whatItem.HasError() {
-				diagnostics.AddError("Failed to get filter what data objects", whatItem.GetError().Error())
+			if err != nil {
+				diagnostics.AddError("Failed to get filter what data objects", err.Error())
 
 				return diagnostics
 			}
 
-			what := whatItem.GetItem()
-			data.Table = types.StringValue(what.DataObject.FullName)
+			data.Table = types.StringValue(whatItem.DataObject.FullName)
 		}
 	}
 

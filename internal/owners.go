@@ -15,7 +15,7 @@ import (
 )
 
 func getOwners(ctx context.Context, id string, client *sdk.CollibraClient) (result types.Set, diagnostics diag.Diagnostics) {
-	ownersList := client.Role().ListRoleAssignments(ctx, services.WithRoleAssignmentListFilter(
+	ownersSeq := client.Role().ListRoleAssignments(ctx, services.WithRoleAssignmentListFilter(
 		&raitoType.RoleAssignmentFilterInput{
 			Role:               utils.Ptr(ownerRole),
 			Resource:           &id,
@@ -28,14 +28,14 @@ func getOwners(ctx context.Context, id string, client *sdk.CollibraClient) (resu
 
 	var owners []attr.Value
 
-	for owner := range ownersList {
-		if owner.HasError() {
-			diagnostics.AddError("Failed to list owners", owner.GetError().Error())
+	for owner, err := range ownersSeq {
+		if err != nil {
+			diagnostics.AddError("Failed to list owners", err.Error())
 
 			return result, diagnostics
 		}
 
-		switch ownerItem := owner.GetItem().GetTo().(type) {
+		switch ownerItem := owner.GetTo().(type) {
 		case *raitoType.RoleAssignmentToUser:
 			owners = append(owners, types.StringValue(ownerItem.Id))
 		case *raitoType.RoleAssignmentToGroup:

@@ -25,10 +25,9 @@ type RaitoCloudProvider struct {
 
 // RaitoCloudProviderModel describes the provider data model.
 type RaitoCloudProviderModel struct {
-	Domain      types.String `tfsdk:"domain"`
-	User        types.String `tfsdk:"user"`
-	Secret      types.String `tfsdk:"secret"`
-	UrlOverride types.String `tfsdk:"url_override"`
+	Url    types.String `tfsdk:"url"`
+	User   types.String `tfsdk:"user"`
+	Secret types.String `tfsdk:"secret"`
 }
 
 func (p *RaitoCloudProvider) Metadata(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
@@ -39,12 +38,12 @@ func (p *RaitoCloudProvider) Metadata(ctx context.Context, req provider.Metadata
 func (p *RaitoCloudProvider) Schema(ctx context.Context, req provider.SchemaRequest, resp *provider.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
-			"domain": schema.StringAttribute{
+			"url": schema.StringAttribute{
 				Required:            true,
 				Optional:            false,
 				Sensitive:           false,
-				Description:         "The subdomain of your Raito Cloud instance (i.e. https://<this_part>.raito.cloud)",
-				MarkdownDescription: "The subdomain of your Raito Cloud instance (i.e. https://<this_part>.raito.cloud)",
+				Description:         "The base url of your Collibra instance (i.e. https://<your>.collibra.com)",
+				MarkdownDescription: "The base url of your Collibra instance (i.e. https://<your>.collibra.com)",
 			},
 			"user": schema.StringAttribute{
 				Required:            true,
@@ -60,12 +59,6 @@ func (p *RaitoCloudProvider) Schema(ctx context.Context, req provider.SchemaRequ
 				Description:         "The password to use to sign in to your Raito Cloud instance",
 				MarkdownDescription: "The password to use to sign in to your Raito Cloud instance",
 			},
-			"url_override": schema.StringAttribute{
-				Required:    false,
-				Optional:    true,
-				Sensitive:   false,
-				Description: "If set, this URL is used as address for the Raito Cloud API. Only used for testing purposes.",
-			},
 		},
 	}
 }
@@ -79,13 +72,7 @@ func (p *RaitoCloudProvider) Configure(ctx context.Context, req provider.Configu
 		return
 	}
 
-	var options []func(options *sdk.ClientOptions)
-
-	if !data.UrlOverride.IsNull() {
-		options = append(options, sdk.WithUrlOverride(data.UrlOverride.ValueString()))
-	}
-
-	client := sdk.NewClient(ctx, data.Domain.ValueString(), data.User.ValueString(), data.Secret.ValueString(), options...)
+	client := sdk.NewClient(data.User.ValueString(), data.Secret.ValueString(), data.Url.ValueString())
 
 	resp.DataSourceData = client
 	resp.ResourceData = client
@@ -100,7 +87,6 @@ func (p *RaitoCloudProvider) Resources(_ context.Context) []func() resource.Reso
 		NewGrantResource,
 		NewFilterResource,
 		NewMaskResource,
-		NewUserResource,
 	}
 }
 

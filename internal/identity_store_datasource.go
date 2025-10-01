@@ -110,30 +110,28 @@ func (i *IdentityStoreDataSource) Read(ctx context.Context, request datasource.R
 	cancelCtx, cancelFunc := context.WithCancel(ctx)
 	defer cancelFunc()
 
-	isChan := i.client.IdentityStore().ListIdentityStores(cancelCtx, services.WithListIdentityStoresFilter(&types2.IdentityStoreFilterInput{
+	identityStores := i.client.IdentityStore().ListIdentityStores(cancelCtx, services.WithListIdentityStoresFilter(&types2.IdentityStoreFilterInput{
 		Search: &name,
 	}))
 
-	for is := range isChan {
-		if is.HasError() {
-			response.Diagnostics.AddError("Failed to list identity stores", is.GetError().Error())
+	for identityStore, err := range identityStores {
+		if err != nil {
+			response.Diagnostics.AddError("Failed to list identity stores", err.Error())
 
 			return
 		}
 
-		isItem := is.GetItem()
-
-		if isItem.Name != name {
+		if identityStore.Name != name {
 			continue
 		}
 
-		data.Id = types.StringValue(isItem.Id)
-		data.Name = types.StringValue(isItem.Name)
-		data.Description = types.StringValue(isItem.Description)
-		data.Master = types.BoolValue(isItem.Master)
-		data.IsNative = types.BoolValue(isItem.Native)
+		data.Id = types.StringValue(identityStore.Id)
+		data.Name = types.StringValue(identityStore.Name)
+		data.Description = types.StringValue(identityStore.Description)
+		data.Master = types.BoolValue(identityStore.Master)
+		data.IsNative = types.BoolValue(identityStore.Native)
 
-		owners, diagn := getOwners(ctx, isItem.Id, i.client)
+		owners, diagn := getOwners(ctx, identityStore.Id, i.client)
 		response.Diagnostics.Append(diagn...)
 
 		if response.Diagnostics.HasError() {

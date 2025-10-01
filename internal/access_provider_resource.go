@@ -464,17 +464,16 @@ func (a *AccessProviderResource[T, ApModel]) readWhoItems(ctx context.Context, a
 	defer cancelFn()
 
 	whoItems := a.client.AccessControl().GetAccessControlWhoList(cancelCtx, apModel.Id.ValueString())
-	for whoItem := range whoItems {
-		if whoItem.HasError() {
-			response.Diagnostics.AddError("Failed to read who-item from access provider", whoItem.GetError().Error())
+	for whoItem, err := range whoItems {
+		if err != nil {
+			response.Diagnostics.AddError("Failed to read who-item from access provider", err.Error())
 
 			return nil, true
 		}
 
 		var user, group, whoAp *string
 
-		item := whoItem.GetItem()
-		switch benificiaryItem := item.Item.(type) {
+		switch benificiaryItem := whoItem.Item.(type) {
 		case *raitoType.AccessWhoItemItemUser:
 			user = benificiaryItem.Email
 		case *raitoType.AccessWhoItemItemGroup:
@@ -487,11 +486,11 @@ func (a *AccessProviderResource[T, ApModel]) readWhoItems(ctx context.Context, a
 			return nil, true
 		}
 
-		if item.Type == raitoType.AccessWhoItemTypeWhogrant {
+		if whoItem.Type == raitoType.AccessWhoItemTypeWhogrant {
 			if (user != nil && definedPromises.Contains(_userPrefix(*user))) || (group != nil && definedPromises.Contains(_groupPrefix(*group))) || (whoAp != nil && definedPromises.Contains(_accessControlPrefix(*whoAp))) {
 				continue
 			}
-		} else if item.PromiseDuration == nil {
+		} else if whoItem.PromiseDuration == nil {
 			response.Diagnostics.AddError("Invalid who-item detected.", "Invalid who-item. Promise duration not set on promise who-item")
 		}
 
@@ -505,7 +504,7 @@ func (a *AccessProviderResource[T, ApModel]) readWhoItems(ctx context.Context, a
 				"user":             types.StringPointerValue(user),
 				"group":            types.StringPointerValue(group),
 				"access_control":   types.StringPointerValue(whoAp),
-				"promise_duration": types.Int64PointerValue(item.PromiseDuration),
+				"promise_duration": types.Int64PointerValue(whoItem.PromiseDuration),
 			}))
 	}
 
@@ -596,21 +595,19 @@ func (a *AccessProviderResource[T, ApModel]) updateGetWhoItems(ctx context.Conte
 	cancelCtx, cancelFn := context.WithCancel(ctx)
 	defer cancelFn()
 
-	whoItemChannel := a.client.AccessControl().GetAccessControlWhoList(cancelCtx, id)
-	for whoItem := range whoItemChannel {
-		if whoItem.HasError() {
-			response.Diagnostics.AddError("Failed to read who-item from access provider", whoItem.GetError().Error())
+	whoItems := a.client.AccessControl().GetAccessControlWhoList(cancelCtx, id)
+	for whoItem, err := range whoItems {
+		if err != nil {
+			response.Diagnostics.AddError("Failed to read who-item from access provider", err.Error())
 
 			return true
 		}
 
-		item := whoItem.GetItem()
-
-		if item.Type == raitoType.AccessWhoItemTypeWhogrant {
+		if whoItem.Type == raitoType.AccessWhoItemTypeWhogrant {
 			var key string
 			var user, group, whoAp *string
 
-			switch beneficiaryItem := item.Item.(type) {
+			switch beneficiaryItem := whoItem.Item.(type) {
 			case *raitoType.AccessWhoItemItemUser:
 				if beneficiaryItem.Email == nil {
 					continue
@@ -634,7 +631,7 @@ func (a *AccessProviderResource[T, ApModel]) updateGetWhoItems(ctx context.Conte
 					User:          user,
 					Group:         group,
 					AccessControl: whoAp,
-					ExpiresAt:     item.ExpiresAt,
+					ExpiresAt:     whoItem.ExpiresAt,
 				})
 			}
 		}
@@ -778,14 +775,14 @@ func (a *AccessProviderResource[T, ApModel]) readOwners(ctx context.Context, apI
 
 	var ownerIds []attr.Value
 
-	for roleAssignment := range roleAssignments {
-		if roleAssignment.HasError() {
-			diagnostics.AddError("Failed to list role assignments on access provider", roleAssignment.GetError().Error())
+	for roleAssignment, err := range roleAssignments {
+		if err != nil {
+			diagnostics.AddError("Failed to list role assignments on access provider", err.Error())
 
 			return basetypes.SetValue{}, diagnostics
 		}
 
-		switch to := roleAssignment.GetItem().To.(type) {
+		switch to := roleAssignment.To.(type) {
 		case *raitoType.RoleAssignmentToUser:
 			ownerIds = append(ownerIds, types.StringValue(to.Id))
 		case *raitoType.RoleAssignmentToGroup:
@@ -1164,14 +1161,14 @@ func (p AccessProviderWhatAbacParser) ToWhatAbacRuleObject(ctx context.Context, 
 	cancelCtx, cancelFunc := context.WithCancel(ctx)
 	defer cancelFunc()
 
-	for scopeItem := range client.AccessControl().GetAccessControlAbacWhatScope(cancelCtx, ap.Id) {
-		if scopeItem.HasError() {
-			diagnostics.AddError("Failed to load access provider abac scope", scopeItem.GetError().Error())
+	for scopeItem, err := range client.AccessControl().GetAccessControlAbacWhatScope(cancelCtx, ap.Id) {
+		if err != nil {
+			diagnostics.AddError("Failed to load access provider abac scope", err.Error())
 
 			return types.ObjectNull(objectTypes), diagnostics
 		}
 
-		scopeItems = append(scopeItems, types.StringValue(scopeItem.MustGetItem().FullName))
+		scopeItems = append(scopeItems, types.StringValue(scopeItem.FullName))
 	}
 
 	objectValue := map[string]attr.Value{
