@@ -21,21 +21,21 @@ func TestAccDataSourceDataSource(t *testing.T) {
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: providerConfig + `data "raito_datasource" "test" {
+				Config: providerConfig + `data "collibra-access-governance_datasource" "test" {
     name = "Snowflake"
 }
 `,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("data.raito_datasource.test", "name", "Snowflake"),
-					resource.TestCheckResourceAttrWith("data.raito_datasource.test", "id", func(value string) error {
+					resource.TestCheckResourceAttr("data.collibra-access-governance_datasource.test", "name", "Snowflake"),
+					resource.TestCheckResourceAttrWith("data.collibra-access-governance_datasource.test", "id", func(value string) error {
 						if value == "" {
 							return errors.New("ID is not set")
 						}
 
 						return nil
 					}),
-					resource.TestCheckResourceAttr("data.raito_datasource.test", "sync_method", string(types.DataSourceSyncMethodOnprem)),
-					resource.TestCheckResourceAttrSet("data.raito_datasource.test", "owners.0"),
+					resource.TestCheckResourceAttr("data.collibra-access-governance_datasource.test", "sync_method", string(types.DataSourceSyncMethodOnprem)),
+					resource.TestCheckResourceAttrSet("data.collibra-access-governance_datasource.test", "owners.0"),
 				),
 			},
 		},

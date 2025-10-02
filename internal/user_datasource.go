@@ -66,17 +66,17 @@ func (u *UserDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, r
 				Description:         "The type of the requested user (Human or Machine)",
 				MarkdownDescription: "The type of the requested user (Human or Machine)",
 			},
-			"raito_user": schema.BoolAttribute{
+			"collibra_user": schema.BoolAttribute{
 				Required:            false,
 				Optional:            false,
 				Computed:            true,
 				Sensitive:           false,
-				Description:         "Whether the requested user is a Raito user",
-				MarkdownDescription: "Whether the requested user is a Raito user",
+				Description:         "Whether the requested user is a Collibra user",
+				MarkdownDescription: "Whether the requested user is a Collibra user",
 			},
 		},
 		Description:         "Find a user by email address",
-		MarkdownDescription: "Find a Raito [User](https://docs.raito.io/docs/cloud/admin/user_management) by email address",
+		MarkdownDescription: "Find a Collibra [User](https://docs.raito.io/docs/cloud/admin/user_management) by email address",
 	}
 }
 
@@ -113,7 +113,7 @@ func (u *UserDataSource) Configure(_ context.Context, req datasource.ConfigureRe
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
-			fmt.Sprintf("Expected *sdk.RaitoClient, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf("Expected *sdk.CollibraClient, got: %T. Please report this issue to the provider developers.", req.ProviderData),
 		)
 
 		return
@@ -122,7 +122,7 @@ func (u *UserDataSource) Configure(_ context.Context, req datasource.ConfigureRe
 	if client == nil {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
-			"Expected *sdk.RaitoClient, not to be nil.",
+			"Expected *sdk.CollibraClient, not to be nil.",
 		)
 
 		return

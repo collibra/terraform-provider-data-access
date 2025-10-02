@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"github.com/collibra/access-governance-go-sdk"
-	raitoType "github.com/collibra/access-governance-go-sdk/types"
+	accessGovernanceType "github.com/collibra/access-governance-go-sdk/types"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -40,15 +40,15 @@ type GrantCategoryResourceModel struct {
 	AllowedWhatItems         types.Object `tfsdk:"allowed_what_items"`
 }
 
-func (m *GrantCategoryResourceModel) ToGrantCategoryInput() raitoType.GrantCategoryInput {
+func (m *GrantCategoryResourceModel) ToGrantCategoryInput() accessGovernanceType.GrantCategoryInput {
 	defaultTypePerDataSourceValues := m.DefaultTypePerDataSource.Elements()
-	defaultTypePerDS := make([]raitoType.GrantCategoryTypeForDataSourceInput, 0, len(defaultTypePerDataSourceValues))
+	defaultTypePerDS := make([]accessGovernanceType.GrantCategoryTypeForDataSourceInput, 0, len(defaultTypePerDataSourceValues))
 
 	for _, v := range defaultTypePerDataSourceValues {
 		vObject := v.(types.Object)
 		attributes := vObject.Attributes()
 
-		typeForDataSource := raitoType.GrantCategoryTypeForDataSourceInput{
+		typeForDataSource := accessGovernanceType.GrantCategoryTypeForDataSourceInput{
 			DataSource: attributes["data_source"].(types.String).ValueString(),
 			Type:       attributes["type"].(types.String).ValueString(),
 		}
@@ -63,7 +63,7 @@ func (m *GrantCategoryResourceModel) ToGrantCategoryInput() raitoType.GrantCateg
 		allowedWhoCategories = append(allowedWhoCategories, v.(types.String).ValueString())
 	}
 
-	input := raitoType.GrantCategoryInput{
+	input := accessGovernanceType.GrantCategoryInput{
 		Name:                     m.Name.ValueStringPointer(),
 		Description:              m.Description.ValueStringPointer(),
 		Icon:                     m.Icon.ValueStringPointer(),
@@ -71,14 +71,14 @@ func (m *GrantCategoryResourceModel) ToGrantCategoryInput() raitoType.GrantCateg
 		AllowDuplicateNames:      m.AllowDuplicateNames.ValueBoolPointer(),
 		MultiDataSource:          m.MultiDataSource.ValueBoolPointer(),
 		DefaultTypePerDataSource: defaultTypePerDS,
-		AllowedWhoItems: &raitoType.GrantCategoryAllowedWhoItemsInput{
+		AllowedWhoItems: &accessGovernanceType.GrantCategoryAllowedWhoItemsInput{
 			User:        m.AllowedWhoItems.Attributes()["user"].(types.Bool).ValueBool(),
 			Group:       m.AllowedWhoItems.Attributes()["group"].(types.Bool).ValueBool(),
 			Inheritance: m.AllowedWhoItems.Attributes()["inheritance"].(types.Bool).ValueBool(),
 			Self:        m.AllowedWhoItems.Attributes()["self"].(types.Bool).ValueBool(),
 			Categories:  allowedWhoCategories,
 		},
-		AllowedWhatItems: &raitoType.GrantCategoryAllowedWhatItemsInput{
+		AllowedWhatItems: &accessGovernanceType.GrantCategoryAllowedWhatItemsInput{
 			DataObject: m.AllowedWhatItems.Attributes()["data_object"].(types.Bool).ValueBool(),
 		},
 	}
@@ -353,7 +353,7 @@ func (g *GrantCategoryResource) Read(ctx context.Context, request resource.ReadR
 
 	category, err := g.client.GrantCategory().GetGrantCategory(ctx, stateData.Id.ValueString())
 	if err != nil {
-		var notFoundErr *raitoType.ErrNotFound
+		var notFoundErr *accessGovernanceType.ErrNotFound
 		if errors.As(err, &notFoundErr) {
 			response.State.RemoveResource(ctx)
 		} else {
@@ -428,7 +428,7 @@ func (g *GrantCategoryResource) Configure(_ context.Context, req resource.Config
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
-			fmt.Sprintf("Expected *sdk.RaitoClient, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf("Expected *sdk.CollibraClient, got: %T. Please report this issue to the provider developers.", req.ProviderData),
 		)
 
 		return
@@ -437,7 +437,7 @@ func (g *GrantCategoryResource) Configure(_ context.Context, req resource.Config
 	if client == nil {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
-			"Expected *sdk.RaitoClient, not to be nil.",
+			"Expected *sdk.CollibraClient, not to be nil.",
 		)
 
 		return
@@ -449,7 +449,7 @@ func (g *GrantCategoryResource) ImportState(ctx context.Context, req resource.Im
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }
 
-func setGrantCategoryResourceData(data *raitoType.GrantCategoryDetails, resp *GrantCategoryResourceModel) (diags diag.Diagnostics) {
+func setGrantCategoryResourceData(data *accessGovernanceType.GrantCategoryDetails, resp *GrantCategoryResourceModel) (diags diag.Diagnostics) {
 	resp.Id = types.StringValue(data.Id)
 	resp.Name = types.StringValue(data.Name)
 	resp.Description = types.StringValue(data.Description)

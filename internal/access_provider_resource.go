@@ -8,7 +8,7 @@ import (
 
 	"github.com/collibra/access-governance-go-sdk"
 	"github.com/collibra/access-governance-go-sdk/services"
-	raitoType "github.com/collibra/access-governance-go-sdk/types"
+	accessGovernanceType "github.com/collibra/access-governance-go-sdk/types"
 	"github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
@@ -27,8 +27,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/raito-io/golang-set/set"
 
-	"github.com/raito-io/terraform-provider-raito/internal/types/abac_expression"
-	"github.com/raito-io/terraform-provider-raito/internal/utils"
+	"github.com/collibra/access-governance-terraform-provider/internal/types/abac_expression"
+	"github.com/collibra/access-governance-terraform-provider/internal/utils"
 )
 
 const (
@@ -52,8 +52,8 @@ type AccessProviderModel[T any] interface {
 	*T
 	GetAccessProviderResourceModel() *AccessProviderResourceModel
 	SetAccessProviderResourceModel(model *AccessProviderResourceModel)
-	ToAccessProviderInput(ctx context.Context, client *sdk.CollibraClient, result *raitoType.AccessControlInput) diag.Diagnostics
-	FromAccessProvider(ctx context.Context, client *sdk.CollibraClient, input *raitoType.AccessControl) diag.Diagnostics
+	ToAccessProviderInput(ctx context.Context, client *sdk.CollibraClient, result *accessGovernanceType.AccessControlInput) diag.Diagnostics
+	FromAccessProvider(ctx context.Context, client *sdk.CollibraClient, input *accessGovernanceType.AccessControl) diag.Diagnostics
 	UpdateOwners(owners types.Set)
 }
 
@@ -108,11 +108,11 @@ func (a *AccessProviderResource[T, ApModel]) schema(typeName string) map[string]
 			Computed:            true,
 			Sensitive:           false,
 			Description:         fmt.Sprintf("The state of the %s", typeName),
-			MarkdownDescription: fmt.Sprintf("The state of the %s Possible values are: [%q, %q]", typeName, string(raitoType.AccessControlStateActive), string(raitoType.AccessControlStateInactive)),
+			MarkdownDescription: fmt.Sprintf("The state of the %s Possible values are: [%q, %q]", typeName, string(accessGovernanceType.AccessControlStateActive), string(accessGovernanceType.AccessControlStateInactive)),
 			Validators: []validator.String{
-				stringvalidator.OneOf(string(raitoType.AccessControlStateActive), string(raitoType.AccessControlStateInactive)),
+				stringvalidator.OneOf(string(accessGovernanceType.AccessControlStateActive), string(accessGovernanceType.AccessControlStateInactive)),
 			},
-			Default: stringdefault.StaticString(string(raitoType.AccessControlStateActive)),
+			Default: stringdefault.StaticString(string(accessGovernanceType.AccessControlStateActive)),
 		},
 		"who": schema.SetNestedAttribute{
 			NestedObject: schema.NestedAttributeObject{
@@ -233,7 +233,7 @@ func (a *AccessProviderResource[T, ApModel]) Create(ctx context.Context, request
 }
 
 func (a *AccessProviderResource[T, ApModel]) create(ctx context.Context, data ApModel, response *resource.CreateResponse) {
-	input := raitoType.AccessControlInput{}
+	input := accessGovernanceType.AccessControlInput{}
 
 	apResourceModel := data.GetAccessProviderResourceModel()
 
@@ -279,7 +279,7 @@ func (a *AccessProviderResource[T, ApModel]) create(ctx context.Context, data Ap
 	response.Diagnostics.Append(a.createUpdateOwners(ctx, data, owners, ap, &response.State)...)
 }
 
-func (a *AccessProviderResource[T, ApModel]) createUpdateOwners(ctx context.Context, data ApModel, owners types.Set, ap *raitoType.AccessControl, state *tfsdk.State) (diagnostics diag.Diagnostics) {
+func (a *AccessProviderResource[T, ApModel]) createUpdateOwners(ctx context.Context, data ApModel, owners types.Set, ap *accessGovernanceType.AccessControl, state *tfsdk.State) (diagnostics diag.Diagnostics) {
 	if !owners.IsNull() && !owners.IsUnknown() {
 		ownerElements := owners.Elements()
 
@@ -309,21 +309,21 @@ func (a *AccessProviderResource[T, ApModel]) createUpdateOwners(ctx context.Cont
 	return diagnostics
 }
 
-func (a *AccessProviderResource[T, ApModel]) updateState(ctx context.Context, data ApModel, state types.String, ap *raitoType.AccessControl) (_ *raitoType.AccessControl, diagnostics diag.Diagnostics) {
+func (a *AccessProviderResource[T, ApModel]) updateState(ctx context.Context, data ApModel, state types.String, ap *accessGovernanceType.AccessControl) (_ *accessGovernanceType.AccessControl, diagnostics diag.Diagnostics) {
 	if state.Equal(data.GetAccessProviderResourceModel().State) {
 		return ap, diagnostics
 	}
 
 	var err error
 
-	if data.GetAccessProviderResourceModel().State.ValueString() == string(raitoType.AccessControlStateActive) {
+	if data.GetAccessProviderResourceModel().State.ValueString() == string(accessGovernanceType.AccessControlStateActive) {
 		ap, err = a.client.AccessControl().DeactivateAccessControl(ctx, ap.Id)
 		if err != nil {
 			diagnostics.AddError("Failed to activate access provider", err.Error())
 
 			return ap, diagnostics
 		}
-	} else if data.GetAccessProviderResourceModel().State.ValueString() == string(raitoType.AccessControlStateInactive) {
+	} else if data.GetAccessProviderResourceModel().State.ValueString() == string(accessGovernanceType.AccessControlStateInactive) {
 		ap, err = a.client.AccessControl().ActivateAccessControl(ctx, ap.Id)
 		if err != nil {
 			diagnostics.AddError("Failed to deactivate access provider", err.Error())
@@ -357,7 +357,7 @@ func (a *AccessProviderResource[T, ApModel]) read(ctx context.Context, data ApMo
 	// Get the access provider
 	ap, err := a.client.AccessControl().GetAccessControl(ctx, apModel.Id.ValueString())
 	if err != nil {
-		notFoundErr := &raitoType.ErrNotFound{}
+		notFoundErr := &accessGovernanceType.ErrNotFound{}
 		if errors.As(err, &notFoundErr) {
 			response.State.RemoveResource(ctx)
 
@@ -369,7 +369,7 @@ func (a *AccessProviderResource[T, ApModel]) read(ctx context.Context, data ApMo
 		return
 	}
 
-	if ap.State == raitoType.AccessControlStateDeleted {
+	if ap.State == accessGovernanceType.AccessControlStateDeleted {
 		response.State.RemoveResource(ctx)
 
 		return
@@ -474,11 +474,11 @@ func (a *AccessProviderResource[T, ApModel]) readWhoItems(ctx context.Context, a
 		var user, group, whoAp *string
 
 		switch benificiaryItem := whoItem.Item.(type) {
-		case *raitoType.AccessWhoItemItemUser:
+		case *accessGovernanceType.AccessWhoItemItemUser:
 			user = benificiaryItem.Email
-		case *raitoType.AccessWhoItemItemGroup:
+		case *accessGovernanceType.AccessWhoItemItemGroup:
 			group = &benificiaryItem.Id
-		case *raitoType.AccessWhoItemItemAccessControl:
+		case *accessGovernanceType.AccessWhoItemItemAccessControl:
 			whoAp = &benificiaryItem.Id
 		default:
 			response.Diagnostics.AddError("Invalid who-item", fmt.Sprintf("Invalid who-item: %T", benificiaryItem))
@@ -486,7 +486,7 @@ func (a *AccessProviderResource[T, ApModel]) readWhoItems(ctx context.Context, a
 			return nil, true
 		}
 
-		if whoItem.Type == raitoType.AccessWhoItemTypeWhogrant {
+		if whoItem.Type == accessGovernanceType.AccessWhoItemTypeWhogrant {
 			if (user != nil && definedPromises.Contains(_userPrefix(*user))) || (group != nil && definedPromises.Contains(_groupPrefix(*group))) || (whoAp != nil && definedPromises.Contains(_accessControlPrefix(*whoAp))) {
 				continue
 			}
@@ -524,7 +524,7 @@ func (a *AccessProviderResource[T, ApModel]) Update(ctx context.Context, request
 }
 
 func (a *AccessProviderResource[T, ApModel]) update(ctx context.Context, data ApModel, response *resource.UpdateResponse) {
-	input := raitoType.AccessControlInput{}
+	input := accessGovernanceType.AccessControlInput{}
 
 	apResourceModel := data.GetAccessProviderResourceModel()
 
@@ -542,7 +542,7 @@ func (a *AccessProviderResource[T, ApModel]) update(ctx context.Context, data Ap
 	definedPromises := set.Set[string]{}
 
 	for _, whoItem := range input.WhoItems {
-		if whoItem.Type != nil && *whoItem.Type == raitoType.AccessWhoItemTypeWhopromise {
+		if whoItem.Type != nil && *whoItem.Type == accessGovernanceType.AccessWhoItemTypeWhopromise {
 			if whoItem.User != nil {
 				definedPromises.Add(_userPrefix(*whoItem.User))
 			} else if whoItem.Group != nil {
@@ -591,7 +591,7 @@ func (a *AccessProviderResource[T, ApModel]) update(ctx context.Context, data Ap
 	response.Diagnostics.Append(a.createUpdateOwners(ctx, data, owners, ap, &response.State)...)
 }
 
-func (a *AccessProviderResource[T, ApModel]) updateGetWhoItems(ctx context.Context, id string, response *resource.UpdateResponse, definedPromises set.Set[string], input raitoType.AccessControlInput) bool {
+func (a *AccessProviderResource[T, ApModel]) updateGetWhoItems(ctx context.Context, id string, response *resource.UpdateResponse, definedPromises set.Set[string], input accessGovernanceType.AccessControlInput) bool {
 	cancelCtx, cancelFn := context.WithCancel(ctx)
 	defer cancelFn()
 
@@ -603,22 +603,22 @@ func (a *AccessProviderResource[T, ApModel]) updateGetWhoItems(ctx context.Conte
 			return true
 		}
 
-		if whoItem.Type == raitoType.AccessWhoItemTypeWhogrant {
+		if whoItem.Type == accessGovernanceType.AccessWhoItemTypeWhogrant {
 			var key string
 			var user, group, whoAp *string
 
 			switch beneficiaryItem := whoItem.Item.(type) {
-			case *raitoType.AccessWhoItemItemUser:
+			case *accessGovernanceType.AccessWhoItemItemUser:
 				if beneficiaryItem.Email == nil {
 					continue
 				}
 
 				key = _userPrefix(*beneficiaryItem.Email)
 				user = &beneficiaryItem.Id
-			case *raitoType.AccessWhoItemItemGroup:
+			case *accessGovernanceType.AccessWhoItemItemGroup:
 				key = _groupPrefix(beneficiaryItem.Id)
 				group = &beneficiaryItem.Id
-			case *raitoType.AccessWhoItemItemAccessControl:
+			case *accessGovernanceType.AccessWhoItemItemAccessControl:
 				key = _accessControlPrefix(beneficiaryItem.Id)
 				whoAp = &beneficiaryItem.Id
 			default:
@@ -626,8 +626,8 @@ func (a *AccessProviderResource[T, ApModel]) updateGetWhoItems(ctx context.Conte
 			}
 
 			if definedPromises.Contains(key) {
-				input.WhoItems = append(input.WhoItems, raitoType.WhoItemInput{
-					Type:          utils.Ptr(raitoType.AccessWhoItemTypeWhogrant),
+				input.WhoItems = append(input.WhoItems, accessGovernanceType.WhoItemInput{
+					Type:          utils.Ptr(accessGovernanceType.AccessWhoItemTypeWhogrant),
 					User:          user,
 					Group:         group,
 					AccessControl: whoAp,
@@ -769,7 +769,7 @@ func (a *AccessProviderResource[T, ApModel]) readOwners(ctx context.Context, apI
 	cancelCtx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	roleAssignments := a.client.Role().ListRoleAssignmentsOnAccessControl(cancelCtx, apId, services.WithRoleAssignmentListFilter(&raitoType.RoleAssignmentFilterInput{
+	roleAssignments := a.client.Role().ListRoleAssignmentsOnAccessControl(cancelCtx, apId, services.WithRoleAssignmentListFilter(&accessGovernanceType.RoleAssignmentFilterInput{
 		Role: utils.Ptr(ownerRole),
 	}))
 
@@ -783,9 +783,9 @@ func (a *AccessProviderResource[T, ApModel]) readOwners(ctx context.Context, apI
 		}
 
 		switch to := roleAssignment.To.(type) {
-		case *raitoType.RoleAssignmentToUser:
+		case *accessGovernanceType.RoleAssignmentToUser:
 			ownerIds = append(ownerIds, types.StringValue(to.Id))
-		case *raitoType.RoleAssignmentToGroup:
+		case *accessGovernanceType.RoleAssignmentToGroup:
 			ownerIds = append(ownerIds, types.StringValue(to.Id))
 		default:
 			diagnostics.AddError("Unexpected role assignment type", fmt.Sprintf("Unexpected role assignment type %T", to))
@@ -871,32 +871,32 @@ func (a *AccessProviderResource[T, ApModel]) ModifyPlan(ctx context.Context, req
 	resp.Diagnostics.Append(resp.Plan.Set(ctx, apModel)...)
 }
 
-func (a *AccessProviderResourceModel) ToAccessProviderInput(ctx context.Context, client *sdk.CollibraClient, result *raitoType.AccessControlInput) (diagnostics diag.Diagnostics) {
+func (a *AccessProviderResourceModel) ToAccessProviderInput(ctx context.Context, client *sdk.CollibraClient, result *accessGovernanceType.AccessControlInput) (diagnostics diag.Diagnostics) {
 	result.Name = a.Name.ValueStringPointer()
 	result.Description = a.Description.ValueStringPointer()
 	result.Locks = append(result.Locks,
-		raitoType.AccessControlLockDataInput{
-			LockKey: raitoType.AccessControlLockNamelock,
-			Details: &raitoType.AccessControlLockDetailsInput{
+		accessGovernanceType.AccessControlLockDataInput{
+			LockKey: accessGovernanceType.AccessControlLockNamelock,
+			Details: &accessGovernanceType.AccessControlLockDetailsInput{
 				Reason: utils.Ptr(lockMsg),
 			},
 		},
 	)
 
-	result.WhoType = utils.Ptr(raitoType.WhoAndWhatTypeStatic)
+	result.WhoType = utils.Ptr(accessGovernanceType.WhoAndWhatTypeStatic)
 
 	if !a.Who.IsNull() && !a.Who.IsUnknown() {
 		diagnostics.Append(a.whoElementsToAccessProviderInput(ctx, client, result)...)
 	} else if !a.WhoAbacRule.IsNull() && !a.WhoAbacRule.IsUnknown() {
-		result.WhoType = utils.Ptr(raitoType.WhoAndWhatTypeDynamic)
+		result.WhoType = utils.Ptr(accessGovernanceType.WhoAndWhatTypeDynamic)
 		diagnostics.Append(a.whoAbacRuleToAccessProviderInput(result)...)
 	}
 
 	if a.WhoLocked.ValueBool() {
 		result.Locks = append(result.Locks,
-			raitoType.AccessControlLockDataInput{
-				LockKey: raitoType.AccessControlLockWholock,
-				Details: &raitoType.AccessControlLockDetailsInput{
+			accessGovernanceType.AccessControlLockDataInput{
+				LockKey: accessGovernanceType.AccessControlLockWholock,
+				Details: &accessGovernanceType.AccessControlLockDetailsInput{
 					Reason: utils.Ptr(lockMsg),
 				},
 			},
@@ -905,9 +905,9 @@ func (a *AccessProviderResourceModel) ToAccessProviderInput(ctx context.Context,
 
 	if a.InheritanceLocked.ValueBool() {
 		result.Locks = append(result.Locks,
-			raitoType.AccessControlLockDataInput{
-				LockKey: raitoType.AccessControlLockInheritancelock,
-				Details: &raitoType.AccessControlLockDetailsInput{
+			accessGovernanceType.AccessControlLockDataInput{
+				LockKey: accessGovernanceType.AccessControlLockInheritancelock,
+				Details: &accessGovernanceType.AccessControlLockDetailsInput{
 					Reason: utils.Ptr(lockMsg),
 				},
 			},
@@ -915,9 +915,9 @@ func (a *AccessProviderResourceModel) ToAccessProviderInput(ctx context.Context,
 	}
 
 	if !a.Owners.IsNull() {
-		result.Locks = append(result.Locks, raitoType.AccessControlLockDataInput{
-			LockKey: raitoType.AccessControlLockOwnerlock,
-			Details: &raitoType.AccessControlLockDetailsInput{
+		result.Locks = append(result.Locks, accessGovernanceType.AccessControlLockDataInput{
+			LockKey: accessGovernanceType.AccessControlLockOwnerlock,
+			Details: &accessGovernanceType.AccessControlLockDetailsInput{
 				Reason: utils.Ptr(lockMsg),
 			},
 		})
@@ -926,23 +926,23 @@ func (a *AccessProviderResourceModel) ToAccessProviderInput(ctx context.Context,
 	return diagnostics
 }
 
-func (a *AccessProviderResourceModel) whoElementsToAccessProviderInput(ctx context.Context, client *sdk.CollibraClient, result *raitoType.AccessControlInput) (diagnostics diag.Diagnostics) {
+func (a *AccessProviderResourceModel) whoElementsToAccessProviderInput(ctx context.Context, client *sdk.CollibraClient, result *accessGovernanceType.AccessControlInput) (diagnostics diag.Diagnostics) {
 	whoItems := a.Who.Elements()
 
-	result.WhoItems = make([]raitoType.WhoItemInput, 0, len(whoItems))
+	result.WhoItems = make([]accessGovernanceType.WhoItemInput, 0, len(whoItems))
 
 	for _, whoItem := range whoItems {
 		whoObject := whoItem.(types.Object)
 		whoAttributes := whoObject.Attributes()
 
-		raitoWhoItem := raitoType.WhoItemInput{
-			Type: utils.Ptr(raitoType.AccessWhoItemTypeWhogrant),
+		accessGovernanceWhoItem := accessGovernanceType.WhoItemInput{
+			Type: utils.Ptr(accessGovernanceType.AccessWhoItemTypeWhogrant),
 		}
 
 		if promiseDurationAttribute, found := whoAttributes["promise_duration"]; found && !promiseDurationAttribute.IsNull() {
 			promiseDurationInt := promiseDurationAttribute.(types.Int64)
-			raitoWhoItem.PromiseDuration = promiseDurationInt.ValueInt64Pointer()
-			raitoWhoItem.Type = utils.Ptr(raitoType.AccessWhoItemTypeWhopromise)
+			accessGovernanceWhoItem.PromiseDuration = promiseDurationInt.ValueInt64Pointer()
+			accessGovernanceWhoItem.Type = utils.Ptr(accessGovernanceType.AccessWhoItemTypeWhopromise)
 		}
 
 		if userAttribute, found := whoAttributes["user"]; found && !userAttribute.IsNull() {
@@ -955,24 +955,24 @@ func (a *AccessProviderResourceModel) whoElementsToAccessProviderInput(ctx conte
 				continue
 			}
 
-			raitoWhoItem.User = &userInformation.Id
+			accessGovernanceWhoItem.User = &userInformation.Id
 		} else if groupAttribute, found := whoAttributes["group"]; found && !groupAttribute.IsNull() {
-			raitoWhoItem.Group = groupAttribute.(types.String).ValueStringPointer()
+			accessGovernanceWhoItem.Group = groupAttribute.(types.String).ValueStringPointer()
 		} else if accessControlAttribute, found := whoAttributes["access_control"]; found && !accessControlAttribute.IsNull() {
-			raitoWhoItem.AccessControl = accessControlAttribute.(types.String).ValueStringPointer()
+			accessGovernanceWhoItem.AccessControl = accessControlAttribute.(types.String).ValueStringPointer()
 		} else {
 			diagnostics.AddError("Failed to get who-item", "No user, group, or access control set")
 
 			continue
 		}
 
-		result.WhoItems = append(result.WhoItems, raitoWhoItem)
+		result.WhoItems = append(result.WhoItems, accessGovernanceWhoItem)
 	}
 
 	return diagnostics
 }
 
-func (a *AccessProviderResourceModel) whoAbacRuleToAccessProviderInput(result *raitoType.AccessControlInput) (diagnostics diag.Diagnostics) {
+func (a *AccessProviderResourceModel) whoAbacRuleToAccessProviderInput(result *accessGovernanceType.AccessControlInput) (diagnostics diag.Diagnostics) {
 	var abacBeRule abac_expression.BinaryExpression
 
 	diagnostics.Append(a.WhoAbacRule.Unmarshal(&abacBeRule)...)
@@ -988,15 +988,15 @@ func (a *AccessProviderResourceModel) whoAbacRuleToAccessProviderInput(result *r
 		return
 	}
 
-	result.WhoAbacRule = &raitoType.WhoAbacRuleInput{
+	result.WhoAbacRule = &accessGovernanceType.WhoAbacRuleInput{
 		Rule: *rule,
-		Type: raitoType.AccessWhoItemTypeWhogrant,
+		Type: accessGovernanceType.AccessWhoItemTypeWhogrant,
 	}
 
 	return diagnostics
 }
 
-func (a *AccessProviderResourceModel) FromAccessProvider(ap *raitoType.AccessControl) (diagnostics diag.Diagnostics) {
+func (a *AccessProviderResourceModel) FromAccessProvider(ap *accessGovernanceType.AccessControl) (diagnostics diag.Diagnostics) {
 	a.Id = types.StringValue(ap.Id)
 	a.Name = types.StringValue(ap.Name)
 	a.Description = types.StringValue(ap.Description)
@@ -1007,9 +1007,9 @@ func (a *AccessProviderResourceModel) FromAccessProvider(ap *raitoType.AccessCon
 
 	for _, lock := range ap.Locks {
 		switch lock.LockKey {
-		case raitoType.AccessControlLockWholock:
+		case accessGovernanceType.AccessControlLockWholock:
 			a.WhoLocked = types.BoolValue(true)
-		case raitoType.AccessControlLockInheritancelock:
+		case accessGovernanceType.AccessControlLockInheritancelock:
 			a.InheritanceLocked = types.BoolValue(true)
 		default:
 		}
@@ -1034,7 +1034,7 @@ type AccessProviderWhatAbacParser struct {
 	ResourceFixedDoType []string
 }
 
-func (p AccessProviderWhatAbacParser) ToAccessProviderInput(ctx context.Context, whatAbacRule types.Object, client *sdk.CollibraClient, result *raitoType.AccessControlInput) (diagnostics diag.Diagnostics) {
+func (p AccessProviderWhatAbacParser) ToAccessProviderInput(ctx context.Context, whatAbacRule types.Object, client *sdk.CollibraClient, result *accessGovernanceType.AccessControlInput) (diagnostics diag.Diagnostics) {
 	attributes := whatAbacRule.Attributes()
 
 	var doTypes []string
@@ -1109,8 +1109,8 @@ func (p AccessProviderWhatAbacParser) ToAccessProviderInput(ctx context.Context,
 		return diagnostics
 	}
 
-	result.WhatType = utils.Ptr(raitoType.WhoAndWhatTypeDynamic)
-	result.WhatAbacRule = &raitoType.WhatAbacRuleInput{
+	result.WhatType = utils.Ptr(accessGovernanceType.WhoAndWhatTypeDynamic)
+	result.WhatAbacRule = &accessGovernanceType.WhatAbacRuleInput{
 		DoTypes:           doTypes,
 		Permissions:       permissions,
 		GlobalPermissions: globalPermissions,
@@ -1121,7 +1121,7 @@ func (p AccessProviderWhatAbacParser) ToAccessProviderInput(ctx context.Context,
 	return diagnostics
 }
 
-func (p AccessProviderWhatAbacParser) ToWhatAbacRuleObject(ctx context.Context, client *sdk.CollibraClient, ap *raitoType.AccessControl) (_ types.Object, diagnostics diag.Diagnostics) {
+func (p AccessProviderWhatAbacParser) ToWhatAbacRuleObject(ctx context.Context, client *sdk.CollibraClient, ap *accessGovernanceType.AccessControl) (_ types.Object, diagnostics diag.Diagnostics) {
 	objectTypes := map[string]attr.Type{
 		"permissions":        types.SetType{ElemType: types.StringType},
 		"global_permissions": types.SetType{ElemType: types.StringType},

@@ -84,8 +84,8 @@ jobs:
       - run: go mod download
       - env:
           TF_ACC: "1"
-          TF_VAR_raito_user: ${{ secrets.RAITO_USER }}
-          TF_VAR_raito_secret: ${{ secrets.RAITO_SECRET }}
-          TF_VAR_raito_url: ${{ secrets.RAITO_URL }}
+          TF_VAR_collibra_user: ${{ secrets.COLLIBRA_USER }}
+          TF_VAR_collibra_secret: ${{ secrets.COLLIBRA_SECRET }}
+          TF_VAR_collibra_url: ${{ secrets.COLLIBRA_URL }}
         run: go test -v -cover ./internal/ -timeout 0
         timeout-minutes: 15

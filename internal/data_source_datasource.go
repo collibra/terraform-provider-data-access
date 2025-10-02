@@ -196,7 +196,7 @@ func (d *DataSourceDataSource) Configure(_ context.Context, req datasource.Confi
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
-			fmt.Sprintf("Expected *sdk.RaitoClient, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf("Expected *sdk.CollibraClient, got: %T. Please report this issue to the provider developers.", req.ProviderData),
 		)
 
 		return
@@ -205,7 +205,7 @@ func (d *DataSourceDataSource) Configure(_ context.Context, req datasource.Confi
 	if client == nil {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
-			"Expected *sdk.RaitoClient, not to be nil.",
+			"Expected *sdk.CollibraClient, not to be nil.",
 		)
 
 		return

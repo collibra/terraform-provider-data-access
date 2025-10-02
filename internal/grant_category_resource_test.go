@@ -24,37 +24,37 @@ func TestAccGrantCategoryResource(t *testing.T) {
 			Steps: []resource.TestStep{
 				{
 					Config: providerConfig + fmt.Sprintf(`
-resource "raito_grant_category" "test" {
+resource "collibra-access-governance_grant_category" "test" {
 	name        = "tfTestGrantCategory-%s"
 	description = "test description"
 	icon		= "test"
 }
 `, testId),
 					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("raito_grant_category.test", "name", "tfTestGrantCategory-"+testId),
-						resource.TestCheckResourceAttr("raito_grant_category.test", "description", "test description"),
-						resource.TestCheckResourceAttr("raito_grant_category.test", "is_system", "false"),
-						resource.TestCheckResourceAttr("raito_grant_category.test", "is_default", "false"),
-						resource.TestCheckResourceAttr("raito_grant_category.test", "can_create", "true"),
-						resource.TestCheckResourceAttr("raito_grant_category.test", "allow_duplicate_names", "true"),
-						resource.TestCheckResourceAttr("raito_grant_category.test", "multi_data_source", "true"),
-						resource.TestCheckResourceAttr("raito_grant_category.test", "default_type_per_data_source.#", "0"),
-						resource.TestCheckResourceAttr("raito_grant_category.test", "allowed_who_items.user", "true"),
-						resource.TestCheckResourceAttr("raito_grant_category.test", "allowed_who_items.group", "true"),
-						resource.TestCheckResourceAttr("raito_grant_category.test", "allowed_who_items.inheritance", "true"),
-						resource.TestCheckResourceAttr("raito_grant_category.test", "allowed_who_items.self", "true"),
-						resource.TestCheckResourceAttr("raito_grant_category.test", "allowed_who_items.categories.#", "0"),
-						resource.TestCheckResourceAttr("raito_grant_category.test", "allowed_what_items.data_object", "true"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant_category.test", "name", "tfTestGrantCategory-"+testId),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant_category.test", "description", "test description"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant_category.test", "is_system", "false"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant_category.test", "is_default", "false"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant_category.test", "can_create", "true"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant_category.test", "allow_duplicate_names", "true"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant_category.test", "multi_data_source", "true"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant_category.test", "default_type_per_data_source.#", "0"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant_category.test", "allowed_who_items.user", "true"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant_category.test", "allowed_who_items.group", "true"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant_category.test", "allowed_who_items.inheritance", "true"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant_category.test", "allowed_who_items.self", "true"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant_category.test", "allowed_who_items.categories.#", "0"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant_category.test", "allowed_what_items.data_object", "true"),
 					),
 				},
 				{
-					ResourceName:      "raito_grant_category.test",
+					ResourceName:      "collibra-access-governance_grant_category.test",
 					ImportState:       true,
 					ImportStateVerify: true,
 				},
 				{
 					Config: providerConfig + fmt.Sprintf(`
-resource "raito_grant_category" "test" {
+resource "collibra-access-governance_grant_category" "test" {
 	name        = "tfTestGrantCategory-%s"
 	description = "test description update"
 	icon		= "test"
@@ -66,20 +66,20 @@ resource "raito_grant_category" "test" {
 }
 `, testId),
 					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("raito_grant_category.test", "name", "tfTestGrantCategory-"+testId),
-						resource.TestCheckResourceAttr("raito_grant_category.test", "description", "test description update"),
-						resource.TestCheckResourceAttr("raito_grant_category.test", "is_system", "false"),
-						resource.TestCheckResourceAttr("raito_grant_category.test", "is_default", "false"),
-						resource.TestCheckResourceAttr("raito_grant_category.test", "can_create", "true"),
-						resource.TestCheckResourceAttr("raito_grant_category.test", "allow_duplicate_names", "false"),
-						resource.TestCheckResourceAttr("raito_grant_category.test", "multi_data_source", "false"),
-						resource.TestCheckResourceAttr("raito_grant_category.test", "default_type_per_data_source.#", "0"),
-						resource.TestCheckResourceAttr("raito_grant_category.test", "allowed_who_items.user", "false"),
-						resource.TestCheckResourceAttr("raito_grant_category.test", "allowed_who_items.group", "true"),
-						resource.TestCheckResourceAttr("raito_grant_category.test", "allowed_who_items.inheritance", "true"),
-						resource.TestCheckResourceAttr("raito_grant_category.test", "allowed_who_items.self", "true"),
-						resource.TestCheckResourceAttr("raito_grant_category.test", "allowed_who_items.categories.#", "0"),
-						resource.TestCheckResourceAttr("raito_grant_category.test", "allowed_what_items.data_object", "true"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant_category.test", "name", "tfTestGrantCategory-"+testId),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant_category.test", "description", "test description update"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant_category.test", "is_system", "false"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant_category.test", "is_default", "false"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant_category.test", "can_create", "true"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant_category.test", "allow_duplicate_names", "false"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant_category.test", "multi_data_source", "false"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant_category.test", "default_type_per_data_source.#", "0"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant_category.test", "allowed_who_items.user", "false"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant_category.test", "allowed_who_items.group", "true"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant_category.test", "allowed_who_items.inheritance", "true"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant_category.test", "allowed_who_items.self", "true"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant_category.test", "allowed_who_items.categories.#", "0"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant_category.test", "allowed_what_items.data_object", "true"),
 					),
 				},
 				// Resource is automatically deleted

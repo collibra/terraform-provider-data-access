@@ -1,0 +1,1 @@
+terraform import collibra-access-governance_datasource.example DataSourceId

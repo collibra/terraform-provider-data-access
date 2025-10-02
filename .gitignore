@@ -6,6 +6,7 @@ terraform.tfplan
 terraform.tfstate
 bin/
 dist/
+docs/
 modules-dev/
 /pkg/
 website/.vagrant
@@ -34,5 +35,5 @@ website/vendor
 # Keep windows files with windows line endings
 *.winfile eol=crlf
 /tests/
-/terraform-provider-raito
+/access-governance-terraform-provider
 /.tests/

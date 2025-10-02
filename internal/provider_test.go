@@ -9,39 +9,39 @@ import (
 )
 
 var testAccProtoV6ProviderFactories = map[string]func() (tfprotov6.ProviderServer, error){
-	"raito": providerserver.NewProtocol6WithError(New("test")()),
+	"collibra": providerserver.NewProtocol6WithError(New("test")()),
 }
 
 var providerConfig = `
-variable "raito_user" {
+variable "collibra_user" {
 	type = string
 }
 
-variable "raito_secret" {
+variable "collibra_secret" {
     type = string
 }
 
-variable "raito_url" {
+variable "collibra_url" {
     type = string
 }
 
-provider "raito" {
-  user         = var.raito_user
-  secret       = var.raito_secret
-  url          = var.raito_url
+provider "collibra-access-governance" {
+  user         = var.collibra_user
+  secret       = var.collibra_secret
+  url          = var.collibra_url
 }
 `
 
 func AccProviderPreCheck(t *testing.T) {
-	if v := os.Getenv("TF_VAR_raito_user"); v == "" {
-		t.Fatal("TF_VAR_raito_user must be set for acceptance testing")
+	if v := os.Getenv("TF_VAR_collibra_user"); v == "" {
+		t.Fatal("TF_VAR_collibra_user must be set for acceptance testing")
 	}
 
-	if v := os.Getenv("TF_VAR_raito_secret"); v == "" {
-		t.Fatal("TF_VAR_raito_secret must be set for acceptance testing")
+	if v := os.Getenv("TF_VAR_collibra_secret"); v == "" {
+		t.Fatal("TF_VAR_collibra_secret must be set for acceptance testing")
 	}
 
-	if v := os.Getenv("TF_VAR_raito_url"); v == "" {
-		t.Fatal("TF_VAR_raito_url must be set for acceptance testing")
+	if v := os.Getenv("TF_VAR_collibra_url"); v == "" {
+		t.Fatal("TF_VAR_collibra_url must be set for acceptance testing")
 	}
 }

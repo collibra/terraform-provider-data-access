@@ -12,30 +12,30 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-// Ensure RaitoCloudProvider satisfies various provider interfaces.
-var _ provider.Provider = &RaitoCloudProvider{}
+// Ensure CollibraAccessGovernanceProvider satisfies various provider interfaces.
+var _ provider.Provider = &CollibraAccessGovernanceProvider{}
 
-// RaitoCloudProvider defines the provider implementation.
-type RaitoCloudProvider struct {
+// CollibraAccessGovernanceProvider defines the provider implementation.
+type CollibraAccessGovernanceProvider struct {
 	// version is set to the provider version on release, "dev" when the
 	// provider is built and ran locally, and "test" when running acceptance
 	// testing.
 	version string
 }
 
-// RaitoCloudProviderModel describes the provider data model.
-type RaitoCloudProviderModel struct {
+// CollibraAccessGovernanceProviderModel describes the provider data model.
+type CollibraAccessGovernanceProviderModel struct {
 	Url    types.String `tfsdk:"url"`
 	User   types.String `tfsdk:"user"`
 	Secret types.String `tfsdk:"secret"`
 }
 
-func (p *RaitoCloudProvider) Metadata(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
-	resp.TypeName = "raito"
+func (p *CollibraAccessGovernanceProvider) Metadata(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
+	resp.TypeName = providerTypeName
 	resp.Version = p.version
 }
 
-func (p *RaitoCloudProvider) Schema(ctx context.Context, req provider.SchemaRequest, resp *provider.SchemaResponse) {
+func (p *CollibraAccessGovernanceProvider) Schema(ctx context.Context, req provider.SchemaRequest, resp *provider.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"url": schema.StringAttribute{
@@ -63,8 +63,8 @@ func (p *RaitoCloudProvider) Schema(ctx context.Context, req provider.SchemaRequ
 	}
 }
 
-func (p *RaitoCloudProvider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
-	var data RaitoCloudProviderModel
+func (p *CollibraAccessGovernanceProvider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
+	var data CollibraAccessGovernanceProviderModel
 
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
 
@@ -78,10 +78,9 @@ func (p *RaitoCloudProvider) Configure(ctx context.Context, req provider.Configu
 	resp.ResourceData = client
 }
 
-func (p *RaitoCloudProvider) Resources(_ context.Context) []func() resource.Resource {
+func (p *CollibraAccessGovernanceProvider) Resources(_ context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
 		NewDataSourceResource,
-		NewIdentityStoreResource,
 		NewGlobalRoleAssignmentResource,
 		NewGrantCategoryResource,
 		NewGrantResource,
@@ -90,18 +89,17 @@ func (p *RaitoCloudProvider) Resources(_ context.Context) []func() resource.Reso
 	}
 }
 
-func (p *RaitoCloudProvider) DataSources(_ context.Context) []func() datasource.DataSource {
+func (p *CollibraAccessGovernanceProvider) DataSources(_ context.Context) []func() datasource.DataSource {
 	return []func() datasource.DataSource{
 		NewDataSourceDataSource,
 		NewGrantCategoryDataSource,
-		NewIdentityStoreDataSource,
 		NewUserDataSource,
 	}
 }
 
 func New(version string) func() provider.Provider {
 	return func() provider.Provider {
-		return &RaitoCloudProvider{
+		return &CollibraAccessGovernanceProvider{
 			version: version,
 		}
 	}

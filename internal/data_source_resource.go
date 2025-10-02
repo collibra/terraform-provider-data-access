@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"github.com/collibra/access-governance-go-sdk"
-	raitoType "github.com/collibra/access-governance-go-sdk/types"
+	accessGovernanceType "github.com/collibra/access-governance-go-sdk/types"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -21,7 +21,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/raito-io/golang-set/set"
 
-	"github.com/raito-io/terraform-provider-raito/internal/utils"
+	"github.com/collibra/access-governance-terraform-provider/internal/utils"
 )
 
 var _ resource.Resource = (*DataSourceResource)(nil)
@@ -37,11 +37,11 @@ type DataSourceResourceModel struct {
 	Owners              types.Set    `tfsdk:"owners"`
 }
 
-func (m *DataSourceResourceModel) ToDataSourceInput() raitoType.DataSourceInput {
-	return raitoType.DataSourceInput{
+func (m *DataSourceResourceModel) ToDataSourceInput() accessGovernanceType.DataSourceInput {
+	return accessGovernanceType.DataSourceInput{
 		Name:        m.Name.ValueStringPointer(),
 		Description: m.Description.ValueStringPointer(),
-		SyncMethod:  utils.Ptr(raitoType.DataSourceSyncMethod(m.SyncMethod.ValueString())),
+		SyncMethod:  utils.Ptr(accessGovernanceType.DataSourceSyncMethod(m.SyncMethod.ValueString())),
 		Parent:      m.Parent.ValueStringPointer(),
 	}
 }
@@ -97,8 +97,8 @@ func (d *DataSourceResource) Schema(_ context.Context, _ resource.SchemaRequest,
 				Sensitive:           false,
 				Description:         "The sync method of the data source (should be ON_PREM for now)",
 				MarkdownDescription: "The sync method of the data source (should be `ON_PREM` for now)",
-				Default:             stringdefault.StaticString(string(raitoType.DataSourceSyncMethodOnprem)),
-				Validators:          []validator.String{stringvalidator.OneOf(string(raitoType.DataSourceSyncMethodOnprem), string(raitoType.DataSourceSyncMethodCloudmanualtrigger))},
+				Default:             stringdefault.StaticString(string(accessGovernanceType.DataSourceSyncMethodOnprem)),
+				Validators:          []validator.String{stringvalidator.OneOf(string(accessGovernanceType.DataSourceSyncMethodOnprem), string(accessGovernanceType.DataSourceSyncMethodCloudmanualtrigger))},
 			},
 			"parent": schema.StringAttribute{
 				Required:            false,
@@ -256,7 +256,7 @@ func (d *DataSourceResource) Read(ctx context.Context, request resource.ReadRequ
 
 	ds, err := d.client.DataSource().GetDataSource(ctx, stateData.Id.ValueString())
 	if err != nil {
-		var notFoundErr *raitoType.ErrNotFound
+		var notFoundErr *accessGovernanceType.ErrNotFound
 		if errors.As(err, &notFoundErr) {
 			response.State.RemoveResource(ctx)
 		} else {
@@ -475,7 +475,7 @@ func (d *DataSourceResource) Configure(_ context.Context, req resource.Configure
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
-			fmt.Sprintf("Expected *sdk.RaitoClient, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf("Expected *sdk.CollibraClient, got: %T. Please report this issue to the provider developers.", req.ProviderData),
 		)
 
 		return
@@ -484,7 +484,7 @@ func (d *DataSourceResource) Configure(_ context.Context, req resource.Configure
 	if client == nil {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
-			"Expected *sdk.RaitoClient, not to be nil.",
+			"Expected *sdk.CollibraClient, not to be nil.",
 		)
 
 		return

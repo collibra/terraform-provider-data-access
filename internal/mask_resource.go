@@ -6,7 +6,7 @@ import (
 	"slices"
 
 	"github.com/collibra/access-governance-go-sdk"
-	raitoType "github.com/collibra/access-governance-go-sdk/types"
+	accessGovernanceType "github.com/collibra/access-governance-go-sdk/types"
 	"github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -16,8 +16,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
-	"github.com/raito-io/terraform-provider-raito/internal/types/abac_expression"
-	"github.com/raito-io/terraform-provider-raito/internal/utils"
+	"github.com/collibra/access-governance-terraform-provider/internal/types/abac_expression"
+	"github.com/collibra/access-governance-terraform-provider/internal/utils"
 )
 
 var _ resource.Resource = (*MaskResource)(nil)
@@ -68,7 +68,7 @@ func (m *MaskResourceModel) SetAccessProviderResourceModel(ap *AccessProviderRes
 	m.InheritanceLocked = ap.InheritanceLocked
 }
 
-func (m *MaskResourceModel) ToAccessProviderInput(ctx context.Context, client *sdk.CollibraClient, result *raitoType.AccessControlInput) diag.Diagnostics {
+func (m *MaskResourceModel) ToAccessProviderInput(ctx context.Context, client *sdk.CollibraClient, result *accessGovernanceType.AccessControlInput) diag.Diagnostics {
 	diagnostics := m.GetAccessProviderResourceModel().ToAccessProviderInput(ctx, client, result)
 
 	if diagnostics.HasError() {
@@ -81,7 +81,7 @@ func (m *MaskResourceModel) ToAccessProviderInput(ctx context.Context, client *s
 			apType = m.Type.ValueStringPointer()
 		}
 
-		result.DataSources = []raitoType.AccessControlDataSourceInput{
+		result.DataSources = []accessGovernanceType.AccessControlDataSourceInput{
 			{
 				DataSource: m.DataSource.ValueString(),
 				Type:       apType,
@@ -89,12 +89,12 @@ func (m *MaskResourceModel) ToAccessProviderInput(ctx context.Context, client *s
 		}
 	}
 
-	result.Action = utils.Ptr(raitoType.AccessControlActionMask)
+	result.Action = utils.Ptr(accessGovernanceType.AccessControlActionMask)
 
 	if !m.Columns.IsNull() && !m.Columns.IsUnknown() {
 		elements := m.Columns.Elements()
 
-		result.WhatDataObjects = make([]raitoType.AccessControlWhatInputDO, 0, len(elements))
+		result.WhatDataObjects = make([]accessGovernanceType.AccessControlWhatInputDO, 0, len(elements))
 
 		// Assume that currently only 1 dataSource is provided
 		dataSource := result.DataSources[0].DataSource
@@ -102,8 +102,8 @@ func (m *MaskResourceModel) ToAccessProviderInput(ctx context.Context, client *s
 		for _, whatDataObject := range elements {
 			columnName := whatDataObject.(types.String).ValueString()
 
-			result.WhatDataObjects = append(result.WhatDataObjects, raitoType.AccessControlWhatInputDO{
-				DataObjectByName: []raitoType.AccessControlWhatDoByNameInput{{
+			result.WhatDataObjects = append(result.WhatDataObjects, accessGovernanceType.AccessControlWhatInputDO{
+				DataObjectByName: []accessGovernanceType.AccessControlWhatDoByNameInput{{
 					FullName:   columnName,
 					DataSource: dataSource,
 				}},
@@ -118,9 +118,9 @@ func (m *MaskResourceModel) ToAccessProviderInput(ctx context.Context, client *s
 	}
 
 	if m.WhatLocked.ValueBool() {
-		result.Locks = append(result.Locks, raitoType.AccessControlLockDataInput{
-			LockKey: raitoType.AccessControlLockWhatlock,
-			Details: &raitoType.AccessControlLockDetailsInput{
+		result.Locks = append(result.Locks, accessGovernanceType.AccessControlLockDataInput{
+			LockKey: accessGovernanceType.AccessControlLockWhatlock,
+			Details: &accessGovernanceType.AccessControlLockDetailsInput{
 				Reason: utils.Ptr(lockMsg),
 			},
 		})
@@ -129,7 +129,7 @@ func (m *MaskResourceModel) ToAccessProviderInput(ctx context.Context, client *s
 	return diagnostics
 }
 
-func (m *MaskResourceModel) FromAccessProvider(ctx context.Context, client *sdk.CollibraClient, input *raitoType.AccessControl) diag.Diagnostics {
+func (m *MaskResourceModel) FromAccessProvider(ctx context.Context, client *sdk.CollibraClient, input *accessGovernanceType.AccessControl) diag.Diagnostics {
 	apResourceModel := m.GetAccessProviderResourceModel()
 	diagnostics := apResourceModel.FromAccessProvider(input)
 
@@ -146,8 +146,8 @@ func (m *MaskResourceModel) FromAccessProvider(ctx context.Context, client *sdk.
 	}
 
 	m.DataSource = types.StringValue(input.SyncData[0].DataSource.Id)
-	m.WhatLocked = types.BoolValue(slices.ContainsFunc(input.Locks, func(data raitoType.AccessControlLocksAccessControlLockData) bool {
-		return data.LockKey == raitoType.AccessControlLockWhatlock
+	m.WhatLocked = types.BoolValue(slices.ContainsFunc(input.Locks, func(data accessGovernanceType.AccessControlLocksAccessControlLockData) bool {
+		return data.LockKey == accessGovernanceType.AccessControlLockWhatlock
 	}))
 
 	if input.SyncData[0].AccessControlType == nil || input.SyncData[0].AccessControlType.Type == nil {
@@ -163,7 +163,7 @@ func (m *MaskResourceModel) FromAccessProvider(ctx context.Context, client *sdk.
 		m.Type = types.StringPointerValue(input.SyncData[0].AccessControlType.Type)
 	}
 
-	if input.WhatType == raitoType.WhoAndWhatTypeDynamic && input.WhatAbacRule != nil {
+	if input.WhatType == accessGovernanceType.WhoAndWhatTypeDynamic && input.WhatAbacRule != nil {
 		object, objectDiagnostics := m.abacWhatFromAccessProvider(ctx, client, input)
 		diagnostics.Append(objectDiagnostics...)
 
@@ -181,7 +181,7 @@ func (m *MaskResourceModel) UpdateOwners(owners types.Set) {
 	m.Owners = owners
 }
 
-func (m *MaskResourceModel) abacWhatToAccessProviderInput(ctx context.Context, client *sdk.CollibraClient, result *raitoType.AccessControlInput) (diagnostics diag.Diagnostics) {
+func (m *MaskResourceModel) abacWhatToAccessProviderInput(ctx context.Context, client *sdk.CollibraClient, result *accessGovernanceType.AccessControlInput) (diagnostics diag.Diagnostics) {
 	attributes := m.WhatAbacRule.Attributes()
 
 	scopeAttr := attributes["scope"]
@@ -227,8 +227,8 @@ func (m *MaskResourceModel) abacWhatToAccessProviderInput(ctx context.Context, c
 		return diagnostics
 	}
 
-	result.WhatType = utils.Ptr(raitoType.WhoAndWhatTypeDynamic)
-	result.WhatAbacRule = &raitoType.WhatAbacRuleInput{
+	result.WhatType = utils.Ptr(accessGovernanceType.WhoAndWhatTypeDynamic)
+	result.WhatAbacRule = &accessGovernanceType.WhatAbacRuleInput{
 		DoTypes: []string{"column"},
 		Scope:   scope,
 		Rule:    *abacInput,
@@ -237,7 +237,7 @@ func (m *MaskResourceModel) abacWhatToAccessProviderInput(ctx context.Context, c
 	return diagnostics
 }
 
-func (m *MaskResourceModel) abacWhatFromAccessProvider(ctx context.Context, client *sdk.CollibraClient, ap *raitoType.AccessControl) (_ types.Object, diagnostics diag.Diagnostics) {
+func (m *MaskResourceModel) abacWhatFromAccessProvider(ctx context.Context, client *sdk.CollibraClient, ap *accessGovernanceType.AccessControl) (_ types.Object, diagnostics diag.Diagnostics) {
 	objectTypes := map[string]attr.Type{
 		"scope": types.SetType{ElemType: types.StringType},
 		"rule":  jsontypes.NormalizedType{},

@@ -1,5 +1,7 @@
 package internal
 
 const (
-	ownerRole = "OwnerRole"
+	ownerRole              = "OwnerRole"
+	providerTypeName       = "collibra-access-governance"
+	resourceTypeNamePrefix = "collibra-access-governance"
 )

@@ -1,4 +1,4 @@
-module github.com/raito-io/terraform-provider-raito
+module github.com/collibra/access-governance-terraform-provider
 
 go 1.25.1
 
@@ -18,6 +18,10 @@ require (
 	github.com/matoous/go-nanoid/v2 v2.1.0
 	github.com/raito-io/golang-set v0.0.4
 )
+
+replace github.com/collibra/access-governance-go-sdk v0.0.17 => /Users/wouterc/w/access-governance-go-sdk
+
+replace github.com/collibra/go-bexpression v0.2.0 => /Users/wouterc/w/go-bexpression
 
 require (
 	dario.cat/mergo v1.0.1 // indirect

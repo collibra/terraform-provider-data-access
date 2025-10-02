@@ -17,7 +17,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
-	"github.com/raito-io/terraform-provider-raito/internal/utils"
+	"github.com/collibra/access-governance-terraform-provider/internal/utils"
 )
 
 var _ resource.Resource = (*GlobalRoleAssignmentResource)(nil)
@@ -215,7 +215,7 @@ func (g *GlobalRoleAssignmentResource) Configure(_ context.Context, req resource
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
-			fmt.Sprintf("Expected *sdk.RaitoClient, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf("Expected *sdk.CollibraClient, got: %T. Please report this issue to the provider developers.", req.ProviderData),
 		)
 
 		return
@@ -224,7 +224,7 @@ func (g *GlobalRoleAssignmentResource) Configure(_ context.Context, req resource
 	if client == nil {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
-			"Expected *sdk.RaitoClient, not to be nil.",
+			"Expected *sdk.CollibraClient, not to be nil.",
 		)
 
 		return

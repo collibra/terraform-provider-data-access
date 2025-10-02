@@ -20,19 +20,19 @@ func TestAccUserDataSource(t *testing.T) {
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: providerConfig + `data "raito_user" "carla" {
-	email = "c_harris@raito.io"
+				Config: providerConfig + `data "collibra-access-governance_user" "carla" {
+	email = "c_harris@collibra.com"
 }
 
-data "raito_user" "angelica" {
-	email = "a_abbotatkinson7576@raito.io"
+data "collibra-access-governance_user" "angelica" {
+	email = "a_abbotatkinson7576@collibra.com"
 }
 `,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("data.raito_user.carla", "name", "Carla Harris"),
-					resource.TestCheckResourceAttr("data.raito_user.carla", "type", "Human"),
-					resource.TestCheckResourceAttr("data.raito_user.carla", "raito_user", "true"),
-					resource.TestCheckResourceAttrWith("data.raito_user.carla", "id", func(value string) error {
+					resource.TestCheckResourceAttr("data.collibra-access-governance_user.carla", "name", "Carla Harris"),
+					resource.TestCheckResourceAttr("data.collibra-access-governance_user.carla", "type", "Human"),
+					resource.TestCheckResourceAttr("data.collibra-access-governance_user.carla", "collibra-access-governance_user", "true"),
+					resource.TestCheckResourceAttrWith("data.collibra-access-governance_user.carla", "id", func(value string) error {
 						if value == "" {
 							return errors.New("id is empty")
 						}
@@ -40,10 +40,10 @@ data "raito_user" "angelica" {
 						return nil
 					}),
 
-					resource.TestCheckResourceAttr("data.raito_user.angelica", "name", "Angelica Abbot Atkinson"),
-					resource.TestCheckResourceAttr("data.raito_user.angelica", "type", "Machine"),
-					resource.TestCheckResourceAttr("data.raito_user.angelica", "raito_user", "false"),
-					resource.TestCheckResourceAttrWith("data.raito_user.angelica", "id", func(value string) error {
+					resource.TestCheckResourceAttr("data.collibra-access-governance_user.angelica", "name", "Angelica Abbot Atkinson"),
+					resource.TestCheckResourceAttr("data.collibra-access-governance_user.angelica", "type", "Machine"),
+					resource.TestCheckResourceAttr("data.collibra-access-governance_user.angelica", "collibra-access-governance_user", "false"),
+					resource.TestCheckResourceAttrWith("data.collibra-access-governance_user.angelica", "id", func(value string) error {
 						if value == "" {
 							return errors.New("id is empty")
 						}
