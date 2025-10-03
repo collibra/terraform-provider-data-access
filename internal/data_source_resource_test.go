@@ -84,25 +84,12 @@ resource "collibra-access-governance_datasource" "test" {
 			Steps: []resource.TestStep{
 				{
 					Config: providerConfig + fmt.Sprintf(`
-resource "collibra-access-governance_identitystore" "tfIs1" {
-	name = "tfIs1DataSourceTest-%[1]s"
-}
-
-resource "collibra-access-governance_identitystore" "tfIs2" {
-    name = "tfIs2DataSourceTest-%[1]s"
-}
-
 resource "collibra-access-governance_datasource" "test" {
 	name = "tfDs1-%[1]s"
-	identity_stores = [
-		collibra-access-governance_identitystore.tfIs1.id,
-	]
 }
 `, testId),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("collibra-access-governance_datasource.test", "name", "tfDs1-"+testId),
-						resource.TestCheckResourceAttr("collibra-access-governance_datasource.test", "identity_stores.#", "1"),
-						resource.TestCheckResourceAttrPair("collibra-access-governance_identitystore.tfIs1", "id", "collibra-access-governance_datasource.test", "identity_stores.0"),
 					),
 				},
 				{
@@ -112,25 +99,12 @@ resource "collibra-access-governance_datasource" "test" {
 				},
 				{
 					Config: providerConfig + fmt.Sprintf(`
-resource "collibra-access-governance_identitystore" "tfIs1" {
-	name = "tfIs1DataSourceTest-%[1]s"
-}
-
-resource "collibra-access-governance_identitystore" "tfIs2" {
-    name = "tfIs2DataSourceTest-%[1]s"
-}
-
 resource "collibra-access-governance_datasource" "test" {
 	name = "tfDs1-%[1]s"
-	identity_stores = [
-		collibra-access-governance_identitystore.tfIs2.id,
-	]
 }
 `, testId),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("collibra-access-governance_datasource.test", "name", "tfDs1-"+testId),
-						resource.TestCheckResourceAttr("collibra-access-governance_datasource.test", "identity_stores.#", "1"),
-						resource.TestCheckResourceAttrPair("collibra-access-governance_identitystore.tfIs2", "id", "collibra-access-governance_datasource.test", "identity_stores.0"),
 					),
 				},
 				{
@@ -173,13 +147,6 @@ resource "collibra-access-governance_datasource" "test" {
 						resource.TestCheckResourceAttr("collibra-access-governance_datasource.test", "sync_method", string(accessGovernanceType.DataSourceSyncMethodOnprem)),
 						resource.TestCheckResourceAttr("collibra-access-governance_datasource.test", "identity_stores.#", "0"),
 						resource.TestCheckNoResourceAttr("collibra-access-governance_datasource.test", "parent"),
-						resource.TestCheckResourceAttrWith("collibra-access-governance_datasource.test", "native_identity_store", func(value string) error {
-							if value == "" {
-								return errors.New("native_identity_store should not be empty")
-							}
-
-							return nil
-						}),
 						resource.TestCheckResourceAttr("collibra-access-governance_datasource.test", "owners.#", "1"),
 						resource.TestCheckResourceAttrPair("collibra-access-governance_datasource.test", "owners.0", "collibra-access-governance_user.test_user", "id"),
 					),
@@ -217,13 +184,6 @@ resource "collibra-access-governance_datasource" "test" {
 						resource.TestCheckResourceAttr("collibra-access-governance_datasource.test", "sync_method", string(accessGovernanceType.DataSourceSyncMethodOnprem)),
 						resource.TestCheckResourceAttr("collibra-access-governance_datasource.test", "identity_stores.#", "0"),
 						resource.TestCheckNoResourceAttr("collibra-access-governance_datasource.test", "parent"),
-						resource.TestCheckResourceAttrWith("collibra-access-governance_datasource.test", "native_identity_store", func(value string) error {
-							if value == "" {
-								return errors.New("native_identity_store should not be empty")
-							}
-
-							return nil
-						}),
 						resource.TestCheckResourceAttr("collibra-access-governance_datasource.test", "owners.#", "1"),
 						resource.TestCheckResourceAttrPair("collibra-access-governance_datasource.test", "owners.0", "collibra-access-governance_user.test_user_2", "id"),
 					),

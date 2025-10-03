@@ -146,14 +146,6 @@ func (g *GrantCategoryDataSource) Schema(_ context.Context, _ datasource.SchemaR
 						Description:         "Indicates if a user is allowed as a WHO item",
 						MarkdownDescription: "Indicates if a user is allowed as a WHO item",
 					},
-					"group": schema.BoolAttribute{
-						Required:            false,
-						Optional:            false,
-						Computed:            true,
-						Sensitive:           false,
-						Description:         "Indicates if a group is allowed as a WHO item",
-						MarkdownDescription: "Indicates if a group is allowed as a WHO item",
-					},
 					"inheritance": schema.BoolAttribute{
 						Required:            false,
 						Optional:            false,
@@ -336,14 +328,12 @@ func setGrantCategoryData(data *types2.GrantCategoryDetails, resp *GrantCategory
 	allowedWhoItems, diags := types.ObjectValue(
 		map[string]attr.Type{
 			"user":        types.BoolType,
-			"group":       types.BoolType,
 			"inheritance": types.BoolType,
 			"self":        types.BoolType,
 			"categories":  types.SetType{ElemType: types.StringType},
 		},
 		map[string]attr.Value{
 			"user":        types.BoolValue(data.AllowedWhoItems.User),
-			"group":       types.BoolValue(data.AllowedWhoItems.Group),
 			"inheritance": types.BoolValue(data.AllowedWhoItems.Inheritance),
 			"self":        types.BoolValue(data.AllowedWhoItems.Self),
 			"categories":  whoCategories,

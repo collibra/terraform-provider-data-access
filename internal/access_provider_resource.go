@@ -123,20 +123,9 @@ func (a *AccessProviderResource[T, ApModel]) schema(typeName string) map[string]
 						Computed:            false,
 						Sensitive:           false,
 						Description:         "The email address of user",
-						MarkdownDescription: "The email address of the user. This cannot be set if `group` or `access_control` is set.",
+						MarkdownDescription: "The email address of the user. This cannot be set if `access_control` is set.",
 						Validators: []validator.String{
 							stringvalidator.RegexMatches(regexp.MustCompile(`.+@.+\..+`), "value must be a valid email address"),
-						},
-					},
-					"group": schema.StringAttribute{
-						Required:            false,
-						Optional:            true,
-						Computed:            false,
-						Sensitive:           false,
-						Description:         "The ID of the group in Raito Cloud",
-						MarkdownDescription: "The ID of the group in Raito Cloud. This cannot be set if `user` or `access_control` is set.",
-						Validators: []validator.String{
-							stringvalidator.LengthAtLeast(3),
 						},
 					},
 					"access_control": schema.StringAttribute{
@@ -145,7 +134,7 @@ func (a *AccessProviderResource[T, ApModel]) schema(typeName string) map[string]
 						Computed:            false,
 						Sensitive:           false,
 						Description:         "The ID of the access control in Raito Cloud",
-						MarkdownDescription: "The ID of the access control in Raito Cloud. Cannot be set if `user` or `group` is set.",
+						MarkdownDescription: "The ID of the access control in Raito Cloud. Cannot be set if `user` is set.",
 						Validators: []validator.String{
 							stringvalidator.LengthAtLeast(3),
 						},
@@ -187,8 +176,8 @@ func (a *AccessProviderResource[T, ApModel]) schema(typeName string) map[string]
 			Optional:            true,
 			Computed:            true,
 			Sensitive:           false,
-			Description:         "Indicates if who should be locked. This should be true if who users, who groups, or who_abac_rule is set.",
-			MarkdownDescription: "Indicates if who should be locked. This should be true if who users, who groups, or who_abac_rule is set.",
+			Description:         "Indicates if who should be locked. This should be true if who users or who_abac_rule is set.",
+			MarkdownDescription: "Indicates if who should be locked. This should be true if who users or who_abac_rule is set.",
 			Validators:          nil,
 		},
 		"inheritance_locked": schema.BoolAttribute{
@@ -395,8 +384,6 @@ func (a *AccessProviderResource[T, ApModel]) read(ctx context.Context, data ApMo
 			if !attributes["promise_duration"].IsNull() {
 				if !attributes["user"].IsNull() {
 					definedPromises.Add(_userPrefix(attributes["user"].(types.String).ValueString()))
-				} else if !attributes["group"].IsNull() {
-					definedPromises.Add(_groupPrefix(attributes["group"].(types.String).ValueString()))
 				} else if !attributes["access_control"].IsNull() {
 					definedPromises.Add(_accessControlPrefix(attributes["access_control"].(types.String).ValueString()))
 				}
@@ -413,7 +400,6 @@ func (a *AccessProviderResource[T, ApModel]) read(ctx context.Context, data ApMo
 		who, whoDiag := types.SetValue(types.ObjectType{
 			AttrTypes: map[string]attr.Type{
 				"user":             types.StringType,
-				"group":            types.StringType,
 				"access_control":   types.StringType,
 				"promise_duration": types.Int64Type,
 			},
@@ -471,13 +457,11 @@ func (a *AccessProviderResource[T, ApModel]) readWhoItems(ctx context.Context, a
 			return nil, true
 		}
 
-		var user, group, whoAp *string
+		var user, whoAp *string
 
 		switch benificiaryItem := whoItem.Item.(type) {
 		case *accessGovernanceType.AccessWhoItemItemUser:
 			user = benificiaryItem.Email
-		case *accessGovernanceType.AccessWhoItemItemGroup:
-			group = &benificiaryItem.Id
 		case *accessGovernanceType.AccessWhoItemItemAccessControl:
 			whoAp = &benificiaryItem.Id
 		default:
@@ -487,7 +471,7 @@ func (a *AccessProviderResource[T, ApModel]) readWhoItems(ctx context.Context, a
 		}
 
 		if whoItem.Type == accessGovernanceType.AccessWhoItemTypeWhogrant {
-			if (user != nil && definedPromises.Contains(_userPrefix(*user))) || (group != nil && definedPromises.Contains(_groupPrefix(*group))) || (whoAp != nil && definedPromises.Contains(_accessControlPrefix(*whoAp))) {
+			if (user != nil && definedPromises.Contains(_userPrefix(*user))) || (whoAp != nil && definedPromises.Contains(_accessControlPrefix(*whoAp))) {
 				continue
 			}
 		} else if whoItem.PromiseDuration == nil {
@@ -497,12 +481,10 @@ func (a *AccessProviderResource[T, ApModel]) readWhoItems(ctx context.Context, a
 		stateWhoItems = append(stateWhoItems, types.ObjectValueMust(
 			map[string]attr.Type{
 				"user":             types.StringType,
-				"group":            types.StringType,
 				"access_control":   types.StringType,
 				"promise_duration": types.Int64Type,
 			}, map[string]attr.Value{
 				"user":             types.StringPointerValue(user),
-				"group":            types.StringPointerValue(group),
 				"access_control":   types.StringPointerValue(whoAp),
 				"promise_duration": types.Int64PointerValue(whoItem.PromiseDuration),
 			}))
@@ -545,8 +527,6 @@ func (a *AccessProviderResource[T, ApModel]) update(ctx context.Context, data Ap
 		if whoItem.Type != nil && *whoItem.Type == accessGovernanceType.AccessWhoItemTypeWhopromise {
 			if whoItem.User != nil {
 				definedPromises.Add(_userPrefix(*whoItem.User))
-			} else if whoItem.Group != nil {
-				definedPromises.Add(_groupPrefix(*whoItem.Group))
 			} else if whoItem.AccessControl != nil {
 				definedPromises.Add(_accessControlPrefix(*whoItem.AccessControl))
 			}
@@ -605,7 +585,7 @@ func (a *AccessProviderResource[T, ApModel]) updateGetWhoItems(ctx context.Conte
 
 		if whoItem.Type == accessGovernanceType.AccessWhoItemTypeWhogrant {
 			var key string
-			var user, group, whoAp *string
+			var user, whoAp *string
 
 			switch beneficiaryItem := whoItem.Item.(type) {
 			case *accessGovernanceType.AccessWhoItemItemUser:
@@ -615,9 +595,6 @@ func (a *AccessProviderResource[T, ApModel]) updateGetWhoItems(ctx context.Conte
 
 				key = _userPrefix(*beneficiaryItem.Email)
 				user = &beneficiaryItem.Id
-			case *accessGovernanceType.AccessWhoItemItemGroup:
-				key = _groupPrefix(beneficiaryItem.Id)
-				group = &beneficiaryItem.Id
 			case *accessGovernanceType.AccessWhoItemItemAccessControl:
 				key = _accessControlPrefix(beneficiaryItem.Id)
 				whoAp = &beneficiaryItem.Id
@@ -629,7 +606,6 @@ func (a *AccessProviderResource[T, ApModel]) updateGetWhoItems(ctx context.Conte
 				input.WhoItems = append(input.WhoItems, accessGovernanceType.WhoItemInput{
 					Type:          utils.Ptr(accessGovernanceType.AccessWhoItemTypeWhogrant),
 					User:          user,
-					Group:         group,
 					AccessControl: whoAp,
 					ExpiresAt:     whoItem.ExpiresAt,
 				})
@@ -710,7 +686,7 @@ func (a *AccessProviderResource[T, ApModel]) ValidateConfig(ctx context.Context,
 	who := &apResourceModel.Who
 	whoAbac := &apResourceModel.WhoAbacRule
 
-	whoGroupsOrUsersDefined := false
+	whoUsersDefined := false
 	whoAccessProvidersDefined := false
 
 	if !who.IsNull() && !whoAbac.IsNull() {
@@ -718,7 +694,7 @@ func (a *AccessProviderResource[T, ApModel]) ValidateConfig(ctx context.Context,
 			"Cannot specify both who and who_abac",
 			"Please specify only one of who or who_abac",
 		)
-	} else if !who.IsNull() { // For each who-item check if exactly one of user, group or access_control is set.
+	} else if !who.IsNull() { // For each who-item check if exactly one of user or access_control is set.
 		for _, whoItem := range who.Elements() {
 			whoItemAttribute := whoItem.(types.Object)
 
@@ -733,14 +709,13 @@ func (a *AccessProviderResource[T, ApModel]) ValidateConfig(ctx context.Context,
 				}
 			}
 
-			attrFn("user", &whoGroupsOrUsersDefined)
-			attrFn("group", &whoGroupsOrUsersDefined)
+			attrFn("user", &whoUsersDefined)
 			attrFn("access_control", &whoAccessProvidersDefined)
 
 			if attributesFound != 1 {
 				response.Diagnostics.AddError(
-					"Invalid who-item. Exactly one of user, group or access_control must be set.",
-					fmt.Sprintf("Expected exactly one of user, group or access_control, got: %d.", attributesFound),
+					"Invalid who-item. Exactly one of user or access_control must be set.",
+					fmt.Sprintf("Expected exactly one of user or access_control, got: %d.", attributesFound),
 				)
 
 				break
@@ -748,9 +723,9 @@ func (a *AccessProviderResource[T, ApModel]) ValidateConfig(ctx context.Context,
 		}
 	}
 
-	if whoGroupsOrUsersDefined || !whoAbac.IsNull() {
+	if whoUsersDefined || !whoAbac.IsNull() {
 		if !apResourceModel.WhoLocked.IsNull() && !apResourceModel.WhoLocked.ValueBool() {
-			response.Diagnostics.AddError("Who must be locked", "Who must be locked if who users, who groups or who_abac_rule is set.")
+			response.Diagnostics.AddError("Who must be locked", "Who must be locked if who users or who_abac_rule is set.")
 		}
 	}
 
@@ -784,8 +759,6 @@ func (a *AccessProviderResource[T, ApModel]) readOwners(ctx context.Context, apI
 
 		switch to := roleAssignment.To.(type) {
 		case *accessGovernanceType.RoleAssignmentToUser:
-			ownerIds = append(ownerIds, types.StringValue(to.Id))
-		case *accessGovernanceType.RoleAssignmentToGroup:
 			ownerIds = append(ownerIds, types.StringValue(to.Id))
 		default:
 			diagnostics.AddError("Unexpected role assignment type", fmt.Sprintf("Unexpected role assignment type %T", to))
@@ -822,7 +795,7 @@ func (a *AccessProviderResource[T, ApModel]) ModifyPlan(ctx context.Context, req
 	apModel := ApModel(&data)
 	apResourceModel := apModel.GetAccessProviderResourceModel()
 
-	whoGroupsOrUsersDefined := false
+	whoUsersDefined := false
 	whoAccessProvidersDefined := false
 
 	if !apResourceModel.Who.IsNull() {
@@ -837,13 +810,12 @@ func (a *AccessProviderResource[T, ApModel]) ModifyPlan(ctx context.Context, req
 				}
 			}
 
-			attrFn("user", &whoGroupsOrUsersDefined)
-			attrFn("group", &whoGroupsOrUsersDefined)
+			attrFn("user", &whoUsersDefined)
 			attrFn("access_control", &whoAccessProvidersDefined)
 		}
 	}
 
-	if whoGroupsOrUsersDefined || !apResourceModel.WhoAbacRule.IsNull() {
+	if whoUsersDefined || !apResourceModel.WhoAbacRule.IsNull() {
 		apResourceModel.WhoLocked = types.BoolValue(true)
 	} else if apResourceModel.WhoLocked.IsUnknown() {
 		apResourceModel.WhoLocked = types.BoolValue(false)
@@ -956,12 +928,10 @@ func (a *AccessProviderResourceModel) whoElementsToAccessProviderInput(ctx conte
 			}
 
 			accessGovernanceWhoItem.User = &userInformation.Id
-		} else if groupAttribute, found := whoAttributes["group"]; found && !groupAttribute.IsNull() {
-			accessGovernanceWhoItem.Group = groupAttribute.(types.String).ValueStringPointer()
 		} else if accessControlAttribute, found := whoAttributes["access_control"]; found && !accessControlAttribute.IsNull() {
 			accessGovernanceWhoItem.AccessControl = accessControlAttribute.(types.String).ValueStringPointer()
 		} else {
-			diagnostics.AddError("Failed to get who-item", "No user, group, or access control set")
+			diagnostics.AddError("Failed to get who-item", "No user or access control set")
 
 			continue
 		}
@@ -1020,10 +990,6 @@ func (a *AccessProviderResourceModel) FromAccessProvider(ap *accessGovernanceTyp
 
 func _userPrefix(u string) string {
 	return "user:" + u
-}
-
-func _groupPrefix(g string) string {
-	return "group:" + g
 }
 
 func _accessControlPrefix(a string) string {

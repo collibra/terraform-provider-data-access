@@ -9,7 +9,7 @@ import (
 	accessGovernanceType "github.com/collibra/access-governance-go-sdk/types"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
-	"github.com/hashicorp/terraform-plugin-framework/diag"
+	terraformDiag "github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -73,7 +73,6 @@ func (m *GrantCategoryResourceModel) ToGrantCategoryInput() accessGovernanceType
 		DefaultTypePerDataSource: defaultTypePerDS,
 		AllowedWhoItems: &accessGovernanceType.GrantCategoryAllowedWhoItemsInput{
 			User:        m.AllowedWhoItems.Attributes()["user"].(types.Bool).ValueBool(),
-			Group:       m.AllowedWhoItems.Attributes()["group"].(types.Bool).ValueBool(),
 			Inheritance: m.AllowedWhoItems.Attributes()["inheritance"].(types.Bool).ValueBool(),
 			Self:        m.AllowedWhoItems.Attributes()["self"].(types.Bool).ValueBool(),
 			Categories:  allowedWhoCategories,
@@ -221,15 +220,6 @@ func (g *GrantCategoryResource) Schema(ctx context.Context, request resource.Sch
 						MarkdownDescription: "Whether the user is allowed as WHO item for the grants of this category",
 						Default:             booldefault.StaticBool(true),
 					},
-					"group": schema.BoolAttribute{
-						Required:            false,
-						Optional:            true,
-						Computed:            true,
-						Sensitive:           false,
-						Description:         "Whether the group is allowed as WHO item for the grants of this category",
-						MarkdownDescription: "Whether the group is allowed as WHO item for the grants of this category",
-						Default:             booldefault.StaticBool(true),
-					},
 					"inheritance": schema.BoolAttribute{
 						Required:            false,
 						Optional:            true,
@@ -267,13 +257,11 @@ func (g *GrantCategoryResource) Schema(ctx context.Context, request resource.Sch
 				MarkdownDescription: "The allowed WHO items for the grants of this category",
 				Default: objectdefault.StaticValue(types.ObjectValueMust(map[string]attr.Type{
 					"user":        types.BoolType,
-					"group":       types.BoolType,
 					"inheritance": types.BoolType,
 					"self":        types.BoolType,
 					"categories":  types.SetType{ElemType: types.StringType},
 				}, map[string]attr.Value{
 					"user":        types.BoolValue(true),
-					"group":       types.BoolValue(true),
 					"inheritance": types.BoolValue(true),
 					"self":        types.BoolValue(true),
 					"categories":  types.SetValueMust(types.StringType, []attr.Value{}),
@@ -449,7 +437,7 @@ func (g *GrantCategoryResource) ImportState(ctx context.Context, req resource.Im
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }
 
-func setGrantCategoryResourceData(data *accessGovernanceType.GrantCategoryDetails, resp *GrantCategoryResourceModel) (diags diag.Diagnostics) {
+func setGrantCategoryResourceData(data *accessGovernanceType.GrantCategoryDetails, resp *GrantCategoryResourceModel) (diags terraformDiag.Diagnostics) {
 	resp.Id = types.StringValue(data.Id)
 	resp.Name = types.StringValue(data.Name)
 	resp.Description = types.StringValue(data.Description)
@@ -514,14 +502,12 @@ func setGrantCategoryResourceData(data *accessGovernanceType.GrantCategoryDetail
 	allowedWhoItems, diag := types.ObjectValue(
 		map[string]attr.Type{
 			"user":        types.BoolType,
-			"group":       types.BoolType,
 			"inheritance": types.BoolType,
 			"self":        types.BoolType,
 			"categories":  types.SetType{ElemType: types.StringType},
 		},
 		map[string]attr.Value{
 			"user":        types.BoolValue(data.AllowedWhoItems.User),
-			"group":       types.BoolValue(data.AllowedWhoItems.Group),
 			"inheritance": types.BoolValue(data.AllowedWhoItems.Inheritance),
 			"self":        types.BoolValue(data.AllowedWhoItems.Self),
 			"categories":  whoCategories,

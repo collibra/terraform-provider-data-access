@@ -6,7 +6,6 @@ import (
 
 	"github.com/collibra/access-governance-go-sdk"
 	"github.com/collibra/access-governance-go-sdk/services"
-	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -15,14 +14,12 @@ import (
 var _ datasource.DataSource = (*DataSourceDataSource)(nil)
 
 type DataSourceDataSourceModel struct {
-	Id                  types.String `tfsdk:"id"`
-	Name                types.String `tfsdk:"name"`
-	Description         types.String `tfsdk:"description"`
-	SyncMethod          types.String `tfsdk:"sync_method"`
-	Parent              types.String `tfsdk:"parent"`
-	NativeIdentityStore types.String `tfsdk:"native_identity_store"`
-	IdentityStores      types.Set    `tfsdk:"identity_stores"`
-	Owners              types.Set    `tfsdk:"owners"`
+	Id          types.String `tfsdk:"id"`
+	Name        types.String `tfsdk:"name"`
+	Description types.String `tfsdk:"description"`
+	SyncMethod  types.String `tfsdk:"sync_method"`
+	Parent      types.String `tfsdk:"parent"`
+	Owners      types.Set    `tfsdk:"owners"`
 }
 
 type DataSourceDataSource struct {
@@ -137,27 +134,6 @@ func (d *DataSourceDataSource) Read(ctx context.Context, request datasource.Read
 		}
 
 		if dsItem.Name == name {
-			identityStores, err := d.client.DataSource().ListIdentityStores(cancelCtx, dsItem.Id)
-			if err != nil {
-				response.Diagnostics.AddError("Failed to list identity stores", err.Error())
-
-				return
-			}
-
-			var nativeIs *string
-			isIds := make([]attr.Value, 0, len(identityStores))
-
-			for i, identityStore := range identityStores {
-				if identityStore.Native {
-					nativeIs = &identityStores[i].Id
-				} else if !identityStore.Master {
-					isIds = append(isIds, types.StringValue(identityStore.Id))
-				}
-			}
-
-			isAttr, diagnostic := types.SetValue(types.StringType, isIds)
-			response.Diagnostics.Append(diagnostic...)
-
 			var parentId *string
 			if dsItem.Parent != nil {
 				parentId = &dsItem.Parent.Id
@@ -167,8 +143,6 @@ func (d *DataSourceDataSource) Read(ctx context.Context, request datasource.Read
 			data.Description = types.StringValue(dsItem.Description)
 			data.SyncMethod = types.StringValue(string(dsItem.SyncMethod))
 			data.Parent = types.StringPointerValue(parentId)
-			data.NativeIdentityStore = types.StringPointerValue(nativeIs)
-			data.IdentityStores = isAttr
 
 			owners, diagn := getOwners(ctx, dsItem.Id, d.client)
 			response.Diagnostics.Append(diagn...)

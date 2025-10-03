@@ -36,7 +36,7 @@ func main() {
 	flag.Parse()
 
 	opts := providerserver.ServeOpts{
-		Address: "registry.terraform.io/hashicorp/collibra-access-governance",
+		Address: "registry.terraform.io/collibra/collibra-access-governance",
 		Debug:   debug,
 	}
 

@@ -7,6 +7,7 @@ import (
 
 	"github.com/collibra/access-governance-go-sdk"
 	accessGovernanceType "github.com/collibra/access-governance-go-sdk/types"
+	"github.com/collibra/access-governance-terraform-provider/internal/utils"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -19,22 +20,17 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/raito-io/golang-set/set"
-
-	"github.com/collibra/access-governance-terraform-provider/internal/utils"
 )
 
 var _ resource.Resource = (*DataSourceResource)(nil)
 
 type DataSourceResourceModel struct {
-	Id                  types.String `tfsdk:"id"`
-	Name                types.String `tfsdk:"name"`
-	Description         types.String `tfsdk:"description"`
-	SyncMethod          types.String `tfsdk:"sync_method"`
-	Parent              types.String `tfsdk:"parent"`
-	NativeIdentityStore types.String `tfsdk:"native_identity_store"`
-	IdentityStores      types.Set    `tfsdk:"identity_stores"`
-	Owners              types.Set    `tfsdk:"owners"`
+	Id          types.String `tfsdk:"id"`
+	Name        types.String `tfsdk:"name"`
+	Description types.String `tfsdk:"description"`
+	SyncMethod  types.String `tfsdk:"sync_method"`
+	Parent      types.String `tfsdk:"parent"`
+	Owners      types.Set    `tfsdk:"owners"`
 }
 
 func (m *DataSourceResourceModel) ToDataSourceInput() accessGovernanceType.DataSourceInput {
@@ -167,62 +163,6 @@ func (d *DataSourceResource) Create(ctx context.Context, request resource.Create
 	data.Id = types.StringValue(dataSourceResult.Id)
 	response.Diagnostics.Append(response.State.Set(ctx, data)...) //Ensure to store id first
 
-	// Load current identity stores
-	cancelCtx, cancelFunc := context.WithCancel(ctx)
-	defer cancelFunc()
-
-	identityStores, err := d.client.DataSource().ListIdentityStores(cancelCtx, dataSourceResult.Id)
-	if err != nil {
-		response.Diagnostics.AddError("Failed to list identity stores", err.Error())
-
-		return
-	}
-
-	planExpectedIss := set.Set[string]{}
-
-	for _, identityStoreId := range data.IdentityStores.Elements() {
-		idValue := identityStoreId.(types.String)
-		planExpectedIss.Add(idValue.ValueString())
-	}
-
-	linkedIss := set.Set[string]{}
-
-	for _, identityStore := range identityStores {
-		if identityStore.Native {
-			data.NativeIdentityStore = types.StringValue(identityStore.Id)
-		} else {
-			linkedIss.Add(identityStore.Id)
-		}
-	}
-
-	// Add missing identity stores
-	for is := range planExpectedIss {
-		if linkedIss.Contains(is) {
-			continue
-		}
-
-		err = d.client.DataSource().AddIdentityStoreToDataSource(ctx, dataSourceResult.Id, is)
-		if err != nil {
-			response.Diagnostics.AddError("Failed to remove identity store from data source", err.Error())
-
-			return
-		}
-	}
-
-	// Remove old identity stores
-	for is := range linkedIss {
-		if planExpectedIss.Contains(is) {
-			continue
-		}
-
-		err = d.client.DataSource().RemoveIdentityStoreFromDataSource(ctx, dataSourceResult.Id, is)
-		if err != nil {
-			response.Diagnostics.AddError("Failed to add identity store to data source", err.Error())
-
-			return
-		}
-	}
-
 	// Set Owners
 	if !data.Owners.IsNull() && len(data.Owners.Elements()) > 0 {
 		response.Diagnostics.Append(d.setOwners(ctx, &data.Owners, dataSourceResult.Id)...)
@@ -266,30 +206,6 @@ func (d *DataSourceResource) Read(ctx context.Context, request resource.ReadRequ
 		return
 	}
 
-	cancelCtx, cancelFunc := context.WithCancel(ctx)
-	defer cancelFunc()
-
-	identityStores, err := d.client.DataSource().ListIdentityStores(cancelCtx, stateData.Id.ValueString())
-	if err != nil {
-		response.Diagnostics.AddError("Failed to list identity stores", err.Error())
-
-		return
-	}
-
-	var nativeIs *string
-	isIds := make([]attr.Value, 0, len(identityStores))
-
-	for i, identityStore := range identityStores {
-		if identityStore.Native {
-			nativeIs = &identityStores[i].Id
-		} else if !identityStore.Master {
-			isIds = append(isIds, types.StringValue(identityStore.Id))
-		}
-	}
-
-	isAttr, diagnostic := types.SetValue(types.StringType, isIds)
-	response.Diagnostics.Append(diagnostic...)
-
 	var parentId *string
 	if ds.Parent != nil {
 		parentId = &ds.Parent.Id
@@ -300,13 +216,11 @@ func (d *DataSourceResource) Read(ctx context.Context, request resource.ReadRequ
 	}
 
 	actualData := DataSourceResourceModel{
-		Id:                  types.StringValue(ds.Id),
-		Name:                types.StringValue(ds.Name),
-		Description:         types.StringValue(ds.Description),
-		SyncMethod:          types.StringValue(string(ds.SyncMethod)),
-		Parent:              types.StringPointerValue(parentId),
-		NativeIdentityStore: types.StringPointerValue(nativeIs),
-		IdentityStores:      isAttr,
+		Id:          types.StringValue(ds.Id),
+		Name:        types.StringValue(ds.Name),
+		Description: types.StringValue(ds.Description),
+		SyncMethod:  types.StringValue(string(ds.SyncMethod)),
+		Parent:      types.StringPointerValue(parentId),
 	}
 
 	owners, diagn := getOwners(ctx, stateData.Id.ValueString(), d.client)
@@ -337,60 +251,6 @@ func (d *DataSourceResource) Update(ctx context.Context, request resource.Update
 		response.Diagnostics.AddError("Failed to update data source", err.Error())
 
 		return
-	}
-
-	// Load current identity stores
-	cancelCtx, cancelFunc := context.WithCancel(ctx)
-	defer cancelFunc()
-
-	identityStores, err := d.client.DataSource().ListIdentityStores(cancelCtx, data.Id.ValueString())
-	if err != nil {
-		response.Diagnostics.AddError("Failed to list identity stores", err.Error())
-
-		return
-	}
-
-	planExpectedIss := set.Set[string]{}
-
-	for _, identityStoreId := range data.IdentityStores.Elements() {
-		idValue := identityStoreId.(types.String)
-		planExpectedIss.Add(idValue.ValueString())
-	}
-
-	linkedIss := set.Set[string]{}
-
-	for _, identityStore := range identityStores {
-		if !identityStore.Native && !identityStore.Master {
-			linkedIss.Add(identityStore.Id)
-		}
-	}
-
-	// Add missing identity stores
-	for is := range planExpectedIss {
-		if linkedIss.Contains(is) {
-			continue
-		}
-
-		err = d.client.DataSource().AddIdentityStoreToDataSource(ctx, data.Id.ValueString(), is)
-		if err != nil {
-			response.Diagnostics.AddError("Failed to remove identity store from data source", err.Error())
-
-			return
-		}
-	}
-
-	// Remove old identity stores
-	for is := range linkedIss {
-		if planExpectedIss.Contains(is) {
-			continue
-		}
-
-		err = d.client.DataSource().RemoveIdentityStoreFromDataSource(ctx, data.Id.ValueString(), is)
-		if err != nil {
-			response.Diagnostics.AddError("Failed to add identity store to data source", err.Error())
-
-			return
-		}
 	}
 
 	// Set Owners
