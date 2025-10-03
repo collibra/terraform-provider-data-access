@@ -31,7 +31,7 @@ data "collibra-access-governance_user" "angelica" {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("data.collibra-access-governance_user.carla", "name", "Carla Harris"),
 					resource.TestCheckResourceAttr("data.collibra-access-governance_user.carla", "type", "Human"),
-					resource.TestCheckResourceAttr("data.collibra-access-governance_user.carla", "collibra-access-governance_user", "true"),
+					resource.TestCheckResourceAttr("data.collibra-access-governance_user.carla", "collibra_user", "true"),
 					resource.TestCheckResourceAttrWith("data.collibra-access-governance_user.carla", "id", func(value string) error {
 						if value == "" {
 							return errors.New("id is empty")
@@ -42,7 +42,7 @@ data "collibra-access-governance_user" "angelica" {
 
 					resource.TestCheckResourceAttr("data.collibra-access-governance_user.angelica", "name", "Angelica Abbot Atkinson"),
 					resource.TestCheckResourceAttr("data.collibra-access-governance_user.angelica", "type", "Machine"),
-					resource.TestCheckResourceAttr("data.collibra-access-governance_user.angelica", "collibra-access-governance_user", "false"),
+					resource.TestCheckResourceAttr("data.collibra-access-governance_user.angelica", "collibra_user", "false"),
 					resource.TestCheckResourceAttrWith("data.collibra-access-governance_user.angelica", "id", func(value string) error {
 						if value == "" {
 							return errors.New("id is empty")
