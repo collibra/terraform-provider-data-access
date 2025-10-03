@@ -46,6 +46,7 @@ jobs:
 
       - name: Mod Tidy
         run: go mod tidy
+
       - name: Build
         run: go build -v .
 
@@ -58,15 +59,35 @@ jobs:
   generate:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Install Terraform
-        uses: hashicorp/setup-terraform@v3
-      - uses: actions/setup-go@v5
+      - name: Check out repository code
+        uses: actions/checkout@v4
+
+      - name: Setup private repo access
+        run: |
+          git config --global url.https://${GH_ACCESS_TOKEN}@github.com/.insteadOf https://github.com/
+        env:
+          GH_ACCESS_TOKEN: ${{ secrets.COLLIBRA_GITHUB_TOKEN }}
+
+      - name: Install Go
+        uses: actions/setup-go@v5
         with:
           go-version-file: 'go.mod'
+          cache-dependency-path: "go.sum"
+          check-latest: true
           cache: true
-      - run: go mod tidy
-      - run: go generate ./...
+
+      - name: Install Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ matrix.terraform }}
+          terraform_wrapper: false
+
+      - name: Mod Tidy
+        run: go mod tidy
+
+      - name: Generate
+        run: go generate ./...
+
       - name: git diff
         run: |
           git diff --compact-summary --exit-code || \
