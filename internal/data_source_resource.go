@@ -9,13 +9,11 @@ import (
 	accessGovernanceType "github.com/collibra/access-governance-go-sdk/types"
 	"github.com/collibra/access-governance-terraform-provider/internal/utils"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
-	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -103,28 +101,6 @@ func (d *DataSourceResource) Schema(_ context.Context, _ resource.SchemaRequest,
 				Sensitive:           false,
 				Description:         "The ID of the parent data source, if applicable",
 				MarkdownDescription: "The ID of the parent data source, if applicable",
-			},
-			"native_identity_store": schema.StringAttribute{
-				Required:            false,
-				Optional:            false,
-				Computed:            true,
-				Sensitive:           false,
-				Description:         "The ID of the native identity store",
-				MarkdownDescription: "The ID of the native identity store",
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
-			},
-			"identity_stores": schema.SetAttribute{
-				ElementType:         types.StringType,
-				Required:            false,
-				Optional:            true,
-				Computed:            true,
-				Sensitive:           false,
-				Description:         "The IDs of the linked identity stores",
-				MarkdownDescription: "The IDs of the linked identity stores",
-				DeprecationMessage:  "",
-				Default:             setdefault.StaticValue(types.SetValueMust(types.StringType, []attr.Value{})),
 			},
 			"owners": schema.SetAttribute{
 				ElementType:         types.StringType,

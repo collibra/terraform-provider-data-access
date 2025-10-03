@@ -31,7 +31,7 @@ type CollibraAccessGovernanceProviderModel struct {
 }
 
 func (p *CollibraAccessGovernanceProvider) Metadata(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
-	resp.TypeName = providerTypeName
+	resp.TypeName = "collibra-access-governance"
 	resp.Version = p.version
 }
 

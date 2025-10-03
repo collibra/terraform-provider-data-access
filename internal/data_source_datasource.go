@@ -78,23 +78,6 @@ func (d *DataSourceDataSource) Schema(_ context.Context, _ datasource.SchemaRequ
 				Description:         "The ID of the parent data source, if applicable",
 				MarkdownDescription: "The ID of the parent data source, if applicable",
 			},
-			"native_identity_store": schema.StringAttribute{
-				Required:            false,
-				Optional:            false,
-				Computed:            true,
-				Sensitive:           false,
-				Description:         "The ID of the native identity store",
-				MarkdownDescription: "The ID of the native identity store",
-			},
-			"identity_stores": schema.SetAttribute{
-				ElementType:         types.StringType,
-				Required:            false,
-				Optional:            false,
-				Computed:            true,
-				Sensitive:           false,
-				Description:         "The IDs of the identity stores that also link to the data source",
-				MarkdownDescription: "The IDs of the identity stores that also link to the data source",
-			},
 			"owners": schema.SetAttribute{
 				ElementType:         types.StringType,
 				Required:            false,

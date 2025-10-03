@@ -9,7 +9,7 @@ import (
 )
 
 var testAccProtoV6ProviderFactories = map[string]func() (tfprotov6.ProviderServer, error){
-	"collibra": providerserver.NewProtocol6WithError(New("test")()),
+	"collibra-access-governance": providerserver.NewProtocol6WithError(New("test")()),
 }
 
 var providerConfig = `
