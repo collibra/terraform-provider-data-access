@@ -5,49 +5,43 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/collibra/access-governance-go-sdk"
+	accessGovernanceType "github.com/collibra/access-governance-go-sdk/types"
+	"github.com/collibra/access-governance-terraform-provider/internal/utils"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
-	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/raito-io/golang-set/set"
-	"github.com/raito-io/sdk-go"
-	raitoType "github.com/raito-io/sdk-go/types"
-
-	"github.com/raito-io/terraform-provider-raito/internal/utils"
 )
 
 var _ resource.Resource = (*DataSourceResource)(nil)
 
 type DataSourceResourceModel struct {
-	Id                  types.String `tfsdk:"id"`
-	Name                types.String `tfsdk:"name"`
-	Description         types.String `tfsdk:"description"`
-	SyncMethod          types.String `tfsdk:"sync_method"`
-	Parent              types.String `tfsdk:"parent"`
-	NativeIdentityStore types.String `tfsdk:"native_identity_store"`
-	IdentityStores      types.Set    `tfsdk:"identity_stores"`
-	Owners              types.Set    `tfsdk:"owners"`
+	Id          types.String `tfsdk:"id"`
+	Name        types.String `tfsdk:"name"`
+	Description types.String `tfsdk:"description"`
+	SyncMethod  types.String `tfsdk:"sync_method"`
+	Parent      types.String `tfsdk:"parent"`
+	Owners      types.Set    `tfsdk:"owners"`
 }
 
-func (m *DataSourceResourceModel) ToDataSourceInput() raitoType.DataSourceInput {
-	return raitoType.DataSourceInput{
+func (m *DataSourceResourceModel) ToDataSourceInput() accessGovernanceType.DataSourceInput {
+	return accessGovernanceType.DataSourceInput{
 		Name:        m.Name.ValueStringPointer(),
 		Description: m.Description.ValueStringPointer(),
-		SyncMethod:  utils.Ptr(raitoType.DataSourceSyncMethod(m.SyncMethod.ValueString())),
+		SyncMethod:  utils.Ptr(accessGovernanceType.DataSourceSyncMethod(m.SyncMethod.ValueString())),
 		Parent:      m.Parent.ValueStringPointer(),
 	}
 }
 
 type DataSourceResource struct {
-	client *sdk.RaitoClient
+	client *sdk.CollibraClient
 }
 
 func NewDataSourceResource() resource.Resource {
@@ -97,8 +91,8 @@ func (d *DataSourceResource) Schema(_ context.Context, _ resource.SchemaRequest,
 				Sensitive:           false,
 				Description:         "The sync method of the data source (should be ON_PREM for now)",
 				MarkdownDescription: "The sync method of the data source (should be `ON_PREM` for now)",
-				Default:             stringdefault.StaticString(string(raitoType.DataSourceSyncMethodOnPrem)),
-				Validators:          []validator.String{stringvalidator.OneOf(string(raitoType.DataSourceSyncMethodOnPrem), string(raitoType.DataSourceSyncMethodCloudManualTrigger))},
+				Default:             stringdefault.StaticString(string(accessGovernanceType.DataSourceSyncMethodOnprem)),
+				Validators:          []validator.String{stringvalidator.OneOf(string(accessGovernanceType.DataSourceSyncMethodOnprem), string(accessGovernanceType.DataSourceSyncMethodCloudmanualtrigger))},
 			},
 			"parent": schema.StringAttribute{
 				Required:            false,
@@ -107,28 +101,6 @@ func (d *DataSourceResource) Schema(_ context.Context, _ resource.SchemaRequest,
 				Sensitive:           false,
 				Description:         "The ID of the parent data source, if applicable",
 				MarkdownDescription: "The ID of the parent data source, if applicable",
-			},
-			"native_identity_store": schema.StringAttribute{
-				Required:            false,
-				Optional:            false,
-				Computed:            true,
-				Sensitive:           false,
-				Description:         "The ID of the native identity store",
-				MarkdownDescription: "The ID of the native identity store",
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
-			},
-			"identity_stores": schema.SetAttribute{
-				ElementType:         types.StringType,
-				Required:            false,
-				Optional:            true,
-				Computed:            true,
-				Sensitive:           false,
-				Description:         "The IDs of the linked identity stores",
-				MarkdownDescription: "The IDs of the linked identity stores",
-				DeprecationMessage:  "",
-				Default:             setdefault.StaticValue(types.SetValueMust(types.StringType, []attr.Value{})),
 			},
 			"owners": schema.SetAttribute{
 				ElementType:         types.StringType,
@@ -167,62 +139,6 @@ func (d *DataSourceResource) Create(ctx context.Context, request resource.Create
 	data.Id = types.StringValue(dataSourceResult.Id)
 	response.Diagnostics.Append(response.State.Set(ctx, data)...) //Ensure to store id first
 
-	// Load current identity stores
-	cancelCtx, cancelFunc := context.WithCancel(ctx)
-	defer cancelFunc()
-
-	identityStores, err := d.client.DataSource().ListIdentityStores(cancelCtx, dataSourceResult.Id)
-	if err != nil {
-		response.Diagnostics.AddError("Failed to list identity stores", err.Error())
-
-		return
-	}
-
-	planExpectedIss := set.Set[string]{}
-
-	for _, identityStoreId := range data.IdentityStores.Elements() {
-		idValue := identityStoreId.(types.String)
-		planExpectedIss.Add(idValue.ValueString())
-	}
-
-	linkedIss := set.Set[string]{}
-
-	for _, identityStore := range identityStores {
-		if identityStore.Native {
-			data.NativeIdentityStore = types.StringValue(identityStore.Id)
-		} else {
-			linkedIss.Add(identityStore.Id)
-		}
-	}
-
-	// Add missing identity stores
-	for is := range planExpectedIss {
-		if linkedIss.Contains(is) {
-			continue
-		}
-
-		err = d.client.DataSource().AddIdentityStoreToDataSource(ctx, dataSourceResult.Id, is)
-		if err != nil {
-			response.Diagnostics.AddError("Failed to remove identity store from data source", err.Error())
-
-			return
-		}
-	}
-
-	// Remove old identity stores
-	for is := range linkedIss {
-		if planExpectedIss.Contains(is) {
-			continue
-		}
-
-		err = d.client.DataSource().RemoveIdentityStoreFromDataSource(ctx, dataSourceResult.Id, is)
-		if err != nil {
-			response.Diagnostics.AddError("Failed to add identity store to data source", err.Error())
-
-			return
-		}
-	}
-
 	// Set Owners
 	if !data.Owners.IsNull() && len(data.Owners.Elements()) > 0 {
 		response.Diagnostics.Append(d.setOwners(ctx, &data.Owners, dataSourceResult.Id)...)
@@ -256,7 +172,7 @@ func (d *DataSourceResource) Read(ctx context.Context, request resource.ReadRequ
 
 	ds, err := d.client.DataSource().GetDataSource(ctx, stateData.Id.ValueString())
 	if err != nil {
-		var notFoundErr *raitoType.ErrNotFound
+		var notFoundErr *accessGovernanceType.ErrNotFound
 		if errors.As(err, &notFoundErr) {
 			response.State.RemoveResource(ctx)
 		} else {
@@ -265,30 +181,6 @@ func (d *DataSourceResource) Read(ctx context.Context, request resource.ReadRequ
 
 		return
 	}
-
-	cancelCtx, cancelFunc := context.WithCancel(ctx)
-	defer cancelFunc()
-
-	identityStores, err := d.client.DataSource().ListIdentityStores(cancelCtx, stateData.Id.ValueString())
-	if err != nil {
-		response.Diagnostics.AddError("Failed to list identity stores", err.Error())
-
-		return
-	}
-
-	var nativeIs *string
-	isIds := make([]attr.Value, 0, len(identityStores))
-
-	for i, identityStore := range identityStores {
-		if identityStore.Native {
-			nativeIs = &identityStores[i].Id
-		} else if !identityStore.Master {
-			isIds = append(isIds, types.StringValue(identityStore.Id))
-		}
-	}
-
-	isAttr, diagnostic := types.SetValue(types.StringType, isIds)
-	response.Diagnostics.Append(diagnostic...)
 
 	var parentId *string
 	if ds.Parent != nil {
@@ -300,13 +192,11 @@ func (d *DataSourceResource) Read(ctx context.Context, request resource.ReadRequ
 	}
 
 	actualData := DataSourceResourceModel{
-		Id:                  types.StringValue(ds.Id),
-		Name:                types.StringValue(ds.Name),
-		Description:         types.StringValue(ds.Description),
-		SyncMethod:          types.StringValue(string(ds.SyncMethod)),
-		Parent:              types.StringPointerValue(parentId),
-		NativeIdentityStore: types.StringPointerValue(nativeIs),
-		IdentityStores:      isAttr,
+		Id:          types.StringValue(ds.Id),
+		Name:        types.StringValue(ds.Name),
+		Description: types.StringValue(ds.Description),
+		SyncMethod:  types.StringValue(string(ds.SyncMethod)),
+		Parent:      types.StringPointerValue(parentId),
 	}
 
 	owners, diagn := getOwners(ctx, stateData.Id.ValueString(), d.client)
@@ -337,60 +227,6 @@ func (d *DataSourceResource) Update(ctx context.Context, request resource.Update
 		response.Diagnostics.AddError("Failed to update data source", err.Error())
 
 		return
-	}
-
-	// Load current identity stores
-	cancelCtx, cancelFunc := context.WithCancel(ctx)
-	defer cancelFunc()
-
-	identityStores, err := d.client.DataSource().ListIdentityStores(cancelCtx, data.Id.ValueString())
-	if err != nil {
-		response.Diagnostics.AddError("Failed to list identity stores", err.Error())
-
-		return
-	}
-
-	planExpectedIss := set.Set[string]{}
-
-	for _, identityStoreId := range data.IdentityStores.Elements() {
-		idValue := identityStoreId.(types.String)
-		planExpectedIss.Add(idValue.ValueString())
-	}
-
-	linkedIss := set.Set[string]{}
-
-	for _, identityStore := range identityStores {
-		if !identityStore.Native && !identityStore.Master {
-			linkedIss.Add(identityStore.Id)
-		}
-	}
-
-	// Add missing identity stores
-	for is := range planExpectedIss {
-		if linkedIss.Contains(is) {
-			continue
-		}
-
-		err = d.client.DataSource().AddIdentityStoreToDataSource(ctx, data.Id.ValueString(), is)
-		if err != nil {
-			response.Diagnostics.AddError("Failed to remove identity store from data source", err.Error())
-
-			return
-		}
-	}
-
-	// Remove old identity stores
-	for is := range linkedIss {
-		if planExpectedIss.Contains(is) {
-			continue
-		}
-
-		err = d.client.DataSource().RemoveIdentityStoreFromDataSource(ctx, data.Id.ValueString(), is)
-		if err != nil {
-			response.Diagnostics.AddError("Failed to add identity store to data source", err.Error())
-
-			return
-		}
 	}
 
 	// Set Owners
@@ -470,12 +306,12 @@ func (d *DataSourceResource) Configure(_ context.Context, req resource.Configure
 		return
 	}
 
-	client, ok := req.ProviderData.(*sdk.RaitoClient)
+	client, ok := req.ProviderData.(*sdk.CollibraClient)
 
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
-			fmt.Sprintf("Expected *sdk.RaitoClient, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf("Expected *sdk.CollibraClient, got: %T. Please report this issue to the provider developers.", req.ProviderData),
 		)
 
 		return
@@ -484,7 +320,7 @@ func (d *DataSourceResource) Configure(_ context.Context, req resource.Configure
 	if client == nil {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
-			"Expected *sdk.RaitoClient, not to be nil.",
+			"Expected *sdk.CollibraClient, not to be nil.",
 		)
 
 		return

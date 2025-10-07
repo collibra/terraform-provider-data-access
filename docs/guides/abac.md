@@ -1,8 +1,8 @@
 ---
-page_title: "Abac Rules in Raito Cloud"
+page_title: "Abac Rules in Collibra Access Governance"
 ---
 
-# Abac Rules in the Raito Provider
+# Abac Rules in the Collibra Access Governance Provider
 
 Access provider resources (grants, masks, filters, and purposes) can the define what- and/or who-items that are authorized based on Attribute-Based Access Control (ABAC) rules. These rules are specified in JSON format following the outlined structure below.
 
@@ -135,17 +135,17 @@ locals {
   )
 }
 
-resource "raito_datasource" "ds" {
+resource "collibra-access-governance_datasource" "ds" {
   name = "exampleDS"
 }
 
-resource "raito_grant" "example_grant" {
+resource "collibra-access-governance_grant" "example_grant" {
   name        = "Grant with abac"
   description = "Grant with what abac rule"
   state       = "Active"
   what_abac_rule = {
     rule = local.example_grant_abac_rule
   }
-  data_source = raito_datasource.ds.id
+  data_source = collibra-access-governance_datasource.ds.id
 }
 ```

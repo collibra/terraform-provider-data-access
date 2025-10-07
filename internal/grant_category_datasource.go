@@ -4,13 +4,13 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/collibra/access-governance-go-sdk"
+	types2 "github.com/collibra/access-governance-go-sdk/types"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/raito-io/sdk-go"
-	types2 "github.com/raito-io/sdk-go/types"
 )
 
 var _ datasource.DataSource = (*GrantCategoryDataSource)(nil)
@@ -30,7 +30,7 @@ type GrantCategoryDataSourceModel struct {
 }
 
 type GrantCategoryDataSource struct {
-	client *sdk.RaitoClient
+	client *sdk.CollibraClient
 }
 
 func NewGrantCategoryDataSource() datasource.DataSource {
@@ -146,14 +146,6 @@ func (g *GrantCategoryDataSource) Schema(_ context.Context, _ datasource.SchemaR
 						Description:         "Indicates if a user is allowed as a WHO item",
 						MarkdownDescription: "Indicates if a user is allowed as a WHO item",
 					},
-					"group": schema.BoolAttribute{
-						Required:            false,
-						Optional:            false,
-						Computed:            true,
-						Sensitive:           false,
-						Description:         "Indicates if a group is allowed as a WHO item",
-						MarkdownDescription: "Indicates if a group is allowed as a WHO item",
-					},
 					"inheritance": schema.BoolAttribute{
 						Required:            false,
 						Optional:            false,
@@ -251,11 +243,11 @@ func (g *GrantCategoryDataSource) Configure(_ context.Context, req datasource.Co
 		return
 	}
 
-	client, ok := req.ProviderData.(*sdk.RaitoClient)
+	client, ok := req.ProviderData.(*sdk.CollibraClient)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
-			fmt.Sprintf("Expected *sdk.RaitoClient, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf("Expected *sdk.CollibraClient, got: %T. Please report this issue to the provider developers.", req.ProviderData),
 		)
 
 		return
@@ -264,7 +256,7 @@ func (g *GrantCategoryDataSource) Configure(_ context.Context, req datasource.Co
 	if client == nil {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
-			"Expected *sdk.RaitoClient, not to be nil.",
+			"Expected *sdk.CollibraClient, not to be nil.",
 		)
 
 		return
@@ -336,14 +328,12 @@ func setGrantCategoryData(data *types2.GrantCategoryDetails, resp *GrantCategory
 	allowedWhoItems, diags := types.ObjectValue(
 		map[string]attr.Type{
 			"user":        types.BoolType,
-			"group":       types.BoolType,
 			"inheritance": types.BoolType,
 			"self":        types.BoolType,
 			"categories":  types.SetType{ElemType: types.StringType},
 		},
 		map[string]attr.Value{
 			"user":        types.BoolValue(data.AllowedWhoItems.User),
-			"group":       types.BoolValue(data.AllowedWhoItems.Group),
 			"inheritance": types.BoolValue(data.AllowedWhoItems.Inheritance),
 			"self":        types.BoolValue(data.AllowedWhoItems.Self),
 			"categories":  whoCategories,

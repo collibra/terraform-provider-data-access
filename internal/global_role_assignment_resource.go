@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/collibra/access-governance-go-sdk"
+	"github.com/collibra/access-governance-go-sdk/services"
+	types2 "github.com/collibra/access-governance-go-sdk/types"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -13,11 +16,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/raito-io/sdk-go"
-	"github.com/raito-io/sdk-go/services"
-	types2 "github.com/raito-io/sdk-go/types"
 
-	"github.com/raito-io/terraform-provider-raito/internal/utils"
+	"github.com/collibra/access-governance-terraform-provider/internal/utils"
 )
 
 var _ resource.Resource = (*GlobalRoleAssignmentResource)(nil)
@@ -52,7 +52,7 @@ func _getRoleAndUserFromId(id string) (role, user string) {
 }
 
 type GlobalRoleAssignmentResource struct {
-	client *sdk.RaitoClient
+	client *sdk.CollibraClient
 }
 
 func (g *GlobalRoleAssignmentResource) Metadata(ctx context.Context, request resource.MetadataRequest, response *resource.MetadataResponse) {
@@ -142,11 +142,7 @@ func (g *GlobalRoleAssignmentResource) Read(ctx context.Context, request resourc
 	// Read role assignment
 	roleName, userId := _getRoleAndUserFromId(stateData.Id.ValueString())
 
-	cancelCtx, cancel := context.WithCancel(ctx)
-
-	defer cancel()
-
-	roleAssignmentChannel := g.client.Role().ListRoleAssignments(cancelCtx, services.WithRoleAssignmentListFilter(
+	roleAssignments := g.client.Role().ListRoleAssignments(ctx, services.WithRoleAssignmentListFilter(
 		&types2.RoleAssignmentFilterInput{
 			Role: utils.Ptr(roleId(roleName)),
 			User: &userId,
@@ -154,20 +150,20 @@ func (g *GlobalRoleAssignmentResource) Read(ctx context.Context, request resourc
 
 	var ra *types2.RoleAssignment
 
-	for roleAssignment := range roleAssignmentChannel {
-		if roleAssignment.HasError() {
-			response.Diagnostics.AddError("Failed to list role assignment", roleAssignment.GetError().Error())
+	for roleAssignment, err := range roleAssignments {
+		if err != nil {
+			response.Diagnostics.AddError("Failed to list role assignment", err.Error())
 
 			return
 		} else if ra != nil {
 			response.Diagnostics.AddError("Multiple role assignment found", "Multiple role assignment found")
 
 			return
-		} else if roleAssignment.GetItem() == nil {
+		} else if roleAssignment == nil {
 			continue
 		}
 
-		ra = roleAssignment.GetItem()
+		ra = roleAssignment
 	}
 
 	if ra == nil {
@@ -211,11 +207,11 @@ func (g *GlobalRoleAssignmentResource) Configure(_ context.Context, req resource
 		return
 	}
 
-	client, ok := req.ProviderData.(*sdk.RaitoClient)
+	client, ok := req.ProviderData.(*sdk.CollibraClient)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
-			fmt.Sprintf("Expected *sdk.RaitoClient, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf("Expected *sdk.CollibraClient, got: %T. Please report this issue to the provider developers.", req.ProviderData),
 		)
 
 		return
@@ -224,7 +220,7 @@ func (g *GlobalRoleAssignmentResource) Configure(_ context.Context, req resource
 	if client == nil {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
-			"Expected *sdk.RaitoClient, not to be nil.",
+			"Expected *sdk.CollibraClient, not to be nil.",
 		)
 
 		return

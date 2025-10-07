@@ -5,9 +5,11 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/collibra/access-governance-go-sdk"
+	accessGovernanceType "github.com/collibra/access-governance-go-sdk/types"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
-	"github.com/hashicorp/terraform-plugin-framework/diag"
+	terraformDiag "github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -19,8 +21,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/raito-io/sdk-go"
-	raitoType "github.com/raito-io/sdk-go/types"
 )
 
 var _ resource.Resource = (*GrantCategoryResource)(nil)
@@ -40,15 +40,15 @@ type GrantCategoryResourceModel struct {
 	AllowedWhatItems         types.Object `tfsdk:"allowed_what_items"`
 }
 
-func (m *GrantCategoryResourceModel) ToGrantCategoryInput() raitoType.GrantCategoryInput {
+func (m *GrantCategoryResourceModel) ToGrantCategoryInput() accessGovernanceType.GrantCategoryInput {
 	defaultTypePerDataSourceValues := m.DefaultTypePerDataSource.Elements()
-	defaultTypePerDS := make([]raitoType.GrantCategoryTypeForDataSourceInput, 0, len(defaultTypePerDataSourceValues))
+	defaultTypePerDS := make([]accessGovernanceType.GrantCategoryTypeForDataSourceInput, 0, len(defaultTypePerDataSourceValues))
 
 	for _, v := range defaultTypePerDataSourceValues {
 		vObject := v.(types.Object)
 		attributes := vObject.Attributes()
 
-		typeForDataSource := raitoType.GrantCategoryTypeForDataSourceInput{
+		typeForDataSource := accessGovernanceType.GrantCategoryTypeForDataSourceInput{
 			DataSource: attributes["data_source"].(types.String).ValueString(),
 			Type:       attributes["type"].(types.String).ValueString(),
 		}
@@ -63,7 +63,7 @@ func (m *GrantCategoryResourceModel) ToGrantCategoryInput() raitoType.GrantCateg
 		allowedWhoCategories = append(allowedWhoCategories, v.(types.String).ValueString())
 	}
 
-	input := raitoType.GrantCategoryInput{
+	input := accessGovernanceType.GrantCategoryInput{
 		Name:                     m.Name.ValueStringPointer(),
 		Description:              m.Description.ValueStringPointer(),
 		Icon:                     m.Icon.ValueStringPointer(),
@@ -71,14 +71,13 @@ func (m *GrantCategoryResourceModel) ToGrantCategoryInput() raitoType.GrantCateg
 		AllowDuplicateNames:      m.AllowDuplicateNames.ValueBoolPointer(),
 		MultiDataSource:          m.MultiDataSource.ValueBoolPointer(),
 		DefaultTypePerDataSource: defaultTypePerDS,
-		AllowedWhoItems: &raitoType.GrantCategoryAllowedWhoItemsInput{
+		AllowedWhoItems: &accessGovernanceType.GrantCategoryAllowedWhoItemsInput{
 			User:        m.AllowedWhoItems.Attributes()["user"].(types.Bool).ValueBool(),
-			Group:       m.AllowedWhoItems.Attributes()["group"].(types.Bool).ValueBool(),
 			Inheritance: m.AllowedWhoItems.Attributes()["inheritance"].(types.Bool).ValueBool(),
 			Self:        m.AllowedWhoItems.Attributes()["self"].(types.Bool).ValueBool(),
 			Categories:  allowedWhoCategories,
 		},
-		AllowedWhatItems: &raitoType.GrantCategoryAllowedWhatItemsInput{
+		AllowedWhatItems: &accessGovernanceType.GrantCategoryAllowedWhatItemsInput{
 			DataObject: m.AllowedWhatItems.Attributes()["data_object"].(types.Bool).ValueBool(),
 		},
 	}
@@ -87,7 +86,7 @@ func (m *GrantCategoryResourceModel) ToGrantCategoryInput() raitoType.GrantCateg
 }
 
 type GrantCategoryResource struct {
-	client *sdk.RaitoClient
+	client *sdk.CollibraClient
 }
 
 func NewGrantCategoryResource() resource.Resource {
@@ -221,15 +220,6 @@ func (g *GrantCategoryResource) Schema(ctx context.Context, request resource.Sch
 						MarkdownDescription: "Whether the user is allowed as WHO item for the grants of this category",
 						Default:             booldefault.StaticBool(true),
 					},
-					"group": schema.BoolAttribute{
-						Required:            false,
-						Optional:            true,
-						Computed:            true,
-						Sensitive:           false,
-						Description:         "Whether the group is allowed as WHO item for the grants of this category",
-						MarkdownDescription: "Whether the group is allowed as WHO item for the grants of this category",
-						Default:             booldefault.StaticBool(true),
-					},
 					"inheritance": schema.BoolAttribute{
 						Required:            false,
 						Optional:            true,
@@ -267,13 +257,11 @@ func (g *GrantCategoryResource) Schema(ctx context.Context, request resource.Sch
 				MarkdownDescription: "The allowed WHO items for the grants of this category",
 				Default: objectdefault.StaticValue(types.ObjectValueMust(map[string]attr.Type{
 					"user":        types.BoolType,
-					"group":       types.BoolType,
 					"inheritance": types.BoolType,
 					"self":        types.BoolType,
 					"categories":  types.SetType{ElemType: types.StringType},
 				}, map[string]attr.Value{
 					"user":        types.BoolValue(true),
-					"group":       types.BoolValue(true),
 					"inheritance": types.BoolValue(true),
 					"self":        types.BoolValue(true),
 					"categories":  types.SetValueMust(types.StringType, []attr.Value{}),
@@ -353,7 +341,7 @@ func (g *GrantCategoryResource) Read(ctx context.Context, request resource.ReadR
 
 	category, err := g.client.GrantCategory().GetGrantCategory(ctx, stateData.Id.ValueString())
 	if err != nil {
-		var notFoundErr *raitoType.ErrNotFound
+		var notFoundErr *accessGovernanceType.ErrNotFound
 		if errors.As(err, &notFoundErr) {
 			response.State.RemoveResource(ctx)
 		} else {
@@ -424,11 +412,11 @@ func (g *GrantCategoryResource) Configure(_ context.Context, req resource.Config
 		return
 	}
 
-	client, ok := req.ProviderData.(*sdk.RaitoClient)
+	client, ok := req.ProviderData.(*sdk.CollibraClient)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
-			fmt.Sprintf("Expected *sdk.RaitoClient, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf("Expected *sdk.CollibraClient, got: %T. Please report this issue to the provider developers.", req.ProviderData),
 		)
 
 		return
@@ -437,7 +425,7 @@ func (g *GrantCategoryResource) Configure(_ context.Context, req resource.Config
 	if client == nil {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
-			"Expected *sdk.RaitoClient, not to be nil.",
+			"Expected *sdk.CollibraClient, not to be nil.",
 		)
 
 		return
@@ -449,7 +437,7 @@ func (g *GrantCategoryResource) ImportState(ctx context.Context, req resource.Im
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }
 
-func setGrantCategoryResourceData(data *raitoType.GrantCategoryDetails, resp *GrantCategoryResourceModel) (diags diag.Diagnostics) {
+func setGrantCategoryResourceData(data *accessGovernanceType.GrantCategoryDetails, resp *GrantCategoryResourceModel) (diags terraformDiag.Diagnostics) {
 	resp.Id = types.StringValue(data.Id)
 	resp.Name = types.StringValue(data.Name)
 	resp.Description = types.StringValue(data.Description)
@@ -514,14 +502,12 @@ func setGrantCategoryResourceData(data *raitoType.GrantCategoryDetails, resp *Gr
 	allowedWhoItems, diag := types.ObjectValue(
 		map[string]attr.Type{
 			"user":        types.BoolType,
-			"group":       types.BoolType,
 			"inheritance": types.BoolType,
 			"self":        types.BoolType,
 			"categories":  types.SetType{ElemType: types.StringType},
 		},
 		map[string]attr.Value{
 			"user":        types.BoolValue(data.AllowedWhoItems.User),
-			"group":       types.BoolValue(data.AllowedWhoItems.Group),
 			"inheritance": types.BoolValue(data.AllowedWhoItems.Inheritance),
 			"self":        types.BoolValue(data.AllowedWhoItems.Self),
 			"categories":  whoCategories,

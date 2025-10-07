@@ -37,16 +37,16 @@ locals {
   )
 }
 
-resource "raito_datasource" "ds" {
+resource "collibra-access-governance_datasource" "ds" {
   name = "exampleDS"
 }
 
-resource "raito_grant" "example_grant" {
+resource "collibra-access-governance_grant" "example_grant" {
   name        = "Grant with abac"
   description = "Grant with what abac rule"
   state       = "Active"
   what_abac_rule = {
     rule = local.example_grant_abac_rule
   }
-  data_source = raito_datasource.ds.id
+  data_source = collibra-access-governance_datasource.ds.id
 }

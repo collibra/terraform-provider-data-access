@@ -20,18 +20,18 @@ func TestAccGrantCategoryDataSource(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: providerConfig + `
-data "raito_grant_category" "test" {
+data "collibra-access-governance_grant_category" "test" {
 	name = "Purpose"
 }
 					`,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("data.raito_grant_category.test", "id", "purpose"),
-					resource.TestCheckResourceAttr("data.raito_grant_category.test", "name", "Purpose"),
-					resource.TestCheckResourceAttr("data.raito_grant_category.test", "is_system", "false"),
-					resource.TestCheckResourceAttr("data.raito_grant_category.test", "is_default", "false"),
-					resource.TestCheckResourceAttr("data.raito_grant_category.test", "can_create", "true"),
-					resource.TestCheckResourceAttr("data.raito_grant_category.test", "allow_duplicate_names", "true"),
-					resource.TestCheckResourceAttr("data.raito_grant_category.test", "default_type_per_data_source.#", "0"),
+					resource.TestCheckResourceAttr("data.collibra-access-governance_grant_category.test", "id", "purpose"),
+					resource.TestCheckResourceAttr("data.collibra-access-governance_grant_category.test", "name", "Purpose"),
+					resource.TestCheckResourceAttr("data.collibra-access-governance_grant_category.test", "is_system", "false"),
+					resource.TestCheckResourceAttr("data.collibra-access-governance_grant_category.test", "is_default", "false"),
+					resource.TestCheckResourceAttr("data.collibra-access-governance_grant_category.test", "can_create", "true"),
+					resource.TestCheckResourceAttr("data.collibra-access-governance_grant_category.test", "allow_duplicate_names", "true"),
+					resource.TestCheckResourceAttr("data.collibra-access-governance_grant_category.test", "default_type_per_data_source.#", "0"),
 				),
 			},
 		},

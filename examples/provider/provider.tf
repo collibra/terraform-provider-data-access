@@ -1,6 +1,6 @@
 # Configuration-based authentication
-provider "raito" {
-  domain = "mycompany"
-  user   = "terraform@raito.io"
+provider "collibra-access-governance" {
+  url    = "https://mycompany.collibra.com"
+  user   = "terraform@mycompany.com"
   secret = "password"
 }

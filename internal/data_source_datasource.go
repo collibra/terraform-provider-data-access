@@ -4,29 +4,26 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/collibra/access-governance-go-sdk"
+	"github.com/collibra/access-governance-go-sdk/services"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/raito-io/sdk-go"
-	"github.com/raito-io/sdk-go/services"
 )
 
 var _ datasource.DataSource = (*DataSourceDataSource)(nil)
 
 type DataSourceDataSourceModel struct {
-	Id                  types.String `tfsdk:"id"`
-	Name                types.String `tfsdk:"name"`
-	Description         types.String `tfsdk:"description"`
-	SyncMethod          types.String `tfsdk:"sync_method"`
-	Parent              types.String `tfsdk:"parent"`
-	NativeIdentityStore types.String `tfsdk:"native_identity_store"`
-	IdentityStores      types.Set    `tfsdk:"identity_stores"`
-	Owners              types.Set    `tfsdk:"owners"`
+	Id          types.String `tfsdk:"id"`
+	Name        types.String `tfsdk:"name"`
+	Description types.String `tfsdk:"description"`
+	SyncMethod  types.String `tfsdk:"sync_method"`
+	Parent      types.String `tfsdk:"parent"`
+	Owners      types.Set    `tfsdk:"owners"`
 }
 
 type DataSourceDataSource struct {
-	client *sdk.RaitoClient
+	client *sdk.CollibraClient
 }
 
 func NewDataSourceDataSource() datasource.DataSource {
@@ -81,23 +78,6 @@ func (d *DataSourceDataSource) Schema(_ context.Context, _ datasource.SchemaRequ
 				Description:         "The ID of the parent data source, if applicable",
 				MarkdownDescription: "The ID of the parent data source, if applicable",
 			},
-			"native_identity_store": schema.StringAttribute{
-				Required:            false,
-				Optional:            false,
-				Computed:            true,
-				Sensitive:           false,
-				Description:         "The ID of the native identity store",
-				MarkdownDescription: "The ID of the native identity store",
-			},
-			"identity_stores": schema.SetAttribute{
-				ElementType:         types.StringType,
-				Required:            false,
-				Optional:            false,
-				Computed:            true,
-				Sensitive:           false,
-				Description:         "The IDs of the identity stores that also link to the data source",
-				MarkdownDescription: "The IDs of the identity stores that also link to the data source",
-			},
 			"owners": schema.SetAttribute{
 				ElementType:         types.StringType,
 				Required:            false,
@@ -124,42 +104,16 @@ func (d *DataSourceDataSource) Read(ctx context.Context, request datasource.Read
 
 	name := data.Name.ValueString()
 
-	cancelCtx, cancelFunc := context.WithCancel(ctx)
-	defer cancelFunc()
+	dsSeq := d.client.DataSource().ListDataSources(ctx, services.WithDataSourceListSearch(&name))
 
-	dsChan := d.client.DataSource().ListDataSources(cancelCtx, services.WithDataSourceListSearch(&name))
-
-	for ds := range dsChan {
-		if ds.HasError() {
-			response.Diagnostics.AddError("Failed to list data sources", ds.GetError().Error())
+	for dsItem, err := range dsSeq {
+		if err != nil {
+			response.Diagnostics.AddError("Failed to list data sources", err.Error())
 
 			return
 		}
 
-		dsItem := ds.GetItem()
-
 		if dsItem.Name == name {
-			identityStores, err := d.client.DataSource().ListIdentityStores(cancelCtx, dsItem.Id)
-			if err != nil {
-				response.Diagnostics.AddError("Failed to list identity stores", err.Error())
-
-				return
-			}
-
-			var nativeIs *string
-			isIds := make([]attr.Value, 0, len(identityStores))
-
-			for i, identityStore := range identityStores {
-				if identityStore.Native {
-					nativeIs = &identityStores[i].Id
-				} else if !identityStore.Master {
-					isIds = append(isIds, types.StringValue(identityStore.Id))
-				}
-			}
-
-			isAttr, diagnostic := types.SetValue(types.StringType, isIds)
-			response.Diagnostics.Append(diagnostic...)
-
 			var parentId *string
 			if dsItem.Parent != nil {
 				parentId = &dsItem.Parent.Id
@@ -169,8 +123,6 @@ func (d *DataSourceDataSource) Read(ctx context.Context, request datasource.Read
 			data.Description = types.StringValue(dsItem.Description)
 			data.SyncMethod = types.StringValue(string(dsItem.SyncMethod))
 			data.Parent = types.StringPointerValue(parentId)
-			data.NativeIdentityStore = types.StringPointerValue(nativeIs)
-			data.IdentityStores = isAttr
 
 			owners, diagn := getOwners(ctx, dsItem.Id, d.client)
 			response.Diagnostics.Append(diagn...)
@@ -193,12 +145,12 @@ func (d *DataSourceDataSource) Configure(_ context.Context, req datasource.Confi
 		return
 	}
 
-	client, ok := req.ProviderData.(*sdk.RaitoClient)
+	client, ok := req.ProviderData.(*sdk.CollibraClient)
 
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
-			fmt.Sprintf("Expected *sdk.RaitoClient, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf("Expected *sdk.CollibraClient, got: %T. Please report this issue to the provider developers.", req.ProviderData),
 		)
 
 		return
@@ -207,7 +159,7 @@ func (d *DataSourceDataSource) Configure(_ context.Context, req datasource.Confi
 	if client == nil {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
-			"Expected *sdk.RaitoClient, not to be nil.",
+			"Expected *sdk.CollibraClient, not to be nil.",
 		)
 
 		return

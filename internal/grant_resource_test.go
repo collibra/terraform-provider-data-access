@@ -22,64 +22,64 @@ func TestAccGrantResource(t *testing.T) {
 			Steps: []resource.TestStep{
 				{
 					Config: providerConfig + `
-data "raito_datasource" "ds" {
+data "collibra-access-governance_datasource" "ds" {
     name = "Snowflake"
 }
 
-resource "raito_grant" "test" {
+resource "collibra-access-governance_grant" "test" {
 	name        = "tfTestGrant"
     description = "test description"
 	data_source = [
 		{  
-			data_source = data.raito_datasource.ds.id
+			data_source = data.collibra-access-governance_datasource.ds.id
 			type = "role"
 		}
 	]
 	what_data_objects = [
 		{
 			fullname = "MASTER_DATA.SALES"
-			data_source = data.raito_datasource.ds.id
+			data_source = data.collibra-access-governance_datasource.ds.id
 		}
 	]
 	who = [
 		{
-			"user": "terraform@raito.io"
+			"user": "terraform-acc-test-1@collibra.com"
 		}
 	]
 }
 `,
 					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("raito_grant.test", "name", "tfTestGrant"),
-						resource.TestCheckResourceAttr("raito_grant.test", "description", "test description"),
-						resource.TestCheckResourceAttrPair("raito_grant.test", "data_source.0.data_source", "data.raito_datasource.ds", "id"),
-						resource.TestCheckResourceAttr("raito_grant.test", "what_data_objects.#", "1"),
-						resource.TestCheckResourceAttr("raito_grant.test", "what_data_objects.0.fullname", "MASTER_DATA.SALES"),
-						resource.TestCheckResourceAttr("raito_grant.test", "who.#", "1"),
-						resource.TestCheckResourceAttr("raito_grant.test", "who.0.user", "terraform@raito.io"),
-						resource.TestCheckResourceAttr("raito_grant.test", "who_locked", "true"),
-						resource.TestCheckResourceAttr("raito_grant.test", "inheritance_locked", "false"),
-						resource.TestCheckResourceAttr("raito_grant.test", "what_locked", "true"),
-						resource.TestCheckResourceAttr("raito_grant.test", "category", "default"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.test", "name", "tfTestGrant"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.test", "description", "test description"),
+						resource.TestCheckResourceAttrPair("collibra-access-governance_grant.test", "data_source.0.data_source", "data.collibra-access-governance_datasource.ds", "id"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.test", "what_data_objects.#", "1"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.test", "what_data_objects.0.fullname", "MASTER_DATA.SALES"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.test", "who.#", "1"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.test", "who.0.user", "terraform-acc-test-1@collibra.com"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.test", "who_locked", "true"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.test", "inheritance_locked", "false"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.test", "what_locked", "true"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.test", "category", "default"),
 					),
 				},
 				{
-					ResourceName:            "raito_grant.test",
+					ResourceName:            "collibra-access-governance_grant.test",
 					ImportState:             true,
 					ImportStateVerify:       true,
 					ImportStateVerifyIgnore: []string{"who", "what_data_objects"},
 				},
 				{
 					Config: providerConfig + fmt.Sprintf(`
-data "raito_datasource" "ds" {
+data "collibra-access-governance_datasource" "ds" {
     name = "Snowflake"
 }
 
-resource "raito_grant" "test" {
+resource "collibra-access-governance_grant" "test" {
 	name        = "tfTestGrant"
     description = "test description"
 	data_source = [
 		{  
-			data_source = data.raito_datasource.ds.id
+			data_source = data.collibra-access-governance_datasource.ds.id
 			type = "role"
 		}
 	]
@@ -87,45 +87,45 @@ resource "raito_grant" "test" {
 	what_data_objects = [
 		{
 			fullname = "MASTER_DATA.SALES"
-			data_source = data.raito_datasource.ds.id
+			data_source = data.collibra-access-governance_datasource.ds.id
 			permissions: ["SELECT"]
 		}
 	]
 	who = [
 		{
-			"user": "terraform@raito.io"
+			"user": "terraform-acc-test-1@collibra.com"
 		}
 	]
 	inheritance_locked = true
 }
 `),
 					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("raito_grant.test", "name", "tfTestGrant"),
-						resource.TestCheckResourceAttr("raito_grant.test", "description", "test description"),
-						resource.TestCheckResourceAttrPair("raito_grant.test", "data_source.0.data_source", "data.raito_datasource.ds", "id"),
-						resource.TestCheckResourceAttr("raito_grant.test", "what_data_objects.#", "1"),
-						resource.TestCheckResourceAttr("raito_grant.test", "what_data_objects.0.fullname", "MASTER_DATA.SALES"),
-						resource.TestCheckResourceAttr("raito_grant.test", "what_data_objects.0.permissions.#", "1"),
-						resource.TestCheckResourceAttr("raito_grant.test", "what_data_objects.0.permissions.0", "SELECT"),
-						resource.TestCheckResourceAttr("raito_grant.test", "who.#", "1"),
-						resource.TestCheckResourceAttr("raito_grant.test", "who.0.user", "terraform@raito.io"),
-						resource.TestCheckResourceAttr("raito_grant.test", "who_locked", "true"),
-						resource.TestCheckResourceAttr("raito_grant.test", "inheritance_locked", "true"),
-						resource.TestCheckResourceAttr("raito_grant.test", "what_locked", "true"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.test", "name", "tfTestGrant"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.test", "description", "test description"),
+						resource.TestCheckResourceAttrPair("collibra-access-governance_grant.test", "data_source.0.data_source", "data.collibra-access-governance_datasource.ds", "id"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.test", "what_data_objects.#", "1"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.test", "what_data_objects.0.fullname", "MASTER_DATA.SALES"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.test", "what_data_objects.0.permissions.#", "1"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.test", "what_data_objects.0.permissions.0", "SELECT"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.test", "who.#", "1"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.test", "who.0.user", "terraform-acc-test-1@collibra.com"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.test", "who_locked", "true"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.test", "inheritance_locked", "true"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.test", "what_locked", "true"),
 					),
 				},
 				{
 					Config: providerConfig + fmt.Sprintf(`
-data "raito_datasource" "ds" {
+data "collibra-access-governance_datasource" "ds" {
     name = "Snowflake"
 }
 
-resource "raito_grant" "test" {
+resource "collibra-access-governance_grant" "test" {
 	name        = "tfTestGrant"
     description = "test description"
 	data_source = [
 		{  
-			data_source = data.raito_datasource.ds.id
+			data_source = data.collibra-access-governance_datasource.ds.id
 			type = "role"
 		}
 	]
@@ -136,28 +136,28 @@ resource "raito_grant" "test" {
 }
 `),
 					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("raito_grant.test", "name", "tfTestGrant"),
-						resource.TestCheckResourceAttr("raito_grant.test", "description", "test description"),
-						resource.TestCheckResourceAttrPair("raito_grant.test", "data_source.0.data_source", "data.raito_datasource.ds", "id"),
-						resource.TestCheckNoResourceAttr("raito_grant.test", "what_data_objects"),
-						resource.TestCheckNoResourceAttr("raito_grant.test", "who"),
-						resource.TestCheckResourceAttr("raito_grant.test", "who_locked", "true"),
-						resource.TestCheckResourceAttr("raito_grant.test", "inheritance_locked", "true"),
-						resource.TestCheckResourceAttr("raito_grant.test", "what_locked", "true"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.test", "name", "tfTestGrant"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.test", "description", "test description"),
+						resource.TestCheckResourceAttrPair("collibra-access-governance_grant.test", "data_source.0.data_source", "data.collibra-access-governance_datasource.ds", "id"),
+						resource.TestCheckNoResourceAttr("collibra-access-governance_grant.test", "what_data_objects"),
+						resource.TestCheckNoResourceAttr("collibra-access-governance_grant.test", "who"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.test", "who_locked", "true"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.test", "inheritance_locked", "true"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.test", "what_locked", "true"),
 					),
 				},
 				{
 					Config: providerConfig + fmt.Sprintf(`
-data "raito_datasource" "ds" {
+data "collibra-access-governance_datasource" "ds" {
     name = "Snowflake"
 }
 
-resource "raito_grant" "test" {
+resource "collibra-access-governance_grant" "test" {
 	name        = "tfTestGrant"
     description = "test description"
 	data_source = [
 		{  
-			data_source = data.raito_datasource.ds.id
+			data_source = data.collibra-access-governance_datasource.ds.id
 			type = "role"
 		}
 	]
@@ -168,14 +168,14 @@ resource "raito_grant" "test" {
 }
 `),
 					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("raito_grant.test", "name", "tfTestGrant"),
-						resource.TestCheckResourceAttr("raito_grant.test", "description", "test description"),
-						resource.TestCheckResourceAttrPair("raito_grant.test", "data_source.0.data_source", "data.raito_datasource.ds", "id"),
-						resource.TestCheckNoResourceAttr("raito_grant.test", "what_data_objects"),
-						resource.TestCheckNoResourceAttr("raito_grant.test", "who"),
-						resource.TestCheckResourceAttr("raito_grant.test", "who_locked", "false"),
-						resource.TestCheckResourceAttr("raito_grant.test", "inheritance_locked", "false"),
-						resource.TestCheckResourceAttr("raito_grant.test", "what_locked", "false"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.test", "name", "tfTestGrant"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.test", "description", "test description"),
+						resource.TestCheckResourceAttrPair("collibra-access-governance_grant.test", "data_source.0.data_source", "data.collibra-access-governance_datasource.ds", "id"),
+						resource.TestCheckNoResourceAttr("collibra-access-governance_grant.test", "what_data_objects"),
+						resource.TestCheckNoResourceAttr("collibra-access-governance_grant.test", "who"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.test", "who_locked", "false"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.test", "inheritance_locked", "false"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.test", "what_locked", "false"),
 					),
 				},
 			},
@@ -195,122 +195,122 @@ resource "raito_grant" "test" {
 			Steps: []resource.TestStep{
 				{
 					Config: providerConfig + `
-data "raito_datasource" "ds" {
+data "collibra-access-governance_datasource" "ds" {
     name = "Snowflake"
 }
 
-resource "raito_grant" "purpose1" {
+resource "collibra-access-governance_grant" "purpose1" {
 	name = "tfPurpose1-update"
 	description = "updated terraform purpose"
 	state = "Active"
 	data_source = [
 		{  
-			data_source = data.raito_datasource.ds.id
+			data_source = data.collibra-access-governance_datasource.ds.id
 			type = "role"
 		}
 	]
 	who = [
 		{
-			"user": "terraform@raito.io"
+			"user": "terraform-acc-test-1@collibra.com"
 		}
 	]
 	category = "purpose"
 }
 
-resource "raito_grant" "test" {
+resource "collibra-access-governance_grant" "test" {
 	name        = "tfTestGrant"
     description = "test description"
 	data_source = [
 		{  
-			data_source = data.raito_datasource.ds.id
+			data_source = data.collibra-access-governance_datasource.ds.id
 			type = "role"
 		}
 	]
 	what_data_objects = [
 		{
 			fullname = "MASTER_DATA.SALES"
-			data_source = data.raito_datasource.ds.id
+			data_source = data.collibra-access-governance_datasource.ds.id
 		}
 	]
 	who = [
 		{
-			"access_control": raito_grant.purpose1.id
+			"access_control": collibra-access-governance_grant.purpose1.id
 		}
 	]
 }
 `,
 					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("raito_grant.test", "name", "tfTestGrant"),
-						resource.TestCheckResourceAttr("raito_grant.test", "description", "test description"),
-						resource.TestCheckResourceAttrPair("raito_grant.test", "data_source.0.data_source", "data.raito_datasource.ds", "id"),
-						resource.TestCheckResourceAttr("raito_grant.test", "what_data_objects.#", "1"),
-						resource.TestCheckResourceAttr("raito_grant.test", "what_data_objects.0.fullname", "MASTER_DATA.SALES"),
-						resource.TestCheckResourceAttr("raito_grant.test", "who.#", "1"),
-						resource.TestCheckResourceAttrPair("raito_grant.test", "who.0.access_control", "raito_grant.purpose1", "id"),
-						resource.TestCheckResourceAttr("raito_grant.test", "who_locked", "false"),
-						resource.TestCheckResourceAttr("raito_grant.test", "inheritance_locked", "true"),
-						resource.TestCheckResourceAttr("raito_grant.test", "what_locked", "true"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.test", "name", "tfTestGrant"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.test", "description", "test description"),
+						resource.TestCheckResourceAttrPair("collibra-access-governance_grant.test", "data_source.0.data_source", "data.collibra-access-governance_datasource.ds", "id"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.test", "what_data_objects.#", "1"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.test", "what_data_objects.0.fullname", "MASTER_DATA.SALES"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.test", "who.#", "1"),
+						resource.TestCheckResourceAttrPair("collibra-access-governance_grant.test", "who.0.access_control", "collibra-access-governance_grant.purpose1", "id"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.test", "who_locked", "false"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.test", "inheritance_locked", "true"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.test", "what_locked", "true"),
 					),
 				},
 				{
 					Config: providerConfig + `
-data "raito_datasource" "ds" {
+data "collibra-access-governance_datasource" "ds" {
     name = "Snowflake"
 }
 
-resource "raito_grant" "purpose1" {
+resource "collibra-access-governance_grant" "purpose1" {
 	name = "tfPurpose1-update"
 	description = "updated terraform purpose"
 	state = "Active"
 	data_source = [
 		{  
-			data_source = data.raito_datasource.ds.id
+			data_source = data.collibra-access-governance_datasource.ds.id
 			type = "role"
 		}
 	]
 	who = [
 		{
-			"user": "terraform@raito.io"
+			"user": "terraform-acc-test-1@collibra.com"
 		}
 	]
 	category = "purpose"
 }
 
-resource "raito_grant" "test" {
+resource "collibra-access-governance_grant" "test" {
 	name        = "tfTestGrant"
     description = "test description"
 	data_source = [
 		{  
-			data_source = data.raito_datasource.ds.id
+			data_source = data.collibra-access-governance_datasource.ds.id
 			type = "role"
 		}
 	]
 	what_data_objects = [
 		{
 			fullname = "MASTER_DATA.SALES"
-			data_source = data.raito_datasource.ds.id
+			data_source = data.collibra-access-governance_datasource.ds.id
 		}
 	]
 	who = [
 		{
-			"access_control": raito_grant.purpose1.id
+			"access_control": collibra-access-governance_grant.purpose1.id
 		},
 		{
-			"user": "terraform@raito.io"
+			"user": "terraform-acc-test-1@collibra.com"
 		}
 	]
 }
 `,
 					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("raito_grant.test", "name", "tfTestGrant"),
-						resource.TestCheckResourceAttr("raito_grant.test", "description", "test description"),
-						resource.TestCheckResourceAttrPair("raito_grant.test", "data_source.0.data_source", "data.raito_datasource.ds", "id"),
-						resource.TestCheckResourceAttr("raito_grant.test", "what_data_objects.#", "1"),
-						resource.TestCheckResourceAttr("raito_grant.test", "what_data_objects.0.fullname", "MASTER_DATA.SALES"),
-						resource.TestCheckResourceAttr("raito_grant.test", "who.#", "2"),
-						resource.TestCheckResourceAttr("raito_grant.test", "who_locked", "true"),
-						resource.TestCheckResourceAttr("raito_grant.test", "inheritance_locked", "true"),
-						resource.TestCheckResourceAttr("raito_grant.test", "what_locked", "true"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.test", "name", "tfTestGrant"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.test", "description", "test description"),
+						resource.TestCheckResourceAttrPair("collibra-access-governance_grant.test", "data_source.0.data_source", "data.collibra-access-governance_datasource.ds", "id"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.test", "what_data_objects.#", "1"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.test", "what_data_objects.0.fullname", "MASTER_DATA.SALES"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.test", "who.#", "2"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.test", "who_locked", "true"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.test", "inheritance_locked", "true"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.test", "what_locked", "true"),
 					),
 				},
 			},
@@ -330,7 +330,7 @@ resource "raito_grant" "test" {
 			Steps: []resource.TestStep{
 				{
 					Config: providerConfig + `
-data "raito_datasource" "ds" {
+data "collibra-access-governance_datasource" "ds" {
     name = "Snowflake"
 }
 
@@ -340,12 +340,12 @@ locals {
 	})
 }
 
-resource "raito_grant" "abac_grant" {
+resource "collibra-access-governance_grant" "abac_grant" {
 	name        = "tfTestGrant"
     description = "test description"
 	data_source = [
 		{  
-			data_source = data.raito_datasource.ds.id
+			data_source = data.collibra-access-governance_datasource.ds.id
 			type = "role"
 		}
 	]
@@ -354,44 +354,44 @@ resource "raito_grant" "abac_grant" {
 		do_types = ["table"]
 		scope = [
 			{
-				data_source: data.raito_datasource.ds.id
+				data_source: data.collibra-access-governance_datasource.ds.id
 				fullname: "MASTER_DATA"
 			}
 		]
     }
 	who = [
 		{
-			"user": "terraform@raito.io"
+			"user": "terraform-acc-test-1@collibra.com"
 		}
 	]
 }
 `,
 					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("raito_grant.abac_grant", "name", "tfTestGrant"),
-						resource.TestCheckResourceAttr("raito_grant.abac_grant", "description", "test description"),
-						resource.TestCheckResourceAttrPair("raito_grant.abac_grant", "data_source.0.data_source", "data.raito_datasource.ds", "id"),
-						resource.TestCheckNoResourceAttr("raito_grant.abac_grant", "what_data_objects"),
-						resource.TestCheckResourceAttr("raito_grant.abac_grant", "what_abac_rule.rule", "{\"literal\":true}"),
-						resource.TestCheckResourceAttr("raito_grant.abac_grant", "what_abac_rule.scope.#", "1"),
-						resource.TestCheckResourceAttr("raito_grant.abac_grant", "what_abac_rule.scope.0.fullname", "MASTER_DATA"),
-						resource.TestCheckResourceAttrPair("raito_grant.abac_grant", "what_abac_rule.scope.0.data_source", "data.raito_datasource.ds", "id"),
-						resource.TestCheckResourceAttr("raito_grant.abac_grant", "what_abac_rule.global_permissions.#", "1"),
-						resource.TestCheckResourceAttr("raito_grant.abac_grant", "what_abac_rule.global_permissions.0", "READ"),
-						resource.TestCheckResourceAttr("raito_grant.abac_grant", "who.#", "1"),
-						resource.TestCheckResourceAttr("raito_grant.abac_grant", "who.0.user", "terraform@raito.io"),
-						resource.TestCheckResourceAttr("raito_grant.abac_grant", "who_locked", "true"),
-						resource.TestCheckResourceAttr("raito_grant.abac_grant", "what_locked", "true"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.abac_grant", "name", "tfTestGrant"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.abac_grant", "description", "test description"),
+						resource.TestCheckResourceAttrPair("collibra-access-governance_grant.abac_grant", "data_source.0.data_source", "data.collibra-access-governance_datasource.ds", "id"),
+						resource.TestCheckNoResourceAttr("collibra-access-governance_grant.abac_grant", "what_data_objects"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.abac_grant", "what_abac_rule.rule", "{\"literal\":true}"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.abac_grant", "what_abac_rule.scope.#", "1"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.abac_grant", "what_abac_rule.scope.0.fullname", "MASTER_DATA"),
+						resource.TestCheckResourceAttrPair("collibra-access-governance_grant.abac_grant", "what_abac_rule.scope.0.data_source", "data.collibra-access-governance_datasource.ds", "id"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.abac_grant", "what_abac_rule.global_permissions.#", "1"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.abac_grant", "what_abac_rule.global_permissions.0", "READ"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.abac_grant", "who.#", "1"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.abac_grant", "who.0.user", "terraform-acc-test-1@collibra.com"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.abac_grant", "who_locked", "true"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.abac_grant", "what_locked", "true"),
 					),
 				},
 				{
-					ResourceName:            "raito_grant.abac_grant",
+					ResourceName:            "collibra-access-governance_grant.abac_grant",
 					ImportState:             true,
 					ImportStateVerify:       true,
 					ImportStateVerifyIgnore: []string{"who", "what_data_objects"},
 				},
 				{
 					Config: providerConfig + `
-data "raito_datasource" "ds" {
+data "collibra-access-governance_datasource" "ds" {
     name = "Snowflake"
 }
 
@@ -401,12 +401,12 @@ locals {
 	})
 }
 
-resource "raito_grant" "abac_grant" {
+resource "collibra-access-governance_grant" "abac_grant" {
 	name        = "tfTestGrant"
     description = "test description"
 	data_source = [
 		{  
-			data_source = data.raito_datasource.ds.id
+			data_source = data.collibra-access-governance_datasource.ds.id
 			type = "role"
 		}
 	]
@@ -415,11 +415,11 @@ resource "raito_grant" "abac_grant" {
 		scope = [
 			{
 				fullname: "MASTER_DATA.PERSON"
-				data_source: data.raito_datasource.ds.id
+				data_source: data.collibra-access-governance_datasource.ds.id
 			},
 			{
 				fullname: "MASTER_DATA.SALES"
-				data_source: data.raito_datasource.ds.id
+				data_source: data.collibra-access-governance_datasource.ds.id
 			}
 		]
 		global_permissions = ["WRITE"]
@@ -428,28 +428,28 @@ resource "raito_grant" "abac_grant" {
     }
 	who = [
 		{
-			"user": "terraform@raito.io"
+			"user": "terraform-acc-test-1@collibra.com"
 		}
 	]
 }
 `,
 					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("raito_grant.abac_grant", "name", "tfTestGrant"),
-						resource.TestCheckResourceAttr("raito_grant.abac_grant", "description", "test description"),
-						resource.TestCheckResourceAttrPair("raito_grant.abac_grant", "data_source.0.data_source", "data.raito_datasource.ds", "id"),
-						resource.TestCheckNoResourceAttr("raito_grant.abac_grant", "what_data_objects"),
-						resource.TestCheckResourceAttr("raito_grant.abac_grant", "what_abac_rule.rule", "{\"literal\":true}"),
-						resource.TestCheckResourceAttr("raito_grant.abac_grant", "what_abac_rule.scope.#", "2"),
-						resource.TestCheckResourceAttr("raito_grant.abac_grant", "what_abac_rule.global_permissions.#", "1"),
-						resource.TestCheckResourceAttr("raito_grant.abac_grant", "what_abac_rule.global_permissions.0", "WRITE"),
-						resource.TestCheckResourceAttr("raito_grant.abac_grant", "what_abac_rule.permissions.#", "1"),
-						resource.TestCheckResourceAttr("raito_grant.abac_grant", "what_abac_rule.permissions.0", "SELECT"),
-						resource.TestCheckResourceAttr("raito_grant.abac_grant", "what_abac_rule.do_types.#", "2"),
-						resource.TestCheckResourceAttr("raito_grant.abac_grant", "who.#", "1"),
-						resource.TestCheckResourceAttr("raito_grant.abac_grant", "who.0.user", "terraform@raito.io"),
-						resource.TestCheckResourceAttr("raito_grant.abac_grant", "who_locked", "true"),
-						resource.TestCheckResourceAttr("raito_grant.abac_grant", "inheritance_locked", "false"),
-						resource.TestCheckResourceAttr("raito_grant.abac_grant", "what_locked", "true"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.abac_grant", "name", "tfTestGrant"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.abac_grant", "description", "test description"),
+						resource.TestCheckResourceAttrPair("collibra-access-governance_grant.abac_grant", "data_source.0.data_source", "data.collibra-access-governance_datasource.ds", "id"),
+						resource.TestCheckNoResourceAttr("collibra-access-governance_grant.abac_grant", "what_data_objects"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.abac_grant", "what_abac_rule.rule", "{\"literal\":true}"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.abac_grant", "what_abac_rule.scope.#", "2"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.abac_grant", "what_abac_rule.global_permissions.#", "1"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.abac_grant", "what_abac_rule.global_permissions.0", "WRITE"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.abac_grant", "what_abac_rule.permissions.#", "1"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.abac_grant", "what_abac_rule.permissions.0", "SELECT"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.abac_grant", "what_abac_rule.do_types.#", "2"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.abac_grant", "who.#", "1"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.abac_grant", "who.0.user", "terraform-acc-test-1@collibra.com"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.abac_grant", "who_locked", "true"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.abac_grant", "inheritance_locked", "false"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.abac_grant", "what_locked", "true"),
 					),
 				},
 			},
@@ -469,7 +469,7 @@ resource "raito_grant" "abac_grant" {
 			Steps: []resource.TestStep{
 				{
 					Config: providerConfig + `
-data "raito_datasource" "ds" {
+data "collibra-access-governance_datasource" "ds" {
     name = "Snowflake"
 }
 
@@ -499,46 +499,46 @@ locals {
 	})
 }
 
-resource "raito_grant" "who_abac_grant" {
+resource "collibra-access-governance_grant" "who_abac_grant" {
 	name        = "tfTestGrant"
     description = "test description"
 	data_source = [
 		{  
-			data_source = data.raito_datasource.ds.id
+			data_source = data.collibra-access-governance_datasource.ds.id
 			type = "role"
 		}
 	]
 	what_data_objects = [
 		{
 			fullname = "MASTER_DATA.SALES"
-			data_source = data.raito_datasource.ds.id
+			data_source = data.collibra-access-governance_datasource.ds.id
 		}
 	]
 	who_abac_rule = local.abac_rule
 }
 `,
 					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("raito_grant.who_abac_grant", "name", "tfTestGrant"),
-						resource.TestCheckResourceAttr("raito_grant.who_abac_grant", "description", "test description"),
-						resource.TestCheckResourceAttrPair("raito_grant.who_abac_grant", "data_source.0.data_source", "data.raito_datasource.ds", "id"),
-						resource.TestCheckResourceAttr("raito_grant.who_abac_grant", "what_data_objects.#", "1"),
-						resource.TestCheckResourceAttr("raito_grant.who_abac_grant", "what_data_objects.0.fullname", "MASTER_DATA.SALES"),
-						resource.TestCheckNoResourceAttr("raito_grant.who_abac_grant", "who"),
-						resource.TestCheckResourceAttr("raito_grant.who_abac_grant", "who_abac_rule", "{\"aggregator\":{\"operands\":[{\"aggregator\":{\"operands\":[{\"comparison\":{\"leftOperand\":\"Test\",\"operator\":\"HasTag\",\"rightOperand\":{\"literal\":{\"string\":\"test\"}}}}],\"operator\":\"And\"}}],\"operator\":\"Or\"}}"),
-						resource.TestCheckResourceAttr("raito_grant.who_abac_grant", "who_locked", "true"),
-						resource.TestCheckResourceAttr("raito_grant.who_abac_grant", "inheritance_locked", "false"),
-						resource.TestCheckResourceAttr("raito_grant.who_abac_grant", "what_locked", "true"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.who_abac_grant", "name", "tfTestGrant"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.who_abac_grant", "description", "test description"),
+						resource.TestCheckResourceAttrPair("collibra-access-governance_grant.who_abac_grant", "data_source.0.data_source", "data.collibra-access-governance_datasource.ds", "id"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.who_abac_grant", "what_data_objects.#", "1"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.who_abac_grant", "what_data_objects.0.fullname", "MASTER_DATA.SALES"),
+						resource.TestCheckNoResourceAttr("collibra-access-governance_grant.who_abac_grant", "who"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.who_abac_grant", "who_abac_rule", "{\"aggregator\":{\"operands\":[{\"aggregator\":{\"operands\":[{\"comparison\":{\"leftOperand\":\"Test\",\"operator\":\"HasTag\",\"rightOperand\":{\"literal\":{\"string\":\"test\"}}}}],\"operator\":\"And\"}}],\"operator\":\"Or\"}}"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.who_abac_grant", "who_locked", "true"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.who_abac_grant", "inheritance_locked", "false"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.who_abac_grant", "what_locked", "true"),
 					),
 				},
 				{
-					ResourceName:            "raito_grant.who_abac_grant",
+					ResourceName:            "collibra-access-governance_grant.who_abac_grant",
 					ImportState:             true,
 					ImportStateVerify:       true,
 					ImportStateVerifyIgnore: []string{"who", "what_data_objects"},
 				},
 				{
 					Config: providerConfig + `
-data "raito_datasource" "ds" {
+data "collibra-access-governance_datasource" "ds" {
     name = "Snowflake"
 }
 
@@ -568,19 +568,19 @@ locals {
 	})
 }
 
-resource "raito_grant" "who_abac_grant" {
+resource "collibra-access-governance_grant" "who_abac_grant" {
 	name        = "tfTestGrant"
     description = "test description"
 	data_source = [
 		{  
-			data_source = data.raito_datasource.ds.id
+			data_source = data.collibra-access-governance_datasource.ds.id
 			type = "role"
 		}
 	]
 	what_data_objects = [
 		{
 			fullname = "MASTER_DATA.SALES"
-			data_source = data.raito_datasource.ds.id
+			data_source = data.collibra-access-governance_datasource.ds.id
 		}
 	]
 	who_abac_rule = local.abac_rule
@@ -588,16 +588,16 @@ resource "raito_grant" "who_abac_grant" {
 }
 `,
 					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("raito_grant.who_abac_grant", "name", "tfTestGrant"),
-						resource.TestCheckResourceAttr("raito_grant.who_abac_grant", "description", "test description"),
-						resource.TestCheckResourceAttrPair("raito_grant.who_abac_grant", "data_source.0.data_source", "data.raito_datasource.ds", "id"),
-						resource.TestCheckResourceAttr("raito_grant.who_abac_grant", "what_data_objects.#", "1"),
-						resource.TestCheckResourceAttr("raito_grant.who_abac_grant", "what_data_objects.0.fullname", "MASTER_DATA.SALES"),
-						resource.TestCheckNoResourceAttr("raito_grant.who_abac_grant", "who"),
-						resource.TestCheckResourceAttr("raito_grant.who_abac_grant", "who_abac_rule", "{\"aggregator\":{\"operands\":[{\"aggregator\":{\"operands\":[{\"comparison\":{\"leftOperand\":\"Test\",\"operator\":\"HasTag\",\"rightOperand\":{\"literal\":{\"string\":\"test\"}}}}],\"operator\":\"And\"}}],\"operator\":\"Or\"}}"),
-						resource.TestCheckResourceAttr("raito_grant.who_abac_grant", "who_locked", "true"),
-						resource.TestCheckResourceAttr("raito_grant.who_abac_grant", "inheritance_locked", "true"),
-						resource.TestCheckResourceAttr("raito_grant.who_abac_grant", "what_locked", "true"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.who_abac_grant", "name", "tfTestGrant"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.who_abac_grant", "description", "test description"),
+						resource.TestCheckResourceAttrPair("collibra-access-governance_grant.who_abac_grant", "data_source.0.data_source", "data.collibra-access-governance_datasource.ds", "id"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.who_abac_grant", "what_data_objects.#", "1"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.who_abac_grant", "what_data_objects.0.fullname", "MASTER_DATA.SALES"),
+						resource.TestCheckNoResourceAttr("collibra-access-governance_grant.who_abac_grant", "who"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.who_abac_grant", "who_abac_rule", "{\"aggregator\":{\"operands\":[{\"aggregator\":{\"operands\":[{\"comparison\":{\"leftOperand\":\"Test\",\"operator\":\"HasTag\",\"rightOperand\":{\"literal\":{\"string\":\"test\"}}}}],\"operator\":\"And\"}}],\"operator\":\"Or\"}}"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.who_abac_grant", "who_locked", "true"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.who_abac_grant", "inheritance_locked", "true"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.who_abac_grant", "what_locked", "true"),
 					),
 				},
 			},
