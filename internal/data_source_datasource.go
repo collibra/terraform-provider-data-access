@@ -104,10 +104,7 @@ func (d *DataSourceDataSource) Read(ctx context.Context, request datasource.Read
 
 	name := data.Name.ValueString()
 
-	cancelCtx, cancelFunc := context.WithCancel(ctx)
-	defer cancelFunc()
-
-	dsSeq := d.client.DataSource().ListDataSources(cancelCtx, services.WithDataSourceListSearch(&name))
+	dsSeq := d.client.DataSource().ListDataSources(ctx, services.WithDataSourceListSearch(&name))
 
 	for dsItem, err := range dsSeq {
 		if err != nil {

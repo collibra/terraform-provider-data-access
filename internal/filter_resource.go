@@ -214,10 +214,7 @@ func (f *FilterResource) Schema(ctx context.Context, request resource.SchemaRequ
 
 func readFilterResourceTable(ctx context.Context, client *sdk.CollibraClient, data *FilterResourceModel) (diagnostics diag.Diagnostics) {
 	if !data.Table.IsNull() {
-		cancelCtx, cancelFunc := context.WithCancel(ctx)
-		defer cancelFunc()
-
-		whatItems := client.AccessControl().GetAccessControlWhatDataObjectList(cancelCtx, data.Id.ValueString())
+		whatItems := client.AccessControl().GetAccessControlWhatDataObjectList(ctx, data.Id.ValueString())
 
 		first := true
 

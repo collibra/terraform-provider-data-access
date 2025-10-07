@@ -142,11 +142,7 @@ func (g *GlobalRoleAssignmentResource) Read(ctx context.Context, request resourc
 	// Read role assignment
 	roleName, userId := _getRoleAndUserFromId(stateData.Id.ValueString())
 
-	cancelCtx, cancel := context.WithCancel(ctx)
-
-	defer cancel()
-
-	roleAssignments := g.client.Role().ListRoleAssignments(cancelCtx, services.WithRoleAssignmentListFilter(
+	roleAssignments := g.client.Role().ListRoleAssignments(ctx, services.WithRoleAssignmentListFilter(
 		&types2.RoleAssignmentFilterInput{
 			Role: utils.Ptr(roleId(roleName)),
 			User: &userId,

@@ -247,10 +247,7 @@ func (m *MaskResourceModel) abacWhatFromAccessControl(ctx context.Context, clien
 
 	var scopeItems []attr.Value //nolint:prealloc
 
-	cancelCtx, cancelFunc := context.WithCancel(ctx)
-	defer cancelFunc()
-
-	for scopeItem, err := range client.AccessControl().GetAccessControlAbacWhatScope(cancelCtx, ap.Id) {
+	for scopeItem, err := range client.AccessControl().GetAccessControlAbacWhatScope(ctx, ap.Id) {
 		if err != nil {
 			diagnostics.AddError("Failed to load access provider abac scope", err.Error())
 
@@ -384,12 +381,9 @@ func (m *MaskResource) Schema(_ context.Context, _ resource.SchemaRequest, respo
 
 func readMaskResourceColumns(ctx context.Context, client *sdk.CollibraClient, data *MaskResourceModel) (diagnostics diag.Diagnostics) {
 	if !data.Columns.IsNull() {
-		cancelCtx, cancelFunc := context.WithCancel(ctx)
-		defer cancelFunc()
-
 		stateWhatItems := make([]attr.Value, 0)
 
-		for whatItem, err := range client.AccessControl().GetAccessControlWhatDataObjectList(cancelCtx, data.Id.ValueString()) {
+		for whatItem, err := range client.AccessControl().GetAccessControlWhatDataObjectList(ctx, data.Id.ValueString()) {
 			if err != nil {
 				diagnostics.AddError("Fauled to get what data objects", err.Error())
 

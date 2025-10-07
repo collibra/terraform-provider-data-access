@@ -354,10 +354,7 @@ func (m *GrantResourceModel) abacWhatFromAccessControl(ctx context.Context, clie
 
 	var scopeItems []attr.Value //nolint:prealloc
 
-	cancelCtx, cancelFunc := context.WithCancel(ctx)
-	defer cancelFunc()
-
-	for scopeItem, err := range client.AccessControl().GetAccessControlAbacWhatScope(cancelCtx, ac.Id) {
+	for scopeItem, err := range client.AccessControl().GetAccessControlAbacWhatScope(ctx, ac.Id) {
 		if err != nil {
 			diagnostics.AddError("Failed to load access provider abac scope", err.Error())
 
@@ -634,10 +631,7 @@ func (g *GrantResource) Schema(_ context.Context, _ resource.SchemaRequest, resp
 
 func readGrantWhatItems(ctx context.Context, client *sdk.CollibraClient, data *GrantResourceModel) (diagnostics diag.Diagnostics) {
 	if !data.WhatDataObjects.IsNull() {
-		cancelCtx, cancelFunc := context.WithCancel(ctx)
-		defer cancelFunc()
-
-		whatItems := client.AccessControl().GetAccessControlWhatDataObjectList(cancelCtx, data.Id.ValueString())
+		whatItems := client.AccessControl().GetAccessControlWhatDataObjectList(ctx, data.Id.ValueString())
 
 		stateWhatItems := make([]attr.Value, 0)
 

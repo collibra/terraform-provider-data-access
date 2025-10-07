@@ -445,11 +445,7 @@ func (a *AccessControlResource[T, ApModel]) read(ctx context.Context, data ApMod
 }
 
 func (a *AccessControlResource[T, ApModel]) readWhoItems(ctx context.Context, apModel *AccessControlResourceModel, response *resource.ReadResponse, definedPromises set.Set[string], stateWhoItems []attr.Value) ([]attr.Value, bool) {
-	// Get all who-items. Ignore implemented promises.
-	cancelCtx, cancelFn := context.WithCancel(ctx)
-	defer cancelFn()
-
-	whoItems := a.client.AccessControl().GetAccessControlWhoList(cancelCtx, apModel.Id.ValueString())
+	whoItems := a.client.AccessControl().GetAccessControlWhoList(ctx, apModel.Id.ValueString())
 	for whoItem, err := range whoItems {
 		if err != nil {
 			response.Diagnostics.AddError("Failed to read who-item from access provider", err.Error())
@@ -572,10 +568,7 @@ func (a *AccessControlResource[T, ApModel]) update(ctx context.Context, data ApM
 }
 
 func (a *AccessControlResource[T, ApModel]) updateGetWhoItems(ctx context.Context, id string, response *resource.UpdateResponse, definedPromises set.Set[string], input accessGovernanceType.AccessControlInput) bool {
-	cancelCtx, cancelFn := context.WithCancel(ctx)
-	defer cancelFn()
-
-	whoItems := a.client.AccessControl().GetAccessControlWhoList(cancelCtx, id)
+	whoItems := a.client.AccessControl().GetAccessControlWhoList(ctx, id)
 	for whoItem, err := range whoItems {
 		if err != nil {
 			response.Diagnostics.AddError("Failed to read who-item from access provider", err.Error())
@@ -741,10 +734,7 @@ func (a *AccessControlResource[T, ApModel]) ValidateConfig(ctx context.Context, 
 }
 
 func (a *AccessControlResource[T, ApModel]) readOwners(ctx context.Context, apId string) (_ types.Set, diagnostics diag.Diagnostics) {
-	cancelCtx, cancel := context.WithCancel(ctx)
-	defer cancel()
-
-	roleAssignments := a.client.Role().ListRoleAssignmentsOnAccessControl(cancelCtx, apId, services.WithRoleAssignmentListFilter(&accessGovernanceType.RoleAssignmentFilterInput{
+	roleAssignments := a.client.Role().ListRoleAssignmentsOnAccessControl(ctx, apId, services.WithRoleAssignmentListFilter(&accessGovernanceType.RoleAssignmentFilterInput{
 		Role: utils.Ptr(ownerRole),
 	}))
 
@@ -1124,10 +1114,7 @@ func (p AccessControlWhatAbacParser) ToWhatAbacRuleObject(ctx context.Context, c
 
 	var scopeItems []attr.Value //nolint:prealloc
 
-	cancelCtx, cancelFunc := context.WithCancel(ctx)
-	defer cancelFunc()
-
-	for scopeItem, err := range client.AccessControl().GetAccessControlAbacWhatScope(cancelCtx, ac.Id) {
+	for scopeItem, err := range client.AccessControl().GetAccessControlAbacWhatScope(ctx, ac.Id) {
 		if err != nil {
 			diagnostics.AddError("Failed to load access provider abac scope", err.Error())
 
