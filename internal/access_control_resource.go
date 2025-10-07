@@ -35,7 +35,7 @@ const (
 	lockMsg = "Locked by terraform"
 )
 
-type AccessProviderResourceModel struct {
+type AccessControlResourceModel struct {
 	Id                types.String
 	Name              types.String
 	Description       types.String
@@ -48,20 +48,20 @@ type AccessProviderResourceModel struct {
 	Owners types.Set
 }
 
-type AccessProviderModel[T any] interface {
+type AccessControlModel[T any] interface {
 	*T
-	GetAccessProviderResourceModel() *AccessProviderResourceModel
-	SetAccessProviderResourceModel(model *AccessProviderResourceModel)
-	ToAccessProviderInput(ctx context.Context, client *sdk.CollibraClient, result *accessGovernanceType.AccessControlInput) diag.Diagnostics
-	FromAccessProvider(ctx context.Context, client *sdk.CollibraClient, input *accessGovernanceType.AccessControl) diag.Diagnostics
+	GetAccessControlResourceModel() *AccessControlResourceModel
+	SetAccessControlResourceModel(model *AccessControlResourceModel)
+	ToAccessControlInput(ctx context.Context, client *sdk.CollibraClient, result *accessGovernanceType.AccessControlInput) diag.Diagnostics
+	FromAccessControl(ctx context.Context, client *sdk.CollibraClient, input *accessGovernanceType.AccessControl) diag.Diagnostics
 	UpdateOwners(owners types.Set)
 }
 
-type ReadHook[T any, ApModel AccessProviderModel[T]] func(ctx context.Context, client *sdk.CollibraClient, data ApModel) diag.Diagnostics
-type ValidationHook[T any, ApModel AccessProviderModel[T]] func(ctx context.Context, data ApModel) diag.Diagnostics
-type PlanModifierHook[T any, ApModel AccessProviderModel[T]] func(ctx context.Context, data ApModel) (ApModel, diag.Diagnostics)
+type ReadHook[T any, ApModel AccessControlModel[T]] func(ctx context.Context, client *sdk.CollibraClient, data ApModel) diag.Diagnostics
+type ValidationHook[T any, ApModel AccessControlModel[T]] func(ctx context.Context, data ApModel) diag.Diagnostics
+type PlanModifierHook[T any, ApModel AccessControlModel[T]] func(ctx context.Context, data ApModel) (ApModel, diag.Diagnostics)
 
-type AccessProviderResource[T any, ApModel AccessProviderModel[T]] struct {
+type AccessControlResource[T any, ApModel AccessControlModel[T]] struct {
 	client *sdk.CollibraClient
 
 	readHooks         []ReadHook[T, ApModel]
@@ -69,7 +69,7 @@ type AccessProviderResource[T any, ApModel AccessProviderModel[T]] struct {
 	planModifierHooks []PlanModifierHook[T, ApModel]
 }
 
-func (a *AccessProviderResource[T, ApModel]) schema(typeName string) map[string]schema.Attribute {
+func (a *AccessControlResource[T, ApModel]) schema(typeName string) map[string]schema.Attribute {
 	defaultSchema := map[string]schema.Attribute{
 		"id": schema.StringAttribute{
 			Required:            false,
@@ -209,7 +209,7 @@ func (a *AccessProviderResource[T, ApModel]) schema(typeName string) map[string]
 	return defaultSchema
 }
 
-func (a *AccessProviderResource[T, ApModel]) Create(ctx context.Context, request resource.CreateRequest, response *resource.CreateResponse) {
+func (a *AccessControlResource[T, ApModel]) Create(ctx context.Context, request resource.CreateRequest, response *resource.CreateResponse) {
 	var data T
 
 	response.Diagnostics.Append(request.Plan.Get(ctx, &data)...)
@@ -221,36 +221,36 @@ func (a *AccessProviderResource[T, ApModel]) Create(ctx context.Context, request
 	a.create(ctx, &data, response)
 }
 
-func (a *AccessProviderResource[T, ApModel]) create(ctx context.Context, data ApModel, response *resource.CreateResponse) {
+func (a *AccessControlResource[T, ApModel]) create(ctx context.Context, data ApModel, response *resource.CreateResponse) {
 	input := accessGovernanceType.AccessControlInput{}
 
-	apResourceModel := data.GetAccessProviderResourceModel()
+	apResourceModel := data.GetAccessControlResourceModel()
 
 	state := apResourceModel.State
 	owners := apResourceModel.Owners
 
-	response.Diagnostics.Append(data.ToAccessProviderInput(ctx, a.client, &input)...)
+	response.Diagnostics.Append(data.ToAccessControlInput(ctx, a.client, &input)...)
 
 	if response.Diagnostics.HasError() {
 		return
 	}
 
 	// Create the access provider
-	ap, err := a.client.AccessControl().CreateAccessControl(ctx, input)
+	ac, err := a.client.AccessControl().CreateAccessControl(ctx, input)
 	if err != nil {
 		response.Diagnostics.AddError("Failed to create access provider", err.Error())
 
 		return
 	}
 
-	response.Diagnostics.Append(data.FromAccessProvider(ctx, a.client, ap)...)
+	response.Diagnostics.Append(data.FromAccessControl(ctx, a.client, ac)...)
 	response.Diagnostics.Append(response.State.Set(ctx, data)...)
 
 	if response.Diagnostics.HasError() {
 		return
 	}
 
-	ap, diagnostics := a.updateState(ctx, data, state, ap)
+	ac, diagnostics := a.updateState(ctx, data, state, ac)
 
 	response.Diagnostics.Append(diagnostics...)
 
@@ -258,17 +258,17 @@ func (a *AccessProviderResource[T, ApModel]) create(ctx context.Context, data Ap
 		return
 	}
 
-	response.Diagnostics.Append(data.FromAccessProvider(ctx, a.client, ap)...)
+	response.Diagnostics.Append(data.FromAccessControl(ctx, a.client, ac)...)
 	response.Diagnostics.Append(response.State.Set(ctx, data)...)
 
 	if response.Diagnostics.HasError() {
 		return
 	}
 
-	response.Diagnostics.Append(a.createUpdateOwners(ctx, data, owners, ap, &response.State)...)
+	response.Diagnostics.Append(a.createUpdateOwners(ctx, data, owners, ac, &response.State)...)
 }
 
-func (a *AccessProviderResource[T, ApModel]) createUpdateOwners(ctx context.Context, data ApModel, owners types.Set, ap *accessGovernanceType.AccessControl, state *tfsdk.State) (diagnostics diag.Diagnostics) {
+func (a *AccessControlResource[T, ApModel]) createUpdateOwners(ctx context.Context, data ApModel, owners types.Set, ac *accessGovernanceType.AccessControl, state *tfsdk.State) (diagnostics diag.Diagnostics) {
 	if !owners.IsNull() && !owners.IsUnknown() {
 		ownerElements := owners.Elements()
 
@@ -277,14 +277,14 @@ func (a *AccessProviderResource[T, ApModel]) createUpdateOwners(ctx context.Cont
 			ownerIds[i] = ownerElement.(types.String).ValueString()
 		}
 
-		_, err := a.client.Role().UpdateRoleAssigneesOnAccessControl(ctx, ap.Id, ownerRole, ownerIds...)
+		_, err := a.client.Role().UpdateRoleAssigneesOnAccessControl(ctx, ac.Id, ownerRole, ownerIds...)
 		if err != nil {
 			diagnostics.AddError("Failed to update owners of access provider", err.Error())
 
 			return diagnostics
 		}
 	} else {
-		ownerSet, ownerDiagnostics := a.readOwners(ctx, ap.Id)
+		ownerSet, ownerDiagnostics := a.readOwners(ctx, ac.Id)
 		diagnostics.Append(ownerDiagnostics...)
 
 		if diagnostics.HasError() {
@@ -298,37 +298,37 @@ func (a *AccessProviderResource[T, ApModel]) createUpdateOwners(ctx context.Cont
 	return diagnostics
 }
 
-func (a *AccessProviderResource[T, ApModel]) updateState(ctx context.Context, data ApModel, state types.String, ap *accessGovernanceType.AccessControl) (_ *accessGovernanceType.AccessControl, diagnostics diag.Diagnostics) {
-	if state.Equal(data.GetAccessProviderResourceModel().State) {
-		return ap, diagnostics
+func (a *AccessControlResource[T, ApModel]) updateState(ctx context.Context, data ApModel, state types.String, ac *accessGovernanceType.AccessControl) (_ *accessGovernanceType.AccessControl, diagnostics diag.Diagnostics) {
+	if state.Equal(data.GetAccessControlResourceModel().State) {
+		return ac, diagnostics
 	}
 
 	var err error
 
-	if data.GetAccessProviderResourceModel().State.ValueString() == string(accessGovernanceType.AccessControlStateActive) {
-		ap, err = a.client.AccessControl().DeactivateAccessControl(ctx, ap.Id)
+	if data.GetAccessControlResourceModel().State.ValueString() == string(accessGovernanceType.AccessControlStateActive) {
+		ac, err = a.client.AccessControl().DeactivateAccessControl(ctx, ac.Id)
 		if err != nil {
 			diagnostics.AddError("Failed to activate access provider", err.Error())
 
-			return ap, diagnostics
+			return ac, diagnostics
 		}
-	} else if data.GetAccessProviderResourceModel().State.ValueString() == string(accessGovernanceType.AccessControlStateInactive) {
-		ap, err = a.client.AccessControl().ActivateAccessControl(ctx, ap.Id)
+	} else if data.GetAccessControlResourceModel().State.ValueString() == string(accessGovernanceType.AccessControlStateInactive) {
+		ac, err = a.client.AccessControl().ActivateAccessControl(ctx, ac.Id)
 		if err != nil {
 			diagnostics.AddError("Failed to deactivate access provider", err.Error())
 
-			return ap, diagnostics
+			return ac, diagnostics
 		}
 	} else {
-		diagnostics.AddError("Invalid state", fmt.Sprintf("Invalid state: %s", data.GetAccessProviderResourceModel().State.ValueString()))
+		diagnostics.AddError("Invalid state", fmt.Sprintf("Invalid state: %s", data.GetAccessControlResourceModel().State.ValueString()))
 
-		return ap, diagnostics
+		return ac, diagnostics
 	}
 
-	return ap, diagnostics
+	return ac, diagnostics
 }
 
-func (a *AccessProviderResource[T, ApModel]) Read(ctx context.Context, request resource.ReadRequest, response *resource.ReadResponse) {
+func (a *AccessControlResource[T, ApModel]) Read(ctx context.Context, request resource.ReadRequest, response *resource.ReadResponse) {
 	var data T
 
 	response.Diagnostics.Append(request.State.Get(ctx, &data)...)
@@ -340,11 +340,11 @@ func (a *AccessProviderResource[T, ApModel]) Read(ctx context.Context, request r
 	a.read(ctx, &data, response, a.readHooks...)
 }
 
-func (a *AccessProviderResource[T, ApModel]) read(ctx context.Context, data ApModel, response *resource.ReadResponse, hooks ...ReadHook[T, ApModel]) {
-	apModel := data.GetAccessProviderResourceModel()
+func (a *AccessControlResource[T, ApModel]) read(ctx context.Context, data ApModel, response *resource.ReadResponse, hooks ...ReadHook[T, ApModel]) {
+	apModel := data.GetAccessControlResourceModel()
 
 	// Get the access provider
-	ap, err := a.client.AccessControl().GetAccessControl(ctx, apModel.Id.ValueString())
+	ac, err := a.client.AccessControl().GetAccessControl(ctx, apModel.Id.ValueString())
 	if err != nil {
 		notFoundErr := &accessGovernanceType.ErrNotFound{}
 		if errors.As(err, &notFoundErr) {
@@ -358,19 +358,19 @@ func (a *AccessProviderResource[T, ApModel]) read(ctx context.Context, data ApMo
 		return
 	}
 
-	if ap.State == accessGovernanceType.AccessControlStateDeleted {
+	if ac.State == accessGovernanceType.AccessControlStateDeleted {
 		response.State.RemoveResource(ctx)
 
 		return
 	}
 
-	response.Diagnostics.Append(data.FromAccessProvider(ctx, a.client, ap)...)
+	response.Diagnostics.Append(data.FromAccessControl(ctx, a.client, ac)...)
 
 	if response.Diagnostics.HasError() {
 		return
 	}
 
-	apModel = data.GetAccessProviderResourceModel()
+	apModel = data.GetAccessControlResourceModel()
 
 	// If who in initial state is not nil, get all who-items
 	if !apModel.Who.IsNull() {
@@ -414,12 +414,12 @@ func (a *AccessProviderResource[T, ApModel]) read(ctx context.Context, data ApMo
 		apModel.Who = who
 	}
 
-	if !apModel.Who.IsNull() && ap.WhoAbacRule != nil {
-		apModel.WhoAbacRule = jsontypes.NewNormalizedPointerValue(ap.WhoAbacRule.RuleJson)
+	if !apModel.Who.IsNull() && ac.WhoAbacRule != nil {
+		apModel.WhoAbacRule = jsontypes.NewNormalizedPointerValue(ac.WhoAbacRule.RuleJson)
 	}
 
 	// Set all global access provider attributes
-	data.SetAccessProviderResourceModel(apModel)
+	data.SetAccessControlResourceModel(apModel)
 
 	// Read owners
 	ownersSet, ownerDiagnostics := a.readOwners(ctx, apModel.Id.ValueString())
@@ -444,7 +444,7 @@ func (a *AccessProviderResource[T, ApModel]) read(ctx context.Context, data ApMo
 	response.Diagnostics.Append(response.State.Set(ctx, data)...)
 }
 
-func (a *AccessProviderResource[T, ApModel]) readWhoItems(ctx context.Context, apModel *AccessProviderResourceModel, response *resource.ReadResponse, definedPromises set.Set[string], stateWhoItems []attr.Value) ([]attr.Value, bool) {
+func (a *AccessControlResource[T, ApModel]) readWhoItems(ctx context.Context, apModel *AccessControlResourceModel, response *resource.ReadResponse, definedPromises set.Set[string], stateWhoItems []attr.Value) ([]attr.Value, bool) {
 	// Get all who-items. Ignore implemented promises.
 	cancelCtx, cancelFn := context.WithCancel(ctx)
 	defer cancelFn()
@@ -493,7 +493,7 @@ func (a *AccessProviderResource[T, ApModel]) readWhoItems(ctx context.Context, a
 	return stateWhoItems, false
 }
 
-func (a *AccessProviderResource[T, ApModel]) Update(ctx context.Context, request resource.UpdateRequest, response *resource.UpdateResponse) {
+func (a *AccessControlResource[T, ApModel]) Update(ctx context.Context, request resource.UpdateRequest, response *resource.UpdateResponse) {
 	var data T
 
 	response.Diagnostics.Append(request.Plan.Get(ctx, &data)...)
@@ -505,16 +505,16 @@ func (a *AccessProviderResource[T, ApModel]) Update(ctx context.Context, request
 	a.update(ctx, &data, response)
 }
 
-func (a *AccessProviderResource[T, ApModel]) update(ctx context.Context, data ApModel, response *resource.UpdateResponse) {
+func (a *AccessControlResource[T, ApModel]) update(ctx context.Context, data ApModel, response *resource.UpdateResponse) {
 	input := accessGovernanceType.AccessControlInput{}
 
-	apResourceModel := data.GetAccessProviderResourceModel()
+	apResourceModel := data.GetAccessControlResourceModel()
 
 	id := apResourceModel.Id.ValueString()
 	state := apResourceModel.State
 	owners := apResourceModel.Owners
 
-	response.Diagnostics.Append(data.ToAccessProviderInput(ctx, a.client, &input)...)
+	response.Diagnostics.Append(data.ToAccessControlInput(ctx, a.client, &input)...)
 
 	if response.Diagnostics.HasError() {
 		return
@@ -538,21 +538,21 @@ func (a *AccessProviderResource[T, ApModel]) update(ctx context.Context, data Ap
 	}
 
 	// Update access provider
-	ap, err := a.client.AccessControl().UpdateAccessControl(ctx, id, input, services.WithAccessControlOverrideLocks())
+	ac, err := a.client.AccessControl().UpdateAccessControl(ctx, id, input, services.WithAccessControlOverrideLocks())
 	if err != nil {
 		response.Diagnostics.AddError("Failed to update access provider", err.Error())
 
 		return
 	}
 
-	response.Diagnostics.Append(data.FromAccessProvider(ctx, a.client, ap)...)
+	response.Diagnostics.Append(data.FromAccessControl(ctx, a.client, ac)...)
 	response.Diagnostics.Append(response.State.Set(ctx, data)...)
 
 	if response.Diagnostics.HasError() {
 		return
 	}
 
-	ap, diagnostics := a.updateState(ctx, data, state, ap)
+	ac, diagnostics := a.updateState(ctx, data, state, ac)
 
 	response.Diagnostics.Append(diagnostics...)
 
@@ -560,7 +560,7 @@ func (a *AccessProviderResource[T, ApModel]) update(ctx context.Context, data Ap
 		return
 	}
 
-	response.Diagnostics.Append(data.FromAccessProvider(ctx, a.client, ap)...)
+	response.Diagnostics.Append(data.FromAccessControl(ctx, a.client, ac)...)
 	response.Diagnostics.Append(response.State.Set(ctx, data)...)
 
 	if response.Diagnostics.HasError() {
@@ -568,10 +568,10 @@ func (a *AccessProviderResource[T, ApModel]) update(ctx context.Context, data Ap
 	}
 
 	// Update owners
-	response.Diagnostics.Append(a.createUpdateOwners(ctx, data, owners, ap, &response.State)...)
+	response.Diagnostics.Append(a.createUpdateOwners(ctx, data, owners, ac, &response.State)...)
 }
 
-func (a *AccessProviderResource[T, ApModel]) updateGetWhoItems(ctx context.Context, id string, response *resource.UpdateResponse, definedPromises set.Set[string], input accessGovernanceType.AccessControlInput) bool {
+func (a *AccessControlResource[T, ApModel]) updateGetWhoItems(ctx context.Context, id string, response *resource.UpdateResponse, definedPromises set.Set[string], input accessGovernanceType.AccessControlInput) bool {
 	cancelCtx, cancelFn := context.WithCancel(ctx)
 	defer cancelFn()
 
@@ -616,7 +616,7 @@ func (a *AccessProviderResource[T, ApModel]) updateGetWhoItems(ctx context.Conte
 	return false
 }
 
-func (a *AccessProviderResource[T, ApModel]) Delete(ctx context.Context, request resource.DeleteRequest, response *resource.DeleteResponse) {
+func (a *AccessControlResource[T, ApModel]) Delete(ctx context.Context, request resource.DeleteRequest, response *resource.DeleteResponse) {
 	var data T
 
 	response.Diagnostics.Append(request.State.Get(ctx, &data)...)
@@ -627,7 +627,7 @@ func (a *AccessProviderResource[T, ApModel]) Delete(ctx context.Context, request
 
 	apModel := ApModel(&data)
 
-	err := a.client.AccessControl().DeleteAccessControl(ctx, apModel.GetAccessProviderResourceModel().Id.ValueString(), services.WithAccessControlOverrideLocks())
+	err := a.client.AccessControl().DeleteAccessControl(ctx, apModel.GetAccessControlResourceModel().Id.ValueString(), services.WithAccessControlOverrideLocks())
 	if err != nil {
 		response.Diagnostics.AddError("Failed to delete access provider", err.Error())
 
@@ -637,7 +637,7 @@ func (a *AccessProviderResource[T, ApModel]) Delete(ctx context.Context, request
 	response.State.RemoveResource(ctx)
 }
 
-func (a *AccessProviderResource[T, ApModel]) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+func (a *AccessControlResource[T, ApModel]) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	// Prevent panic if the provider has not been configured.
 	if req.ProviderData == nil {
 		return
@@ -666,11 +666,11 @@ func (a *AccessProviderResource[T, ApModel]) Configure(_ context.Context, req re
 	a.client = client
 }
 
-func (a *AccessProviderResource[T, ApModel]) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+func (a *AccessControlResource[T, ApModel]) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }
 
-func (a *AccessProviderResource[T, ApModel]) ValidateConfig(ctx context.Context, request resource.ValidateConfigRequest, response *resource.ValidateConfigResponse) {
+func (a *AccessControlResource[T, ApModel]) ValidateConfig(ctx context.Context, request resource.ValidateConfigRequest, response *resource.ValidateConfigResponse) {
 	var data T
 
 	response.Diagnostics.Append(request.Config.Get(ctx, &data)...)
@@ -681,13 +681,13 @@ func (a *AccessProviderResource[T, ApModel]) ValidateConfig(ctx context.Context,
 
 	apModel := ApModel(&data)
 
-	apResourceModel := apModel.GetAccessProviderResourceModel()
+	apResourceModel := apModel.GetAccessControlResourceModel()
 
 	who := &apResourceModel.Who
 	whoAbac := &apResourceModel.WhoAbacRule
 
 	whoUsersDefined := false
-	whoAccessProvidersDefined := false
+	whoAccessControlsDefined := false
 
 	if !who.IsNull() && !whoAbac.IsNull() {
 		response.Diagnostics.AddError(
@@ -710,7 +710,7 @@ func (a *AccessProviderResource[T, ApModel]) ValidateConfig(ctx context.Context,
 			}
 
 			attrFn("user", &whoUsersDefined)
-			attrFn("access_control", &whoAccessProvidersDefined)
+			attrFn("access_control", &whoAccessControlsDefined)
 
 			if attributesFound != 1 {
 				response.Diagnostics.AddError(
@@ -729,7 +729,7 @@ func (a *AccessProviderResource[T, ApModel]) ValidateConfig(ctx context.Context,
 		}
 	}
 
-	if whoAccessProvidersDefined {
+	if whoAccessControlsDefined {
 		if !apResourceModel.InheritanceLocked.IsNull() && !apResourceModel.InheritanceLocked.ValueBool() {
 			response.Diagnostics.AddError("Inheritance must be locked", "Inheritance must be locked if who access providers are set.")
 		}
@@ -740,7 +740,7 @@ func (a *AccessProviderResource[T, ApModel]) ValidateConfig(ctx context.Context,
 	}
 }
 
-func (a *AccessProviderResource[T, ApModel]) readOwners(ctx context.Context, apId string) (_ types.Set, diagnostics diag.Diagnostics) {
+func (a *AccessControlResource[T, ApModel]) readOwners(ctx context.Context, apId string) (_ types.Set, diagnostics diag.Diagnostics) {
 	cancelCtx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
@@ -777,7 +777,7 @@ func (a *AccessProviderResource[T, ApModel]) readOwners(ctx context.Context, apI
 	return ownerSet, diagnostics
 }
 
-func (a *AccessProviderResource[T, ApModel]) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+func (a *AccessControlResource[T, ApModel]) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
 	if req.Plan.Raw.IsNull() {
 		resp.Plan = req.Plan
 
@@ -793,10 +793,10 @@ func (a *AccessProviderResource[T, ApModel]) ModifyPlan(ctx context.Context, req
 	}
 
 	apModel := ApModel(&data)
-	apResourceModel := apModel.GetAccessProviderResourceModel()
+	apResourceModel := apModel.GetAccessControlResourceModel()
 
 	whoUsersDefined := false
-	whoAccessProvidersDefined := false
+	whoAccessControlsDefined := false
 
 	if !apResourceModel.Who.IsNull() {
 		for _, whoItem := range apResourceModel.Who.Elements() {
@@ -811,7 +811,7 @@ func (a *AccessProviderResource[T, ApModel]) ModifyPlan(ctx context.Context, req
 			}
 
 			attrFn("user", &whoUsersDefined)
-			attrFn("access_control", &whoAccessProvidersDefined)
+			attrFn("access_control", &whoAccessControlsDefined)
 		}
 	}
 
@@ -821,13 +821,13 @@ func (a *AccessProviderResource[T, ApModel]) ModifyPlan(ctx context.Context, req
 		apResourceModel.WhoLocked = types.BoolValue(false)
 	}
 
-	if whoAccessProvidersDefined {
+	if whoAccessControlsDefined {
 		apResourceModel.InheritanceLocked = types.BoolValue(true)
 	} else if apResourceModel.InheritanceLocked.IsUnknown() {
 		apResourceModel.InheritanceLocked = types.BoolValue(false)
 	}
 
-	apModel.SetAccessProviderResourceModel(apResourceModel)
+	apModel.SetAccessControlResourceModel(apResourceModel)
 
 	for _, planModifierHook := range a.planModifierHooks {
 		updatedModel, planModifierDiag := planModifierHook(ctx, apModel)
@@ -843,7 +843,7 @@ func (a *AccessProviderResource[T, ApModel]) ModifyPlan(ctx context.Context, req
 	resp.Diagnostics.Append(resp.Plan.Set(ctx, apModel)...)
 }
 
-func (a *AccessProviderResourceModel) ToAccessProviderInput(ctx context.Context, client *sdk.CollibraClient, result *accessGovernanceType.AccessControlInput) (diagnostics diag.Diagnostics) {
+func (a *AccessControlResourceModel) ToAccessControlInput(ctx context.Context, client *sdk.CollibraClient, result *accessGovernanceType.AccessControlInput) (diagnostics diag.Diagnostics) {
 	result.Name = a.Name.ValueStringPointer()
 	result.Description = a.Description.ValueStringPointer()
 	result.Locks = append(result.Locks,
@@ -858,10 +858,10 @@ func (a *AccessProviderResourceModel) ToAccessProviderInput(ctx context.Context,
 	result.WhoType = utils.Ptr(accessGovernanceType.WhoAndWhatTypeStatic)
 
 	if !a.Who.IsNull() && !a.Who.IsUnknown() {
-		diagnostics.Append(a.whoElementsToAccessProviderInput(ctx, client, result)...)
+		diagnostics.Append(a.whoElementsToAccessControlInput(ctx, client, result)...)
 	} else if !a.WhoAbacRule.IsNull() && !a.WhoAbacRule.IsUnknown() {
 		result.WhoType = utils.Ptr(accessGovernanceType.WhoAndWhatTypeDynamic)
-		diagnostics.Append(a.whoAbacRuleToAccessProviderInput(result)...)
+		diagnostics.Append(a.whoAbacRuleToAccessControlInput(result)...)
 	}
 
 	if a.WhoLocked.ValueBool() {
@@ -898,7 +898,7 @@ func (a *AccessProviderResourceModel) ToAccessProviderInput(ctx context.Context,
 	return diagnostics
 }
 
-func (a *AccessProviderResourceModel) whoElementsToAccessProviderInput(ctx context.Context, client *sdk.CollibraClient, result *accessGovernanceType.AccessControlInput) (diagnostics diag.Diagnostics) {
+func (a *AccessControlResourceModel) whoElementsToAccessControlInput(ctx context.Context, client *sdk.CollibraClient, result *accessGovernanceType.AccessControlInput) (diagnostics diag.Diagnostics) {
 	whoItems := a.Who.Elements()
 
 	result.WhoItems = make([]accessGovernanceType.WhoItemInput, 0, len(whoItems))
@@ -942,7 +942,7 @@ func (a *AccessProviderResourceModel) whoElementsToAccessProviderInput(ctx conte
 	return diagnostics
 }
 
-func (a *AccessProviderResourceModel) whoAbacRuleToAccessProviderInput(result *accessGovernanceType.AccessControlInput) (diagnostics diag.Diagnostics) {
+func (a *AccessControlResourceModel) whoAbacRuleToAccessControlInput(result *accessGovernanceType.AccessControlInput) (diagnostics diag.Diagnostics) {
 	var abacBeRule abac_expression.BinaryExpression
 
 	diagnostics.Append(a.WhoAbacRule.Unmarshal(&abacBeRule)...)
@@ -966,16 +966,16 @@ func (a *AccessProviderResourceModel) whoAbacRuleToAccessProviderInput(result *a
 	return diagnostics
 }
 
-func (a *AccessProviderResourceModel) FromAccessProvider(ap *accessGovernanceType.AccessControl) (diagnostics diag.Diagnostics) {
-	a.Id = types.StringValue(ap.Id)
-	a.Name = types.StringValue(ap.Name)
-	a.Description = types.StringValue(ap.Description)
-	a.State = types.StringValue(string(ap.State))
+func (a *AccessControlResourceModel) FromAccessControl(ac *accessGovernanceType.AccessControl) (diagnostics diag.Diagnostics) {
+	a.Id = types.StringValue(ac.Id)
+	a.Name = types.StringValue(ac.Name)
+	a.Description = types.StringValue(ac.Description)
+	a.State = types.StringValue(string(ac.State))
 
 	a.WhoLocked = types.BoolValue(false)
 	a.InheritanceLocked = types.BoolValue(false)
 
-	for _, lock := range ap.Locks {
+	for _, lock := range ac.Locks {
 		switch lock.LockKey {
 		case accessGovernanceType.AccessControlLockWholock:
 			a.WhoLocked = types.BoolValue(true)
@@ -996,11 +996,11 @@ func _accessControlPrefix(a string) string {
 	return "access_control:" + a
 }
 
-type AccessProviderWhatAbacParser struct {
+type AccessControlWhatAbacParser struct {
 	ResourceFixedDoType []string
 }
 
-func (p AccessProviderWhatAbacParser) ToAccessProviderInput(ctx context.Context, whatAbacRule types.Object, client *sdk.CollibraClient, result *accessGovernanceType.AccessControlInput) (diagnostics diag.Diagnostics) {
+func (p AccessControlWhatAbacParser) ToAccessControlInput(ctx context.Context, whatAbacRule types.Object, client *sdk.CollibraClient, result *accessGovernanceType.AccessControlInput) (diagnostics diag.Diagnostics) {
 	attributes := whatAbacRule.Attributes()
 
 	var doTypes []string
@@ -1087,7 +1087,7 @@ func (p AccessProviderWhatAbacParser) ToAccessProviderInput(ctx context.Context,
 	return diagnostics
 }
 
-func (p AccessProviderWhatAbacParser) ToWhatAbacRuleObject(ctx context.Context, client *sdk.CollibraClient, ap *accessGovernanceType.AccessControl) (_ types.Object, diagnostics diag.Diagnostics) {
+func (p AccessControlWhatAbacParser) ToWhatAbacRuleObject(ctx context.Context, client *sdk.CollibraClient, ac *accessGovernanceType.AccessControl) (_ types.Object, diagnostics diag.Diagnostics) {
 	objectTypes := map[string]attr.Type{
 		"permissions":        types.SetType{ElemType: types.StringType},
 		"global_permissions": types.SetType{ElemType: types.StringType},
@@ -1099,35 +1099,35 @@ func (p AccessProviderWhatAbacParser) ToWhatAbacRuleObject(ctx context.Context, 
 		objectTypes["do_types"] = types.SetType{ElemType: types.StringType}
 	}
 
-	permissions, pDiagnostics := utils.SliceToStringSet(ctx, ap.WhatAbacRule.Permissions)
+	permissions, pDiagnostics := utils.SliceToStringSet(ctx, ac.WhatAbacRule.Permissions)
 	diagnostics.Append(pDiagnostics...)
 
 	if diagnostics.HasError() {
 		return types.ObjectNull(objectTypes), diagnostics
 	}
 
-	globalPermissions, gpDiagnostics := utils.SliceToStringSet(ctx, ap.WhatAbacRule.GlobalPermissions)
+	globalPermissions, gpDiagnostics := utils.SliceToStringSet(ctx, ac.WhatAbacRule.GlobalPermissions)
 	diagnostics.Append(gpDiagnostics...)
 
 	if diagnostics.HasError() {
 		return types.ObjectNull(objectTypes), diagnostics
 	}
 
-	doTypes, dtDiagnostics := utils.SliceToStringSet(ctx, ap.WhatAbacRule.DoTypes)
+	doTypes, dtDiagnostics := utils.SliceToStringSet(ctx, ac.WhatAbacRule.DoTypes)
 	diagnostics.Append(dtDiagnostics...)
 
 	if diagnostics.HasError() {
 		return types.ObjectNull(objectTypes), diagnostics
 	}
 
-	abacRule := jsontypes.NewNormalizedPointerValue(ap.WhatAbacRule.RuleJson)
+	abacRule := jsontypes.NewNormalizedPointerValue(ac.WhatAbacRule.RuleJson)
 
 	var scopeItems []attr.Value //nolint:prealloc
 
 	cancelCtx, cancelFunc := context.WithCancel(ctx)
 	defer cancelFunc()
 
-	for scopeItem, err := range client.AccessControl().GetAccessControlAbacWhatScope(cancelCtx, ap.Id) {
+	for scopeItem, err := range client.AccessControl().GetAccessControlAbacWhatScope(cancelCtx, ac.Id) {
 		if err != nil {
 			diagnostics.AddError("Failed to load access provider abac scope", err.Error())
 

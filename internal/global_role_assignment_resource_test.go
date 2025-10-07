@@ -7,12 +7,9 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/tfversion"
-	gonanoid "github.com/matoous/go-nanoid/v2"
 )
 
 func TestAccGlobalRoleAssignmentResource(t *testing.T) {
-	testId := gonanoid.Must(8)
-
 	t.Run("basic", func(t *testing.T) {
 		resource.Test(t, resource.TestCase{
 			IsUnitTest: false,
@@ -28,20 +25,14 @@ func TestAccGlobalRoleAssignmentResource(t *testing.T) {
 					Config: fmt.Sprintf(`
 %[2]s					
 					
-resource "collibra-access-governance_user" "u1" {
-	name = "gra-tfTestUser-%[1]s"
-	email = "gra-test-user-%[1]s@collibra.com"
-	collibra-access-governance_user = true
-}					
-
 resource "collibra-access-governance_global_role_assignment" "gra1" {
 	role = "Admin"
-	user = collibra-access-governance_user.u1.id
+	user = "%[1]s"
 }
-					`, testId, providerConfig),
+					`, TestUser1Id, providerConfig),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("collibra-access-governance_global_role_assignment.gra1", "role", "Admin"),
-						resource.TestCheckResourceAttrPair("collibra-access-governance_global_role_assignment.gra1", "user", "collibra-access-governance_user.u1", "id"),
+						resource.TestCheckResourceAttr("collibra-access-governance_global_role_assignment.gra1", "user", TestUser1Id),
 						resource.TestCheckResourceAttrWith("collibra-access-governance_global_role_assignment.gra1", "id", func(value string) error {
 							if !strings.HasPrefix(value, "Admin#") {
 								return fmt.Errorf("expected id to start with Admin# but is %q", value)
@@ -61,20 +52,14 @@ resource "collibra-access-governance_global_role_assignment" "gra1" {
 					Config: fmt.Sprintf(`
 %[2]s					
 					
-resource "collibra-access-governance_user" "u1" {
-	name = "gra-tfTestUser-%[1]s"
-	email = "gra-test-user-%[1]s@collibra.com"
-	collibra-access-governance_user = true
-}					
-
 resource "collibra-access-governance_global_role_assignment" "gra1" {
 	role = "Creator"
-	user = collibra-access-governance_user.u1.id
+	user = "%[1]s"
 }
-					`, testId, providerConfig),
+					`, TestUser1Id, providerConfig),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("collibra-access-governance_global_role_assignment.gra1", "role", "Creator"),
-						resource.TestCheckResourceAttrPair("collibra-access-governance_global_role_assignment.gra1", "user", "collibra-access-governance_user.u1", "id"),
+						resource.TestCheckResourceAttr("collibra-access-governance_global_role_assignment.gra1", "user", TestUser1Id),
 						resource.TestCheckResourceAttrWith("collibra-access-governance_global_role_assignment.gra1", "id", func(value string) error {
 							if !strings.HasPrefix(value, "Creator#") {
 								return fmt.Errorf("expected id to start with Creator#")
@@ -101,29 +86,23 @@ resource "collibra-access-governance_global_role_assignment" "gra1" {
 			Steps: []resource.TestStep{
 				{
 					Config: fmt.Sprintf(`
-%[2]s					
+%[3]s					
 					
-resource "collibra-access-governance_user" "u1" {
-	name = "gra-tfTestUser-%[1]s"
-	email = "gra-test-user-%[1]s@collibra.com"
-	collibra-access-governance_user = true
-}					
-
 resource "collibra-access-governance_global_role_assignment" "gra1" {
 	role = "Admin"
-	user = collibra-access-governance_user.u1.id
+	user = "%[1]s"
 }
 					
 resource "collibra-access-governance_global_role_assignment" "gra2" {
 	role = "AccessCreator"
-	user = collibra-access-governance_user.u1.id
+	user = "%[2]s"
 }
 					
 					
-					`, testId, providerConfig),
+					`, TestUser1Id, TestUser2Id, providerConfig),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("collibra-access-governance_global_role_assignment.gra1", "role", "Admin"),
-						resource.TestCheckResourceAttrPair("collibra-access-governance_global_role_assignment.gra1", "user", "collibra-access-governance_user.u1", "id"),
+						resource.TestCheckResourceAttr("collibra-access-governance_global_role_assignment.gra1", "user", TestUser1Id),
 						resource.TestCheckResourceAttrWith("collibra-access-governance_global_role_assignment.gra1", "id", func(value string) error {
 							if !strings.HasPrefix(value, "Admin#") {
 								return fmt.Errorf("expected id to start with Admin# but is %q", value)
@@ -133,7 +112,7 @@ resource "collibra-access-governance_global_role_assignment" "gra2" {
 						}),
 
 						resource.TestCheckResourceAttr("collibra-access-governance_global_role_assignment.gra2", "role", "AccessCreator"),
-						resource.TestCheckResourceAttrPair("collibra-access-governance_global_role_assignment.gra2", "user", "collibra-access-governance_user.u1", "id"),
+						resource.TestCheckResourceAttr("collibra-access-governance_global_role_assignment.gra2", "user", TestUser2Id),
 						resource.TestCheckResourceAttrWith("collibra-access-governance_global_role_assignment.gra2", "id", func(value string) error {
 							if !strings.HasPrefix(value, "AccessCreator#") {
 								return fmt.Errorf("expected id to start with Creator# but is %q", value)

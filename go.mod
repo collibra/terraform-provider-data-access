@@ -8,7 +8,7 @@ tool (
 )
 
 require (
-	github.com/collibra/access-governance-go-sdk v0.0.19
+	github.com/collibra/access-governance-go-sdk v0.0.20
 	github.com/go-errors/errors v1.5.1
 	github.com/hashicorp/terraform-plugin-framework v1.15.0
 	github.com/hashicorp/terraform-plugin-framework-jsontypes v0.2.0

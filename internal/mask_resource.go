@@ -23,7 +23,7 @@ import (
 var _ resource.Resource = (*MaskResource)(nil)
 
 type MaskResourceModel struct {
-	// AccessProviderResourceModel properties. This has to be duplicated because of https://github.com/hashicorp/terraform-plugin-framework/issues/242
+	// AccessControlResourceModel properties. This has to be duplicated because of https://github.com/hashicorp/terraform-plugin-framework/issues/242
 	Id                types.String         `tfsdk:"id"`
 	Name              types.String         `tfsdk:"name"`
 	Description       types.String         `tfsdk:"description"`
@@ -42,8 +42,8 @@ type MaskResourceModel struct {
 	WhatLocked   types.Bool   `tfsdk:"what_locked"`
 }
 
-func (m *MaskResourceModel) GetAccessProviderResourceModel() *AccessProviderResourceModel {
-	return &AccessProviderResourceModel{
+func (m *MaskResourceModel) GetAccessControlResourceModel() *AccessControlResourceModel {
+	return &AccessControlResourceModel{
 		Id:                m.Id,
 		Name:              m.Name,
 		Description:       m.Description,
@@ -56,7 +56,7 @@ func (m *MaskResourceModel) GetAccessProviderResourceModel() *AccessProviderReso
 	}
 }
 
-func (m *MaskResourceModel) SetAccessProviderResourceModel(ap *AccessProviderResourceModel) {
+func (m *MaskResourceModel) SetAccessControlResourceModel(ap *AccessControlResourceModel) {
 	m.Id = ap.Id
 	m.Name = ap.Name
 	m.Description = ap.Description
@@ -68,8 +68,8 @@ func (m *MaskResourceModel) SetAccessProviderResourceModel(ap *AccessProviderRes
 	m.InheritanceLocked = ap.InheritanceLocked
 }
 
-func (m *MaskResourceModel) ToAccessProviderInput(ctx context.Context, client *sdk.CollibraClient, result *accessGovernanceType.AccessControlInput) diag.Diagnostics {
-	diagnostics := m.GetAccessProviderResourceModel().ToAccessProviderInput(ctx, client, result)
+func (m *MaskResourceModel) ToAccessControlInput(ctx context.Context, client *sdk.CollibraClient, result *accessGovernanceType.AccessControlInput) diag.Diagnostics {
+	diagnostics := m.GetAccessControlResourceModel().ToAccessControlInput(ctx, client, result)
 
 	if diagnostics.HasError() {
 		return diagnostics
@@ -110,7 +110,7 @@ func (m *MaskResourceModel) ToAccessProviderInput(ctx context.Context, client *s
 			})
 		}
 	} else if !m.WhatAbacRule.IsNull() {
-		diagnostics.Append(m.abacWhatToAccessProviderInput(ctx, client, result)...)
+		diagnostics.Append(m.abacWhatToAccessControlInput(ctx, client, result)...)
 
 		if diagnostics.HasError() {
 			return diagnostics
@@ -129,15 +129,15 @@ func (m *MaskResourceModel) ToAccessProviderInput(ctx context.Context, client *s
 	return diagnostics
 }
 
-func (m *MaskResourceModel) FromAccessProvider(ctx context.Context, client *sdk.CollibraClient, input *accessGovernanceType.AccessControl) diag.Diagnostics {
-	apResourceModel := m.GetAccessProviderResourceModel()
-	diagnostics := apResourceModel.FromAccessProvider(input)
+func (m *MaskResourceModel) FromAccessControl(ctx context.Context, client *sdk.CollibraClient, input *accessGovernanceType.AccessControl) diag.Diagnostics {
+	apResourceModel := m.GetAccessControlResourceModel()
+	diagnostics := apResourceModel.FromAccessControl(input)
 
 	if diagnostics.HasError() {
 		return diagnostics
 	}
 
-	m.SetAccessProviderResourceModel(apResourceModel)
+	m.SetAccessControlResourceModel(apResourceModel)
 
 	if len(input.SyncData) != 1 {
 		diagnostics.AddError("Failed to get data source", fmt.Sprintf("Expected exactly one data source, got: %d.", len(input.SyncData)))
@@ -164,7 +164,7 @@ func (m *MaskResourceModel) FromAccessProvider(ctx context.Context, client *sdk.
 	}
 
 	if input.WhatType == accessGovernanceType.WhoAndWhatTypeDynamic && input.WhatAbacRule != nil {
-		object, objectDiagnostics := m.abacWhatFromAccessProvider(ctx, client, input)
+		object, objectDiagnostics := m.abacWhatFromAccessControl(ctx, client, input)
 		diagnostics.Append(objectDiagnostics...)
 
 		if diagnostics.HasError() {
@@ -181,7 +181,7 @@ func (m *MaskResourceModel) UpdateOwners(owners types.Set) {
 	m.Owners = owners
 }
 
-func (m *MaskResourceModel) abacWhatToAccessProviderInput(ctx context.Context, client *sdk.CollibraClient, result *accessGovernanceType.AccessControlInput) (diagnostics diag.Diagnostics) {
+func (m *MaskResourceModel) abacWhatToAccessControlInput(ctx context.Context, client *sdk.CollibraClient, result *accessGovernanceType.AccessControlInput) (diagnostics diag.Diagnostics) {
 	attributes := m.WhatAbacRule.Attributes()
 
 	scopeAttr := attributes["scope"]
@@ -237,7 +237,7 @@ func (m *MaskResourceModel) abacWhatToAccessProviderInput(ctx context.Context, c
 	return diagnostics
 }
 
-func (m *MaskResourceModel) abacWhatFromAccessProvider(ctx context.Context, client *sdk.CollibraClient, ap *accessGovernanceType.AccessControl) (_ types.Object, diagnostics diag.Diagnostics) {
+func (m *MaskResourceModel) abacWhatFromAccessControl(ctx context.Context, client *sdk.CollibraClient, ap *accessGovernanceType.AccessControl) (_ types.Object, diagnostics diag.Diagnostics) {
 	objectTypes := map[string]attr.Type{
 		"scope": types.SetType{ElemType: types.StringType},
 		"rule":  jsontypes.NormalizedType{},
@@ -282,12 +282,12 @@ func (m *MaskResourceModel) abacWhatFromAccessProvider(ctx context.Context, clie
 }
 
 type MaskResource struct {
-	AccessProviderResource[MaskResourceModel, *MaskResourceModel]
+	AccessControlResource[MaskResourceModel, *MaskResourceModel]
 }
 
 func NewMaskResource() resource.Resource {
 	return &MaskResource{
-		AccessProviderResource: AccessProviderResource[MaskResourceModel, *MaskResourceModel]{
+		AccessControlResource: AccessControlResource[MaskResourceModel, *MaskResourceModel]{
 			readHooks: []ReadHook[MaskResourceModel, *MaskResourceModel]{
 				readMaskResourceColumns,
 			},

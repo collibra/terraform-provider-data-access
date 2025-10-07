@@ -47,9 +47,9 @@ resource "collibra-access-governance_datasource" "test" {
 resource "collibra-access-governance_datasource" "test" {
 	name        = "tfTestDataSourceUpdateName-%s"
 	description = "test update description"
-	sync_method = "CLOUD_MANUAL_TRIGGER"
+	sync_method = "%s"
 }
-`, testId),
+`, testId, accessGovernanceType.DataSourceSyncMethodCloudmanualtrigger),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("collibra-access-governance_datasource.test", "name", "tfTestDataSourceUpdateName-"+testId),
 						resource.TestCheckResourceAttr("collibra-access-governance_datasource.test", "description", "test update description"),
@@ -74,26 +74,19 @@ resource "collibra-access-governance_datasource" "test" {
 			Steps: []resource.TestStep{
 				{
 					Config: providerConfig + fmt.Sprintf(`
-resource "collibra-access-governance_user" "test_user" {
-  name       = "TestUser%[1]s"
-  email      = "test_user-%[1]s@collibra.com"
-  collibra-access-governance_user = true
-  type       = "Machine"					
-}
-					
 resource "collibra-access-governance_datasource" "test" {
 	name        = "tfTestDataSource-%[1]s"
 	description = "test description"
-	owners      = [ collibra-access-governance_user.test_user.id ]
+	owners      = [ "%s" ]
 }
-`, testId),
+`, testId, TestUser1Id),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("collibra-access-governance_datasource.test", "name", "tfTestDataSource-"+testId),
 						resource.TestCheckResourceAttr("collibra-access-governance_datasource.test", "description", "test description"),
 						resource.TestCheckResourceAttr("collibra-access-governance_datasource.test", "sync_method", string(accessGovernanceType.DataSourceSyncMethodOnprem)),
 						resource.TestCheckNoResourceAttr("collibra-access-governance_datasource.test", "parent"),
 						resource.TestCheckResourceAttr("collibra-access-governance_datasource.test", "owners.#", "1"),
-						resource.TestCheckResourceAttrPair("collibra-access-governance_datasource.test", "owners.0", "collibra-access-governance_user.test_user", "id"),
+						resource.TestCheckResourceAttr("collibra-access-governance_datasource.test", "owners.0", TestUser1Id),
 					),
 				},
 				{
@@ -103,33 +96,19 @@ resource "collibra-access-governance_datasource" "test" {
 				},
 				{
 					Config: providerConfig + fmt.Sprintf(`
-resource "collibra-access-governance_user" "test_user" {
-  name       = "TestUser%[1]s"
-  email      = "test_user-%[1]s@collibra.com"
-  collibra-access-governance_user = true
-  type       = "Machine"					
-}
-					
-resource "collibra-access-governance_user" "test_user_2" {
-  name       = "TestUser-2-%[1]s"
-  email      = "test_user-2-%[1]s@collibra.com"
-  collibra-access-governance_user = true
-  type       = "Machine"					
-}
-					
 resource "collibra-access-governance_datasource" "test" {
 	name        = "tfTestDataSource-%[1]s"
 	description = "test description"
-	owners      = [ collibra-access-governance_user.test_user_2.id ]
+	owners      = [ "%s" ]
 }
-`, testId),
+`, testId, TestUser2Id),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("collibra-access-governance_datasource.test", "name", "tfTestDataSource-"+testId),
 						resource.TestCheckResourceAttr("collibra-access-governance_datasource.test", "description", "test description"),
 						resource.TestCheckResourceAttr("collibra-access-governance_datasource.test", "sync_method", string(accessGovernanceType.DataSourceSyncMethodOnprem)),
 						resource.TestCheckNoResourceAttr("collibra-access-governance_datasource.test", "parent"),
 						resource.TestCheckResourceAttr("collibra-access-governance_datasource.test", "owners.#", "1"),
-						resource.TestCheckResourceAttrPair("collibra-access-governance_datasource.test", "owners.0", "collibra-access-governance_user.test_user_2", "id"),
+						resource.TestCheckResourceAttr("collibra-access-governance_datasource.test", "owners.0", TestUser2Id),
 					),
 				},
 				// Resource are automatically deleted

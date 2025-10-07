@@ -33,7 +33,7 @@ resource "collibra-access-governance_mask" "test" {
 	columns = []
 	who = [
      {
-       user             = "terraform@collibra.com"
+       user             = "terraform-acc-test-1@collibra.com"
        promise_duration = 604800
      }
    ]
@@ -45,7 +45,7 @@ resource "collibra-access-governance_mask" "test" {
 						resource.TestCheckResourceAttrPair("collibra-access-governance_mask.test", "data_source", "data.collibra-access-governance_datasource.ds", "id"),
 						resource.TestCheckResourceAttr("collibra-access-governance_mask.test", "columns.#", "0"),
 						resource.TestCheckResourceAttr("collibra-access-governance_mask.test", "who.#", "1"),
-						resource.TestCheckResourceAttr("collibra-access-governance_mask.test", "who.0.user", "terraform@collibra.com"),
+						resource.TestCheckResourceAttr("collibra-access-governance_mask.test", "who.0.user", "terraform-acc-test-1@collibra.com"),
 						resource.TestCheckResourceAttr("collibra-access-governance_mask.test", "who.0.promise_duration", "604800"),
 						resource.TestCheckResourceAttr("collibra-access-governance_mask.test", "type", "NULL"),
 						resource.TestCheckResourceAttr("collibra-access-governance_mask.test", "who_locked", "true"),
@@ -71,7 +71,7 @@ resource "collibra-access-governance_mask" "test" {
 	data_source = data.collibra-access-governance_datasource.ds.id
 	who = [
      {
-       user             = "terraform@collibra.com"
+       user             = "terraform-acc-test-1@collibra.com"
      }
    ]
 	inheritance_locked = true
@@ -83,7 +83,7 @@ resource "collibra-access-governance_mask" "test" {
 						resource.TestCheckResourceAttrPair("collibra-access-governance_mask.test", "data_source", "data.collibra-access-governance_datasource.ds", "id"),
 						resource.TestCheckNoResourceAttr("collibra-access-governance_mask.test", "columns"),
 						resource.TestCheckResourceAttr("collibra-access-governance_mask.test", "who.#", "1"),
-						resource.TestCheckResourceAttr("collibra-access-governance_mask.test", "who.0.user", "terraform@collibra.com"),
+						resource.TestCheckResourceAttr("collibra-access-governance_mask.test", "who.0.user", "terraform-acc-test-1@collibra.com"),
 						resource.TestCheckNoResourceAttr("collibra-access-governance_mask.test", "who.0.promise_duration"),
 						resource.TestCheckResourceAttr("collibra-access-governance_mask.test", "type", "NULL"),
 						resource.TestCheckResourceAttr("collibra-access-governance_mask.test", "who_locked", "true"),
@@ -230,7 +230,7 @@ resource "collibra-access-governance_mask" "abac_mask" {
 	data_source = data.collibra-access-governance_datasource.ds.id
 	who = [
 	     {
-	       user             = "terraform@collibra.com"
+	       user             = "terraform-acc-test-1@collibra.com"
 	       promise_duration = 604800
 	     }
     ]
@@ -248,7 +248,7 @@ resource "collibra-access-governance_mask" "abac_mask" {
 						resource.TestCheckResourceAttr("collibra-access-governance_mask.abac_mask", "what_abac_rule.scope.#", "2"),
 						resource.TestCheckResourceAttr("collibra-access-governance_mask.abac_mask", "who.#", "1"),
 						resource.TestCheckResourceAttr("collibra-access-governance_mask.abac_mask", "who.#", "1"),
-						resource.TestCheckResourceAttr("collibra-access-governance_mask.abac_mask", "who.0.user", "terraform@collibra.com"),
+						resource.TestCheckResourceAttr("collibra-access-governance_mask.abac_mask", "who.0.user", "terraform-acc-test-1@collibra.com"),
 						resource.TestCheckResourceAttr("collibra-access-governance_mask.abac_mask", "who.0.promise_duration", "604800"),
 						resource.TestCheckResourceAttr("collibra-access-governance_mask.abac_mask", "type", "NULL"),
 						resource.TestCheckResourceAttr("collibra-access-governance_mask.abac_mask", "what_abac_rule.rule", "{\"literal\":true}"),

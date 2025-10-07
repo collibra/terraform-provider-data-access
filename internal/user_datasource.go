@@ -13,10 +13,11 @@ import (
 var _ datasource.DataSource = (*UserDataSource)(nil)
 
 type UserDataSourceModel struct {
-	Id    types.String `tfsdk:"id"`
-	Name  types.String `tfsdk:"name"`
-	Email types.String `tfsdk:"email"`
-	Type  types.String `tfsdk:"type"`
+	Id           types.String `tfsdk:"id"`
+	Name         types.String `tfsdk:"name"`
+	Email        types.String `tfsdk:"email"`
+	Type         types.String `tfsdk:"type"`
+	CollibraUser types.Bool   `tfsdk:"collibra_user"`
 }
 
 type UserDataSource struct {

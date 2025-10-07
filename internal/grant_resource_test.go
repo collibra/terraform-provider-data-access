@@ -43,7 +43,7 @@ resource "collibra-access-governance_grant" "test" {
 	]
 	who = [
 		{
-			"user": "terraform@collibra.com"
+			"user": "terraform-acc-test-1@collibra.com"
 		}
 	]
 }
@@ -55,7 +55,7 @@ resource "collibra-access-governance_grant" "test" {
 						resource.TestCheckResourceAttr("collibra-access-governance_grant.test", "what_data_objects.#", "1"),
 						resource.TestCheckResourceAttr("collibra-access-governance_grant.test", "what_data_objects.0.fullname", "MASTER_DATA.SALES"),
 						resource.TestCheckResourceAttr("collibra-access-governance_grant.test", "who.#", "1"),
-						resource.TestCheckResourceAttr("collibra-access-governance_grant.test", "who.0.user", "terraform@collibra.com"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.test", "who.0.user", "terraform-acc-test-1@collibra.com"),
 						resource.TestCheckResourceAttr("collibra-access-governance_grant.test", "who_locked", "true"),
 						resource.TestCheckResourceAttr("collibra-access-governance_grant.test", "inheritance_locked", "false"),
 						resource.TestCheckResourceAttr("collibra-access-governance_grant.test", "what_locked", "true"),
@@ -93,7 +93,7 @@ resource "collibra-access-governance_grant" "test" {
 	]
 	who = [
 		{
-			"user": "terraform@collibra.com"
+			"user": "terraform-acc-test-1@collibra.com"
 		}
 	]
 	inheritance_locked = true
@@ -108,7 +108,7 @@ resource "collibra-access-governance_grant" "test" {
 						resource.TestCheckResourceAttr("collibra-access-governance_grant.test", "what_data_objects.0.permissions.#", "1"),
 						resource.TestCheckResourceAttr("collibra-access-governance_grant.test", "what_data_objects.0.permissions.0", "SELECT"),
 						resource.TestCheckResourceAttr("collibra-access-governance_grant.test", "who.#", "1"),
-						resource.TestCheckResourceAttr("collibra-access-governance_grant.test", "who.0.user", "terraform@collibra.com"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.test", "who.0.user", "terraform-acc-test-1@collibra.com"),
 						resource.TestCheckResourceAttr("collibra-access-governance_grant.test", "who_locked", "true"),
 						resource.TestCheckResourceAttr("collibra-access-governance_grant.test", "inheritance_locked", "true"),
 						resource.TestCheckResourceAttr("collibra-access-governance_grant.test", "what_locked", "true"),
@@ -211,7 +211,7 @@ resource "collibra-access-governance_grant" "purpose1" {
 	]
 	who = [
 		{
-			"user": "terraform@collibra.com"
+			"user": "terraform-acc-test-1@collibra.com"
 		}
 	]
 	category = "purpose"
@@ -270,7 +270,7 @@ resource "collibra-access-governance_grant" "purpose1" {
 	]
 	who = [
 		{
-			"user": "terraform@collibra.com"
+			"user": "terraform-acc-test-1@collibra.com"
 		}
 	]
 	category = "purpose"
@@ -296,7 +296,7 @@ resource "collibra-access-governance_grant" "test" {
 			"access_control": collibra-access-governance_grant.purpose1.id
 		},
 		{
-			"user": "terraform@collibra.com"
+			"user": "terraform-acc-test-1@collibra.com"
 		}
 	]
 }
@@ -361,7 +361,7 @@ resource "collibra-access-governance_grant" "abac_grant" {
     }
 	who = [
 		{
-			"user": "terraform@collibra.com"
+			"user": "terraform-acc-test-1@collibra.com"
 		}
 	]
 }
@@ -378,7 +378,7 @@ resource "collibra-access-governance_grant" "abac_grant" {
 						resource.TestCheckResourceAttr("collibra-access-governance_grant.abac_grant", "what_abac_rule.global_permissions.#", "1"),
 						resource.TestCheckResourceAttr("collibra-access-governance_grant.abac_grant", "what_abac_rule.global_permissions.0", "READ"),
 						resource.TestCheckResourceAttr("collibra-access-governance_grant.abac_grant", "who.#", "1"),
-						resource.TestCheckResourceAttr("collibra-access-governance_grant.abac_grant", "who.0.user", "terraform@collibra.com"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.abac_grant", "who.0.user", "terraform-acc-test-1@collibra.com"),
 						resource.TestCheckResourceAttr("collibra-access-governance_grant.abac_grant", "who_locked", "true"),
 						resource.TestCheckResourceAttr("collibra-access-governance_grant.abac_grant", "what_locked", "true"),
 					),
@@ -428,7 +428,7 @@ resource "collibra-access-governance_grant" "abac_grant" {
     }
 	who = [
 		{
-			"user": "terraform@collibra.com"
+			"user": "terraform-acc-test-1@collibra.com"
 		}
 	]
 }
@@ -446,7 +446,7 @@ resource "collibra-access-governance_grant" "abac_grant" {
 						resource.TestCheckResourceAttr("collibra-access-governance_grant.abac_grant", "what_abac_rule.permissions.0", "SELECT"),
 						resource.TestCheckResourceAttr("collibra-access-governance_grant.abac_grant", "what_abac_rule.do_types.#", "2"),
 						resource.TestCheckResourceAttr("collibra-access-governance_grant.abac_grant", "who.#", "1"),
-						resource.TestCheckResourceAttr("collibra-access-governance_grant.abac_grant", "who.0.user", "terraform@collibra.com"),
+						resource.TestCheckResourceAttr("collibra-access-governance_grant.abac_grant", "who.0.user", "terraform-acc-test-1@collibra.com"),
 						resource.TestCheckResourceAttr("collibra-access-governance_grant.abac_grant", "who_locked", "true"),
 						resource.TestCheckResourceAttr("collibra-access-governance_grant.abac_grant", "inheritance_locked", "false"),
 						resource.TestCheckResourceAttr("collibra-access-governance_grant.abac_grant", "what_locked", "true"),

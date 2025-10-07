@@ -20,7 +20,7 @@ import (
 var _ resource.Resource = (*FilterResource)(nil)
 
 type FilterResourceModel struct {
-	// AccessProviderResourceModel properties. This has to be duplicated because of https://github.com/hashicorp/terraform-plugin-framework/issues/242
+	// AccessControlResourceModel properties. This has to be duplicated because of https://github.com/hashicorp/terraform-plugin-framework/issues/242
 	Id                types.String         `tfsdk:"id"`
 	Name              types.String         `tfsdk:"name"`
 	Description       types.String         `tfsdk:"description"`
@@ -38,8 +38,8 @@ type FilterResourceModel struct {
 	WhatLocked   types.Bool   `tfsdk:"what_locked"`
 }
 
-func (f *FilterResourceModel) GetAccessProviderResourceModel() *AccessProviderResourceModel {
-	return &AccessProviderResourceModel{
+func (f *FilterResourceModel) GetAccessControlResourceModel() *AccessControlResourceModel {
+	return &AccessControlResourceModel{
 		Id:                f.Id,
 		Name:              f.Name,
 		Description:       f.Description,
@@ -52,7 +52,7 @@ func (f *FilterResourceModel) GetAccessProviderResourceModel() *AccessProviderRe
 	}
 }
 
-func (f *FilterResourceModel) SetAccessProviderResourceModel(ap *AccessProviderResourceModel) {
+func (f *FilterResourceModel) SetAccessControlResourceModel(ap *AccessControlResourceModel) {
 	f.Id = ap.Id
 	f.Name = ap.Name
 	f.Description = ap.Description
@@ -64,8 +64,8 @@ func (f *FilterResourceModel) SetAccessProviderResourceModel(ap *AccessProviderR
 	f.InheritanceLocked = ap.InheritanceLocked
 }
 
-func (f *FilterResourceModel) ToAccessProviderInput(ctx context.Context, client *sdk.CollibraClient, result *accessGovernanceType.AccessControlInput) diag.Diagnostics {
-	diagnostics := f.GetAccessProviderResourceModel().ToAccessProviderInput(ctx, client, result)
+func (f *FilterResourceModel) ToAccessControlInput(ctx context.Context, client *sdk.CollibraClient, result *accessGovernanceType.AccessControlInput) diag.Diagnostics {
+	diagnostics := f.GetAccessControlResourceModel().ToAccessControlInput(ctx, client, result)
 
 	if diagnostics.HasError() {
 		return diagnostics
@@ -113,15 +113,15 @@ func (f *FilterResourceModel) ToAccessProviderInput(ctx context.Context, client 
 	return diagnostics
 }
 
-func (f *FilterResourceModel) FromAccessProvider(_ context.Context, _ *sdk.CollibraClient, input *accessGovernanceType.AccessControl) diag.Diagnostics {
-	apResourceModel := f.GetAccessProviderResourceModel()
-	diagnostics := apResourceModel.FromAccessProvider(input)
+func (f *FilterResourceModel) FromAccessControl(_ context.Context, _ *sdk.CollibraClient, input *accessGovernanceType.AccessControl) diag.Diagnostics {
+	apResourceModel := f.GetAccessControlResourceModel()
+	diagnostics := apResourceModel.FromAccessControl(input)
 
 	if diagnostics.HasError() {
 		return diagnostics
 	}
 
-	f.SetAccessProviderResourceModel(apResourceModel)
+	f.SetAccessControlResourceModel(apResourceModel)
 
 	if len(input.SyncData) != 1 {
 		diagnostics.AddError("Failed to get data source", fmt.Sprintf("Expected exactly one data source, got: %d.", len(input.SyncData)))
@@ -143,12 +143,12 @@ func (f *FilterResourceModel) UpdateOwners(owners types.Set) {
 }
 
 type FilterResource struct {
-	AccessProviderResource[FilterResourceModel, *FilterResourceModel]
+	AccessControlResource[FilterResourceModel, *FilterResourceModel]
 }
 
 func NewFilterResource() resource.Resource {
 	return &FilterResource{
-		AccessProviderResource: AccessProviderResource[FilterResourceModel, *FilterResourceModel]{
+		AccessControlResource: AccessControlResource[FilterResourceModel, *FilterResourceModel]{
 			readHooks: []ReadHook[FilterResourceModel, *FilterResourceModel]{
 				readFilterResourceTable,
 			},

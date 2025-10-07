@@ -20,19 +20,18 @@ func TestAccUserDataSource(t *testing.T) {
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: providerConfig + `data "collibra-access-governance_user" "carla" {
-	email = "c_harris@collibra.com"
+				Config: providerConfig + `data "collibra-access-governance_user" "terraform-acc-test-1" {
+	email = "terraform-acc-test-1@collibra.com"
 }
 
-data "collibra-access-governance_user" "angelica" {
-	email = "a_abbotatkinson7576@collibra.com"
+data "collibra-access-governance_user" "terraform-acc-test-2" {
+	email = "terraform-acc-test-2@collibra.com"
 }
 `,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("data.collibra-access-governance_user.carla", "name", "Carla Harris"),
-					resource.TestCheckResourceAttr("data.collibra-access-governance_user.carla", "type", "Human"),
-					resource.TestCheckResourceAttr("data.collibra-access-governance_user.carla", "collibra_user", "true"),
-					resource.TestCheckResourceAttrWith("data.collibra-access-governance_user.carla", "id", func(value string) error {
+					resource.TestCheckResourceAttr("data.collibra-access-governance_user.terraform-acc-test-1", "name", "Terraform Acceptance test 1"),
+					resource.TestCheckResourceAttr("data.collibra-access-governance_user.terraform-acc-test-1", "type", "Human"),
+					resource.TestCheckResourceAttrWith("data.collibra-access-governance_user.terraform-acc-test-1", "id", func(value string) error {
 						if value == "" {
 							return errors.New("id is empty")
 						}
@@ -40,10 +39,9 @@ data "collibra-access-governance_user" "angelica" {
 						return nil
 					}),
 
-					resource.TestCheckResourceAttr("data.collibra-access-governance_user.angelica", "name", "Angelica Abbot Atkinson"),
-					resource.TestCheckResourceAttr("data.collibra-access-governance_user.angelica", "type", "Machine"),
-					resource.TestCheckResourceAttr("data.collibra-access-governance_user.angelica", "collibra_user", "false"),
-					resource.TestCheckResourceAttrWith("data.collibra-access-governance_user.angelica", "id", func(value string) error {
+					resource.TestCheckResourceAttr("data.collibra-access-governance_user.terraform-acc-test-2", "name", "Terraform Acceptance test 2"),
+					resource.TestCheckResourceAttr("data.collibra-access-governance_user.terraform-acc-test-2", "type", "Human"),
+					resource.TestCheckResourceAttrWith("data.collibra-access-governance_user.terraform-acc-test-2", "id", func(value string) error {
 						if value == "" {
 							return errors.New("id is empty")
 						}

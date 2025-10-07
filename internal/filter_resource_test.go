@@ -33,7 +33,7 @@ func TestAccFilterResource(t *testing.T) {
 					table = "MASTER_DATA.SALES.SPECIALOFFER"
 					who = [
 						{
-							"user": "terraform@collibra.com"
+							"user": "terraform-acc-test-1@collibra.com"
 						}
 					]
 					filter_policy = "{Category} = 'Reseller'"
@@ -96,7 +96,7 @@ resource "collibra-access-governance_filter" "test" {
 	what_locked = false
 	who = [
 		{
-			"user": "terraform@collibra.com"
+			"user": "terraform-acc-test-1@collibra.com"
 		}
 	]
 }
