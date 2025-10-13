@@ -294,8 +294,8 @@ func (g *GrantCategoryResource) Schema(ctx context.Context, request resource.Sch
 				)),
 			},
 		},
-		Description:         "The grant category resource allows you to manage grant categories in Raito.",
-		MarkdownDescription: "The grant category resource allows you to manage grant categories in Raito.",
+		Description:         "The grant category resource allows you to manage grant categories in Collibra Access Governance.",
+		MarkdownDescription: "The grant category resource allows you to manage grant categories in Collibra Access Governance.",
 		Version:             1,
 	}
 }

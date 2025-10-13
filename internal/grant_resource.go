@@ -514,7 +514,7 @@ func (g *GrantResource) Schema(_ context.Context, _ resource.SchemaRequest, resp
 		Computed:            false,
 		Sensitive:           false,
 		Description:         "The data object what items associated to the grant.",
-		MarkdownDescription: "The data object what items associated to the grant. When this is not set (nil), the what list will not be overridden. This is typically used when this should be managed from Raito Cloud.",
+		MarkdownDescription: "The data object what items associated to the grant. When this is not set (nil), the what list will not be overridden. This is typically used when this should be managed from Collibra Access Governance.",
 	}
 	attributes["what_abac_rule"] = schema.SingleNestedAttribute{
 		Attributes: map[string]schema.Attribute{
@@ -624,7 +624,7 @@ func (g *GrantResource) Schema(_ context.Context, _ resource.SchemaRequest, resp
 	response.Schema = schema.Schema{
 		Attributes:          attributes,
 		Description:         "Grant access control resource",
-		MarkdownDescription: "The resource for representing a Raito [Grant](https://docs.raito.io/docs/cloud/access_management/grants) access control.",
+		MarkdownDescription: "The resource for representing a Collibra Access Governance [Grant](https://docs.raito.io/docs/cloud/access_management/grants) access control.",
 		Version:             1,
 	}
 }

@@ -5,7 +5,6 @@ package abac_expression
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/go-errors/errors"
 	"io"
 	"strconv"
 	"strings"
@@ -56,7 +55,7 @@ func UnaryOperatorString(s string) (UnaryOperator, error) {
 	if val, ok := _UnaryOperatorNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
-	return 0, errors.Errorf("%s does not belong to UnaryOperator values", s)
+	return 0, fmt.Errorf("%s does not belong to UnaryOperator values", s)
 }
 
 // UnaryOperatorValues returns all values of the enum
@@ -90,7 +89,7 @@ func (i UnaryOperator) MarshalJSON() ([]byte, error) {
 func (i *UnaryOperator) UnmarshalJSON(data []byte) error {
 	var s string
 	if err := json.Unmarshal(data, &s); err != nil {
-		return errors.Errorf("UnaryOperator should be a string, got %s", data)
+		return fmt.Errorf("UnaryOperator should be a string, got %s", data)
 	}
 
 	var err error
@@ -124,7 +123,7 @@ func (i UnaryOperator) MarshalGQL(w io.Writer) {
 func (i *UnaryOperator) UnmarshalGQL(value interface{}) error {
 	str, ok := value.(string)
 	if !ok {
-		return errors.Errorf("UnaryOperator should be a string, got %T", value)
+		return fmt.Errorf("UnaryOperator should be a string, got %T", value)
 	}
 
 	var err error

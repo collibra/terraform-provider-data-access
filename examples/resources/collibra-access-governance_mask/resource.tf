@@ -3,7 +3,7 @@ resource "collibra-access-governance_datasource" "ds" {
 }
 
 resource "collibra-access-governance_mask" "example" {
-  name        = "A Raito Mask"
+  name        = "A Mask"
   description = "A simple mask"
   state       = "Active"
   who = [

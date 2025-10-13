@@ -207,7 +207,7 @@ func (f *FilterResource) Schema(ctx context.Context, request resource.SchemaRequ
 	response.Schema = schema.Schema{
 		Attributes:          attributes,
 		Description:         "The filter access control resource",
-		MarkdownDescription: "The resource for representing a Raito [Row-level Filter](https://docs.raito.io/docs/cloud/access_management/row_filters) access control.",
+		MarkdownDescription: "The resource for representing a [Row-level Filter](https://docs.raito.io/docs/cloud/access_management/row_filters) access control.",
 		Version:             1,
 	}
 }

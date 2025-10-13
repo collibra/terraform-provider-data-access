@@ -5,7 +5,6 @@ package abac_expression
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/go-errors/errors"
 	"io"
 	"strconv"
 	"strings"
@@ -60,7 +59,7 @@ func AggregatorOperatorString(s string) (AggregatorOperator, error) {
 	if val, ok := _AggregatorOperatorNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
-	return 0, errors.Errorf("%s does not belong to AggregatorOperator values", s)
+	return 0, fmt.Errorf("%s does not belong to AggregatorOperator values", s)
 }
 
 // AggregatorOperatorValues returns all values of the enum
@@ -94,7 +93,7 @@ func (i AggregatorOperator) MarshalJSON() ([]byte, error) {
 func (i *AggregatorOperator) UnmarshalJSON(data []byte) error {
 	var s string
 	if err := json.Unmarshal(data, &s); err != nil {
-		return errors.Errorf("AggregatorOperator should be a string, got %s", data)
+		return fmt.Errorf("AggregatorOperator should be a string, got %s", data)
 	}
 
 	var err error
@@ -128,7 +127,7 @@ func (i AggregatorOperator) MarshalGQL(w io.Writer) {
 func (i *AggregatorOperator) UnmarshalGQL(value interface{}) error {
 	str, ok := value.(string)
 	if !ok {
-		return errors.Errorf("AggregatorOperator should be a string, got %T", value)
+		return fmt.Errorf("AggregatorOperator should be a string, got %T", value)
 	}
 
 	var err error
