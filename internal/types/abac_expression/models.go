@@ -44,7 +44,7 @@ func (b BinaryExpression) ToGqlInput() (*accessGovernanceType.AbacComparisonExpr
 	}, nil
 }
 
-//go:generate go run github.com/raito-io/enumer -type=AbacOperator -values -gqlgen -yaml -json -trimprefix=AbacOperator
+//go:generate go run github.com/dmarkham/enumer -type=AbacOperator -values -gqlgen -yaml -json -trimprefix=AbacOperator
 type AbacOperator int
 
 const (
@@ -98,7 +98,7 @@ func (l Literal) ToGqlInput() accessGovernanceType.AbacComparisonExpressionLiter
 	}
 }
 
-//go:generate go run github.com/raito-io/enumer -type=AggregatorOperator -values -gqlgen -yaml -json -trimprefix=AggregatorOperator
+//go:generate go run github.com/dmarkham/enumer -type=AggregatorOperator -values -gqlgen -yaml -json -trimprefix=AggregatorOperator
 type AggregatorOperator int
 
 const (
@@ -129,7 +129,7 @@ func (a Aggregator) ToGqlInput() (*accessGovernanceType.AbacComparisonExpression
 	}, nil
 }
 
-//go:generate go run github.com/raito-io/enumer -type=UnaryOperator -values -gqlgen -yaml -json -trimprefix=UnaryOperator
+//go:generate go run github.com/dmarkham/enumer -type=UnaryOperator -values -gqlgen -yaml -json -trimprefix=UnaryOperator
 type UnaryOperator int
 
 const (

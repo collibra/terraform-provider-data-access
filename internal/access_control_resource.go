@@ -9,6 +9,7 @@ import (
 	"github.com/collibra/access-governance-go-sdk"
 	"github.com/collibra/access-governance-go-sdk/services"
 	accessGovernanceType "github.com/collibra/access-governance-go-sdk/types"
+	"github.com/collibra/go-set/set"
 	"github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
@@ -25,7 +26,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
-	"github.com/raito-io/golang-set/set"
 
 	"github.com/collibra/access-governance-terraform-provider/internal/types/abac_expression"
 	"github.com/collibra/access-governance-terraform-provider/internal/utils"
@@ -133,8 +133,8 @@ func (a *AccessControlResource[T, ApModel]) schema(typeName string) map[string]s
 						Optional:            true,
 						Computed:            false,
 						Sensitive:           false,
-						Description:         "The ID of the access control in Raito Cloud",
-						MarkdownDescription: "The ID of the access control in Raito Cloud. Cannot be set if `user` is set.",
+						Description:         "The ID of the access control in Collibra Access Governance",
+						MarkdownDescription: "The ID of the access control in Collibra Access Governance. Cannot be set if `user` is set.",
 						Validators: []validator.String{
 							stringvalidator.LengthAtLeast(3),
 						},
@@ -160,7 +160,7 @@ func (a *AccessControlResource[T, ApModel]) schema(typeName string) map[string]s
 			Computed:            false,
 			Sensitive:           false,
 			Description:         fmt.Sprintf("The who-items associated with the %s", typeName),
-			MarkdownDescription: fmt.Sprintf("The who-items associated with the %s. When this is not set (nil), the who-list will not be overridden. This is typically used when this should be managed from Raito Cloud.", typeName),
+			MarkdownDescription: fmt.Sprintf("The who-items associated with the %s. When this is not set (nil), the who-list will not be overridden. This is typically used when this should be managed from Collibra Access Governance.", typeName),
 		},
 		"who_abac_rule": schema.StringAttribute{
 			CustomType:          jsontypes.NormalizedType{},

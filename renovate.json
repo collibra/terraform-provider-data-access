@@ -1,0 +1,59 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "automerge": false,
+  "assigneesFromCodeOwners": true,
+  "baseBranches": [
+    "main"
+  ],
+  "branchPrefix": "renovate-",
+  "dependencyDashboard": false,
+  "hashedBranchLength": 24,
+  "enabledManagers": [
+    "renovate-config-presets",
+    "gomod"
+  ],
+  "packageRules": [
+    {
+      "description": "Group all non-major dependency updates",
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ],
+      "groupName": "Non-major dependency updates"
+    },
+    {
+      "description": "Run code generation after Go module updates",
+      "matchManagers": [
+        "gomod"
+      ],
+      "postUpgradeTasks": {
+        "commands": [
+          "go mod tidy -e"
+        ],
+        "fileFilters": [
+          "**/*.go",
+          "go.mod",
+          "go.sum"
+        ]
+      }
+    }
+  ],
+  "labels": [
+    "dependency-update"
+  ],
+  "major": {
+    "automerge": false,
+    "labels": [
+      "dependency-update",
+      "major-dependency-update"
+    ]
+  },
+  "prHourlyLimit": 10,
+  "rebaseWhen": "behind-base-branch",
+  "reviewersSampleSize": 1,
+  "schedule": [
+    "at any time"
+  ],
+  "timezone": "Europe/Brussels",
+  "updateNotScheduled": false
+}

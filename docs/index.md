@@ -28,9 +28,9 @@ provider "collibra-access-governance" {
 
 ### Required
 
-- `secret` (String, Sensitive) The password to use to sign in to your Raito Cloud instance
+- `secret` (String, Sensitive) The password to use to sign in to your Collibra instance
 - `url` (String) The base url of your Collibra instance (i.e. https://<your>.collibra.com)
-- `user` (String) The username to use to sign in to your Raito Cloud instance
+- `user` (String) The username to use to sign in to your Collibra instance
 
 
 

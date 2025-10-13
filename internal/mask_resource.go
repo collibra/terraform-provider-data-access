@@ -330,7 +330,7 @@ func (m *MaskResource) Schema(_ context.Context, _ resource.SchemaRequest, respo
 		Computed:            false,
 		Sensitive:           false,
 		Description:         "The full name of columns that should be included in the mask",
-		MarkdownDescription: "The full name of columns that should be included in the mask. Items are managed by Raito Cloud if columns is not set (nil).",
+		MarkdownDescription: "The full name of columns that should be included in the mask. Items are managed by Collibra Access Governance if columns is not set (nil).",
 	}
 
 	attributes["what_abac_rule"] = schema.SingleNestedAttribute{
@@ -374,7 +374,7 @@ func (m *MaskResource) Schema(_ context.Context, _ resource.SchemaRequest, respo
 	response.Schema = schema.Schema{
 		Attributes:          attributes,
 		Description:         "The mask access control resource",
-		MarkdownDescription: "The resource for representing a Raito [Column Mask](https://docs.raito.io/docs/cloud/access_management/masks) access control.",
+		MarkdownDescription: "The resource for representing a [Column Mask](https://docs.raito.io/docs/cloud/access_management/masks) access control.",
 		Version:             1,
 	}
 }
