@@ -10,7 +10,6 @@ tool (
 require (
 	github.com/collibra/access-governance-go-sdk v0.0.21
 	github.com/collibra/go-set v0.1.0
-	github.com/go-errors/errors v1.5.1
 	github.com/hashicorp/terraform-plugin-framework v1.16.1
 	github.com/hashicorp/terraform-plugin-framework-jsontypes v0.2.0
 	github.com/hashicorp/terraform-plugin-framework-validators v0.19.0
