@@ -8,7 +8,7 @@ tool (
 )
 
 require (
-	github.com/collibra/access-governance-go-sdk v0.0.21
+	github.com/collibra/access-governance-go-sdk v0.0.22
 	github.com/collibra/go-set v0.1.0
 	github.com/hashicorp/terraform-plugin-framework v1.16.1
 	github.com/hashicorp/terraform-plugin-framework-jsontypes v0.2.0
@@ -36,7 +36,7 @@ require (
 	github.com/cloudflare/circl v1.6.1 // indirect
 	github.com/collibra/go-bexpression v0.2.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
-	github.com/dmarkham/enumer v1.5.11 // indirect
+	github.com/dmarkham/enumer v1.6.1 // indirect
 	github.com/fatih/color v1.18.0 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
@@ -57,7 +57,7 @@ require (
 	github.com/hashicorp/logutils v1.0.0 // indirect
 	github.com/hashicorp/terraform-exec v0.24.0 // indirect
 	github.com/hashicorp/terraform-json v0.27.2 // indirect
-	github.com/hashicorp/terraform-plugin-docs v0.23.0 // indirect
+	github.com/hashicorp/terraform-plugin-docs v0.24.0 // indirect
 	github.com/hashicorp/terraform-plugin-log v0.9.0 // indirect
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.38.1 // indirect
 	github.com/hashicorp/terraform-registry-address v0.4.0 // indirect
