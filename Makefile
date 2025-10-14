@@ -9,3 +9,7 @@ lint:
 
 testacc:
 	TF_ACC=1 ${gotestsum} ./... -v $(TESTARGS) -timeout 120m
+
+clean-gitignore:
+	@echo "Removing ignored Go files..."
+	git clean -fX -- "**/*.go"
