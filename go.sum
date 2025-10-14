@@ -35,8 +35,8 @@ github.com/clipperhouse/uax29/v2 v2.2.0 h1:ChwIKnQN3kcZteTXMgb1wztSgaU+ZemkgWdoh
 github.com/clipperhouse/uax29/v2 v2.2.0/go.mod h1:EFJ2TJMRUaplDxHKj1qAEhCtQPW2tJSwu5BF98AuoVM=
 github.com/cloudflare/circl v1.6.1 h1:zqIqSPIndyBh1bjLVVDHMPpVKqp8Su/V+6MeDzzQBQ0=
 github.com/cloudflare/circl v1.6.1/go.mod h1:uddAzsPgqdMAYatqJ0lsjX1oECcQLIlRpzZh3pJrofs=
-github.com/collibra/access-governance-go-sdk v0.0.21 h1:jzXJoWA/hpfaibVApIebpEIqnT2lKihhw4locf8Knb8=
-github.com/collibra/access-governance-go-sdk v0.0.21/go.mod h1:HDYSjDUk8iywCE4sFJGNXNXGOL0TCa7nsjIImM/Nqac=
+github.com/collibra/access-governance-go-sdk v0.0.22 h1:fygxLV+Sbq0+BTTsebunhaQPAMfaagpwiBXDilJbNjw=
+github.com/collibra/access-governance-go-sdk v0.0.22/go.mod h1:HDYSjDUk8iywCE4sFJGNXNXGOL0TCa7nsjIImM/Nqac=
 github.com/collibra/go-bexpression v0.2.0 h1:qSGtqkKwu5lbUsT+fjAsLCDwNZAQef3L2sl+mWfrnnY=
 github.com/collibra/go-bexpression v0.2.0/go.mod h1:K8dpSRrwQYWfjWrmQjBmCn/Q2XAh0aOfqg4Wd26rWHg=
 github.com/collibra/go-set v0.1.0 h1:b/Ve7VpVnmrhW4Ow0FqHWVbSmZvJnys1bFNQDirMaG8=
@@ -49,6 +49,8 @@ github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc h1:U9qPSI2PIWSS1
 github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/dmarkham/enumer v1.5.11 h1:quorLCaEfzjJ23Pf7PB9lyyaHseh91YfTM/sAD/4Mbo=
 github.com/dmarkham/enumer v1.5.11/go.mod h1:yixql+kDDQRYqcuBM2n9Vlt7NoT9ixgXhaXry8vmRg8=
+github.com/dmarkham/enumer v1.6.1 h1:aSc9awYtZL07TUueWs40QcHtxTvHTAwG0EqrNsK45w4=
+github.com/dmarkham/enumer v1.6.1/go.mod h1:yixql+kDDQRYqcuBM2n9Vlt7NoT9ixgXhaXry8vmRg8=
 github.com/emirpasic/gods v1.18.1 h1:FXtiHYKDGKCW2KzwZKx0iC0PQmdlorYgdFG9jPXJ1Bc=
 github.com/emirpasic/gods v1.18.1/go.mod h1:8tpGGwCnJ5H4r6BWwaV6OrWmMoPhUl5jm/FMNAnJvWQ=
 github.com/fatih/color v1.13.0/go.mod h1:kLAiJbzzSOZDVNGyDpeOxJ47H46qBXwg5ILebYFFOfk=
@@ -119,6 +121,8 @@ github.com/hashicorp/terraform-json v0.27.2 h1:BwGuzM6iUPqf9JYM/Z4AF1OJ5VVJEEzoK
 github.com/hashicorp/terraform-json v0.27.2/go.mod h1:GzPLJ1PLdUG5xL6xn1OXWIjteQRT2CNT9o/6A9mi9hE=
 github.com/hashicorp/terraform-plugin-docs v0.23.0 h1:sipnfD4/9EJBg9zekym+s1H6qmLAKJHhGWBwvN9v/hE=
 github.com/hashicorp/terraform-plugin-docs v0.23.0/go.mod h1:J4b5AtMRgJlDrwCQz+G4hKABgHY5m56PnsRmdAzBwW8=
+github.com/hashicorp/terraform-plugin-docs v0.24.0 h1:YNZYd+8cpYclQyXbl1EEngbld8w7/LPOm99GD5nikIU=
+github.com/hashicorp/terraform-plugin-docs v0.24.0/go.mod h1:YLg+7LEwVmRuJc0EuCw0SPLxuQXw5mW8iJ5ml/kvi+o=
 github.com/hashicorp/terraform-plugin-framework v1.16.1 h1:1+zwFm3MEqd/0K3YBB2v9u9DtyYHyEuhVOfeIXbteWA=
 github.com/hashicorp/terraform-plugin-framework v1.16.1/go.mod h1:0xFOxLy5lRzDTayc4dzK/FakIgBhNf/lC4499R9cV4Y=
 github.com/hashicorp/terraform-plugin-framework-jsontypes v0.2.0 h1:SJXL5FfJJm17554Kpt9jFXngdM6fXbnUnZ6iT2IeiYA=
