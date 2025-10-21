@@ -188,7 +188,7 @@ func (m *GrantResourceModel) FromAccessControl(ctx context.Context, client *sdk.
 		dsId := types.StringValue(ds.DataSource.Id)
 		dsType := types.StringPointerValue(ds.AccessControlType.Type)
 
-		dataSource, diagnostics := types.ObjectValue(map[string]attr.Type{
+		dataSource, diags := types.ObjectValue(map[string]attr.Type{
 			"data_source": types.StringType,
 			"type":        types.StringType,
 		},
@@ -197,7 +197,7 @@ func (m *GrantResourceModel) FromAccessControl(ctx context.Context, client *sdk.
 				"type":        dsType,
 			})
 
-		diagnostics.Append(diagnostics...)
+		diagnostics.Append(diags...)
 
 		if diagnostics.HasError() {
 			return diagnostics
@@ -206,14 +206,14 @@ func (m *GrantResourceModel) FromAccessControl(ctx context.Context, client *sdk.
 		dataSourceValues = append(dataSourceValues, dataSource)
 	}
 
-	dataSources, diagnostics := types.SetValue(types.ObjectType{
+	dataSources, diags := types.SetValue(types.ObjectType{
 		AttrTypes: map[string]attr.Type{
 			"data_source": types.StringType,
 			"type":        types.StringType,
 		},
 	}, dataSourceValues)
 
-	diagnostics.Append(diagnostics...)
+	diagnostics.Append(diags...)
 
 	if diagnostics.HasError() {
 		return diagnostics
