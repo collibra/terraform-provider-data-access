@@ -6,7 +6,7 @@ import (
 	"slices"
 
 	"github.com/collibra/access-governance-go-sdk"
-	accessGovernanceType "github.com/collibra/access-governance-go-sdk/types"
+	dataAccessType "github.com/collibra/access-governance-go-sdk/types"
 	"github.com/collibra/access-governance-terraform-provider/internal/utils"
 	"github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -64,17 +64,17 @@ func (f *FilterResourceModel) SetAccessControlResourceModel(ap *AccessControlRes
 	f.InheritanceLocked = ap.InheritanceLocked
 }
 
-func (f *FilterResourceModel) ToAccessControlInput(ctx context.Context, client *sdk.CollibraClient, result *accessGovernanceType.AccessControlInput) diag.Diagnostics {
+func (f *FilterResourceModel) ToAccessControlInput(ctx context.Context, client *sdk.CollibraClient, result *dataAccessType.AccessControlInput) diag.Diagnostics {
 	diagnostics := f.GetAccessControlResourceModel().ToAccessControlInput(ctx, client, result)
 
 	if diagnostics.HasError() {
 		return diagnostics
 	}
 
-	result.Action = utils.Ptr(accessGovernanceType.AccessControlActionFilter)
+	result.Action = utils.Ptr(dataAccessType.AccessControlActionFilter)
 
 	if !f.DataSource.IsNull() && !f.DataSource.IsUnknown() {
-		result.DataSources = []accessGovernanceType.AccessControlDataSourceInput{
+		result.DataSources = []dataAccessType.AccessControlDataSourceInput{
 			{
 				DataSource: f.DataSource.ValueString(),
 			},
@@ -84,16 +84,16 @@ func (f *FilterResourceModel) ToAccessControlInput(ctx context.Context, client *
 	result.PolicyRule = f.FilterPolicy.ValueStringPointer()
 
 	if !f.Table.IsNull() && !f.Table.IsUnknown() {
-		result.Locks = append(result.Locks, accessGovernanceType.AccessControlLockDataInput{
-			LockKey: accessGovernanceType.AccessControlLockWhatlock,
-			Details: &accessGovernanceType.AccessControlLockDetailsInput{
+		result.Locks = append(result.Locks, dataAccessType.AccessControlLockDataInput{
+			LockKey: dataAccessType.AccessControlLockWhatlock,
+			Details: &dataAccessType.AccessControlLockDetailsInput{
 				Reason: utils.Ptr(lockMsg),
 			},
 		})
 
-		result.WhatDataObjects = []accessGovernanceType.AccessControlWhatInputDO{
+		result.WhatDataObjects = []dataAccessType.AccessControlWhatInputDO{
 			{
-				DataObjectByName: []accessGovernanceType.AccessControlWhatDoByNameInput{
+				DataObjectByName: []dataAccessType.AccessControlWhatDoByNameInput{
 					{
 						FullName:   f.Table.ValueString(),
 						DataSource: f.DataSource.ValueString(),
@@ -102,9 +102,9 @@ func (f *FilterResourceModel) ToAccessControlInput(ctx context.Context, client *
 			},
 		}
 	} else if !f.WhatLocked.IsNull() && f.WhatLocked.ValueBool() {
-		result.Locks = append(result.Locks, accessGovernanceType.AccessControlLockDataInput{
-			LockKey: accessGovernanceType.AccessControlLockWhatlock,
-			Details: &accessGovernanceType.AccessControlLockDetailsInput{
+		result.Locks = append(result.Locks, dataAccessType.AccessControlLockDataInput{
+			LockKey: dataAccessType.AccessControlLockWhatlock,
+			Details: &dataAccessType.AccessControlLockDetailsInput{
 				Reason: utils.Ptr(lockMsg),
 			},
 		})
@@ -113,7 +113,7 @@ func (f *FilterResourceModel) ToAccessControlInput(ctx context.Context, client *
 	return diagnostics
 }
 
-func (f *FilterResourceModel) FromAccessControl(_ context.Context, _ *sdk.CollibraClient, input *accessGovernanceType.AccessControl) diag.Diagnostics {
+func (f *FilterResourceModel) FromAccessControl(_ context.Context, _ *sdk.CollibraClient, input *dataAccessType.AccessControl) diag.Diagnostics {
 	apResourceModel := f.GetAccessControlResourceModel()
 	diagnostics := apResourceModel.FromAccessControl(input)
 
@@ -131,8 +131,8 @@ func (f *FilterResourceModel) FromAccessControl(_ context.Context, _ *sdk.Collib
 
 	f.DataSource = types.StringValue(input.SyncData[0].DataSource.Id)
 	f.FilterPolicy = types.StringPointerValue(input.PolicyRule)
-	f.WhatLocked = types.BoolValue(slices.ContainsFunc(input.Locks, func(data accessGovernanceType.AccessControlLocksAccessControlLockData) bool {
-		return data.LockKey == accessGovernanceType.AccessControlLockWhatlock
+	f.WhatLocked = types.BoolValue(slices.ContainsFunc(input.Locks, func(data dataAccessType.AccessControlLocksAccessControlLockData) bool {
+		return data.LockKey == dataAccessType.AccessControlLockWhatlock
 	}))
 
 	return diagnostics

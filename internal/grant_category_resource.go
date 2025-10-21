@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"github.com/collibra/access-governance-go-sdk"
-	accessGovernanceType "github.com/collibra/access-governance-go-sdk/types"
+	dataAccessType "github.com/collibra/access-governance-go-sdk/types"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	terraformDiag "github.com/hashicorp/terraform-plugin-framework/diag"
@@ -40,15 +40,15 @@ type GrantCategoryResourceModel struct {
 	AllowedWhatItems         types.Object `tfsdk:"allowed_what_items"`
 }
 
-func (m *GrantCategoryResourceModel) ToGrantCategoryInput() accessGovernanceType.GrantCategoryInput {
+func (m *GrantCategoryResourceModel) ToGrantCategoryInput() dataAccessType.GrantCategoryInput {
 	defaultTypePerDataSourceValues := m.DefaultTypePerDataSource.Elements()
-	defaultTypePerDS := make([]accessGovernanceType.GrantCategoryTypeForDataSourceInput, 0, len(defaultTypePerDataSourceValues))
+	defaultTypePerDS := make([]dataAccessType.GrantCategoryTypeForDataSourceInput, 0, len(defaultTypePerDataSourceValues))
 
 	for _, v := range defaultTypePerDataSourceValues {
 		vObject := v.(types.Object)
 		attributes := vObject.Attributes()
 
-		typeForDataSource := accessGovernanceType.GrantCategoryTypeForDataSourceInput{
+		typeForDataSource := dataAccessType.GrantCategoryTypeForDataSourceInput{
 			DataSource: attributes["data_source"].(types.String).ValueString(),
 			Type:       attributes["type"].(types.String).ValueString(),
 		}
@@ -63,7 +63,7 @@ func (m *GrantCategoryResourceModel) ToGrantCategoryInput() accessGovernanceType
 		allowedWhoCategories = append(allowedWhoCategories, v.(types.String).ValueString())
 	}
 
-	input := accessGovernanceType.GrantCategoryInput{
+	input := dataAccessType.GrantCategoryInput{
 		Name:                     m.Name.ValueStringPointer(),
 		Description:              m.Description.ValueStringPointer(),
 		Icon:                     m.Icon.ValueStringPointer(),
@@ -71,13 +71,13 @@ func (m *GrantCategoryResourceModel) ToGrantCategoryInput() accessGovernanceType
 		AllowDuplicateNames:      m.AllowDuplicateNames.ValueBoolPointer(),
 		MultiDataSource:          m.MultiDataSource.ValueBoolPointer(),
 		DefaultTypePerDataSource: defaultTypePerDS,
-		AllowedWhoItems: &accessGovernanceType.GrantCategoryAllowedWhoItemsInput{
+		AllowedWhoItems: &dataAccessType.GrantCategoryAllowedWhoItemsInput{
 			User:        m.AllowedWhoItems.Attributes()["user"].(types.Bool).ValueBool(),
 			Inheritance: m.AllowedWhoItems.Attributes()["inheritance"].(types.Bool).ValueBool(),
 			Self:        m.AllowedWhoItems.Attributes()["self"].(types.Bool).ValueBool(),
 			Categories:  allowedWhoCategories,
 		},
-		AllowedWhatItems: &accessGovernanceType.GrantCategoryAllowedWhatItemsInput{
+		AllowedWhatItems: &dataAccessType.GrantCategoryAllowedWhatItemsInput{
 			DataObject: m.AllowedWhatItems.Attributes()["data_object"].(types.Bool).ValueBool(),
 		},
 	}
@@ -341,7 +341,7 @@ func (g *GrantCategoryResource) Read(ctx context.Context, request resource.ReadR
 
 	category, err := g.client.GrantCategory().GetGrantCategory(ctx, stateData.Id.ValueString())
 	if err != nil {
-		var notFoundErr *accessGovernanceType.ErrNotFound
+		var notFoundErr *dataAccessType.ErrNotFound
 		if errors.As(err, &notFoundErr) {
 			response.State.RemoveResource(ctx)
 		} else {
@@ -437,7 +437,7 @@ func (g *GrantCategoryResource) ImportState(ctx context.Context, req resource.Im
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }
 
-func setGrantCategoryResourceData(data *accessGovernanceType.GrantCategoryDetails, resp *GrantCategoryResourceModel) (diags terraformDiag.Diagnostics) {
+func setGrantCategoryResourceData(data *dataAccessType.GrantCategoryDetails, resp *GrantCategoryResourceModel) (diags terraformDiag.Diagnostics) {
 	resp.Id = types.StringValue(data.Id)
 	resp.Name = types.StringValue(data.Name)
 	resp.Description = types.StringValue(data.Description)

@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/collibra/access-governance-go-sdk"
-	accessGovernanceType "github.com/collibra/access-governance-go-sdk/types"
+	dataAccessType "github.com/collibra/access-governance-go-sdk/types"
 	"github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -74,7 +74,7 @@ func (m *GrantResourceModel) SetAccessControlResourceModel(ac *AccessControlReso
 	m.InheritanceLocked = ac.InheritanceLocked
 }
 
-func (m *GrantResourceModel) ToAccessControlInput(ctx context.Context, client *sdk.CollibraClient, result *accessGovernanceType.AccessControlInput) diag.Diagnostics {
+func (m *GrantResourceModel) ToAccessControlInput(ctx context.Context, client *sdk.CollibraClient, result *dataAccessType.AccessControlInput) diag.Diagnostics {
 	diagnostics := m.GetAccessControlResourceModel().ToAccessControlInput(ctx, client, result)
 
 	if diagnostics.HasError() {
@@ -84,7 +84,7 @@ func (m *GrantResourceModel) ToAccessControlInput(ctx context.Context, client *s
 	if !m.DataSource.IsNull() && !m.DataSource.IsUnknown() {
 		dataSourceElements := m.DataSource.Elements()
 
-		result.DataSources = make([]accessGovernanceType.AccessControlDataSourceInput, 0, len(dataSourceElements))
+		result.DataSources = make([]dataAccessType.AccessControlDataSourceInput, 0, len(dataSourceElements))
 
 		for _, dsElement := range dataSourceElements {
 			dsAttributes := dsElement.(types.Object).Attributes()
@@ -95,15 +95,15 @@ func (m *GrantResourceModel) ToAccessControlInput(ctx context.Context, client *s
 				apType = dsAttributes["type"].(types.String).ValueStringPointer()
 			}
 
-			result.DataSources = append(result.DataSources, accessGovernanceType.AccessControlDataSourceInput{
+			result.DataSources = append(result.DataSources, dataAccessType.AccessControlDataSourceInput{
 				DataSource: dsAttributes["data_source"].(types.String).ValueString(),
 				Type:       apType,
 			})
 		}
 	}
 
-	result.Action = utils.Ptr(accessGovernanceType.AccessControlActionGrant)
-	result.WhatType = utils.Ptr(accessGovernanceType.WhoAndWhatTypeStatic)
+	result.Action = utils.Ptr(dataAccessType.AccessControlActionGrant)
+	result.WhatType = utils.Ptr(dataAccessType.WhoAndWhatTypeStatic)
 
 	if !m.WhatDataObjects.IsNull() && !m.WhatDataObjects.IsUnknown() {
 		m.whatDoToApInput(result)
@@ -116,9 +116,9 @@ func (m *GrantResourceModel) ToAccessControlInput(ctx context.Context, client *s
 	}
 
 	if m.WhatLocked.ValueBool() {
-		result.Locks = append(result.Locks, accessGovernanceType.AccessControlLockDataInput{
-			LockKey: accessGovernanceType.AccessControlLockWhatlock,
-			Details: &accessGovernanceType.AccessControlLockDetailsInput{
+		result.Locks = append(result.Locks, dataAccessType.AccessControlLockDataInput{
+			LockKey: dataAccessType.AccessControlLockWhatlock,
+			Details: &dataAccessType.AccessControlLockDetailsInput{
 				Reason: utils.Ptr(lockMsg),
 			},
 		})
@@ -131,10 +131,10 @@ func (m *GrantResourceModel) ToAccessControlInput(ctx context.Context, client *s
 	return diagnostics
 }
 
-func (m *GrantResourceModel) whatDoToApInput(result *accessGovernanceType.AccessControlInput) {
+func (m *GrantResourceModel) whatDoToApInput(result *dataAccessType.AccessControlInput) {
 	elements := m.WhatDataObjects.Elements()
 
-	result.WhatDataObjects = make([]accessGovernanceType.AccessControlWhatInputDO, 0, len(elements))
+	result.WhatDataObjects = make([]dataAccessType.AccessControlWhatInputDO, 0, len(elements))
 
 	for _, whatDataObject := range elements {
 		whatDataObjectObject := whatDataObject.(types.Object)
@@ -159,8 +159,8 @@ func (m *GrantResourceModel) whatDoToApInput(result *accessGovernanceType.Access
 			globalPermissions = append(globalPermissions, permission.ValueStringPointer())
 		}
 
-		result.WhatDataObjects = append(result.WhatDataObjects, accessGovernanceType.AccessControlWhatInputDO{
-			DataObjectByName: []accessGovernanceType.AccessControlWhatDoByNameInput{{
+		result.WhatDataObjects = append(result.WhatDataObjects, dataAccessType.AccessControlWhatInputDO{
+			DataObjectByName: []dataAccessType.AccessControlWhatDoByNameInput{{
 				FullName:   fullname,
 				DataSource: dataSource,
 			},
@@ -171,7 +171,7 @@ func (m *GrantResourceModel) whatDoToApInput(result *accessGovernanceType.Access
 	}
 }
 
-func (m *GrantResourceModel) FromAccessControl(ctx context.Context, client *sdk.CollibraClient, ac *accessGovernanceType.AccessControl) diag.Diagnostics {
+func (m *GrantResourceModel) FromAccessControl(ctx context.Context, client *sdk.CollibraClient, ac *dataAccessType.AccessControl) diag.Diagnostics {
 	apResourceModel := m.GetAccessControlResourceModel()
 	diagnostics := apResourceModel.FromAccessControl(ac)
 
@@ -221,11 +221,11 @@ func (m *GrantResourceModel) FromAccessControl(ctx context.Context, client *sdk.
 
 	m.DataSource = dataSources
 
-	m.WhatLocked = types.BoolValue(slices.ContainsFunc(ac.Locks, func(l accessGovernanceType.AccessControlLocksAccessControlLockData) bool {
-		return l.LockKey == accessGovernanceType.AccessControlLockWhatlock
+	m.WhatLocked = types.BoolValue(slices.ContainsFunc(ac.Locks, func(l dataAccessType.AccessControlLocksAccessControlLockData) bool {
+		return l.LockKey == dataAccessType.AccessControlLockWhatlock
 	}))
 
-	if ac.WhatType == accessGovernanceType.WhoAndWhatTypeDynamic && ac.WhatAbacRule != nil {
+	if ac.WhatType == dataAccessType.WhoAndWhatTypeDynamic && ac.WhatAbacRule != nil {
 		object, objectDiagnostics := m.abacWhatFromAccessControl(ctx, client, ac)
 		diagnostics.Append(objectDiagnostics...)
 
@@ -245,7 +245,7 @@ func (m *GrantResourceModel) UpdateOwners(owners types.Set) {
 	m.Owners = owners
 }
 
-func (m *GrantResourceModel) abacWhatToAccessControlInput(ctx context.Context, client *sdk.CollibraClient, result *accessGovernanceType.AccessControlInput) (diagnostics diag.Diagnostics) {
+func (m *GrantResourceModel) abacWhatToAccessControlInput(ctx context.Context, client *sdk.CollibraClient, result *dataAccessType.AccessControlInput) (diagnostics diag.Diagnostics) {
 	attributes := m.WhatAbacRule.Attributes()
 
 	doTypes, doDiagnostics := utils.StringSetToSlice(ctx, attributes["do_types"].(types.Set))
@@ -305,8 +305,8 @@ func (m *GrantResourceModel) abacWhatToAccessControlInput(ctx context.Context, c
 		return diagnostics
 	}
 
-	result.WhatType = utils.Ptr(accessGovernanceType.WhoAndWhatTypeDynamic)
-	result.WhatAbacRule = &accessGovernanceType.WhatAbacRuleInput{
+	result.WhatType = utils.Ptr(dataAccessType.WhoAndWhatTypeDynamic)
+	result.WhatAbacRule = &dataAccessType.WhatAbacRuleInput{
 		DoTypes:           doTypes,
 		Permissions:       permissions,
 		GlobalPermissions: globalPermissions,
@@ -317,7 +317,7 @@ func (m *GrantResourceModel) abacWhatToAccessControlInput(ctx context.Context, c
 	return diagnostics
 }
 
-func (m *GrantResourceModel) abacWhatFromAccessControl(ctx context.Context, client *sdk.CollibraClient, ac *accessGovernanceType.AccessControl) (_ types.Object, diagnostics diag.Diagnostics) {
+func (m *GrantResourceModel) abacWhatFromAccessControl(ctx context.Context, client *sdk.CollibraClient, ac *dataAccessType.AccessControl) (_ types.Object, diagnostics diag.Diagnostics) {
 	scopeType := types.ObjectType{AttrTypes: map[string]attr.Type{"data_source": types.StringType, "fullname": types.StringType}}
 	objectTypes := map[string]attr.Type{
 		"do_types":           types.SetType{ElemType: types.StringType},
