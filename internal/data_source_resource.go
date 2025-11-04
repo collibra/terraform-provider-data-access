@@ -25,7 +25,6 @@ type DataSourceResourceModel struct {
 	Id          types.String `tfsdk:"id"`
 	Name        types.String `tfsdk:"name"`
 	Description types.String `tfsdk:"description"`
-	SyncMethod  types.String `tfsdk:"sync_method"`
 	Parent      types.String `tfsdk:"parent"`
 	Owners      types.Set    `tfsdk:"owners"`
 }

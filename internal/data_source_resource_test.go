@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"testing"
 
-	dataAccessType "github.com/collibra/data-access-go-sdk/types"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/tfversion"
 	gonanoid "github.com/matoous/go-nanoid/v2"
@@ -33,7 +32,6 @@ resource "collibra-data-access_datasource" "test" {
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("collibra-data-access_datasource.test", "name", "tfTestDataSource-"+testId),
 						resource.TestCheckResourceAttr("collibra-data-access_datasource.test", "description", "test description"),
-						resource.TestCheckResourceAttr("collibra-data-access_datasource.test", "sync_method", string(dataAccessType.DataSourceSyncMethodOnprem)),
 						resource.TestCheckNoResourceAttr("collibra-data-access_datasource.test", "parent"),
 					),
 				},
@@ -49,11 +47,10 @@ resource "collibra-data-access_datasource" "test" {
 	description = "test update description"
 	sync_method = "%s"
 }
-`, testId, dataAccessType.DataSourceSyncMethodCloudmanualtrigger),
+`, testId),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("collibra-data-access_datasource.test", "name", "tfTestDataSourceUpdateName-"+testId),
 						resource.TestCheckResourceAttr("collibra-data-access_datasource.test", "description", "test update description"),
-						resource.TestCheckResourceAttr("collibra-data-access_datasource.test", "sync_method", string(dataAccessType.DataSourceSyncMethodCloudmanualtrigger)),
 					),
 				},
 				// Resource are automatically deleted
@@ -83,7 +80,6 @@ resource "collibra-data-access_datasource" "test" {
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("collibra-data-access_datasource.test", "name", "tfTestDataSource-"+testId),
 						resource.TestCheckResourceAttr("collibra-data-access_datasource.test", "description", "test description"),
-						resource.TestCheckResourceAttr("collibra-data-access_datasource.test", "sync_method", string(dataAccessType.DataSourceSyncMethodOnprem)),
 						resource.TestCheckNoResourceAttr("collibra-data-access_datasource.test", "parent"),
 						resource.TestCheckResourceAttr("collibra-data-access_datasource.test", "owners.#", "1"),
 						resource.TestCheckResourceAttr("collibra-data-access_datasource.test", "owners.0", TestUser1Id),
@@ -105,7 +101,6 @@ resource "collibra-data-access_datasource" "test" {
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("collibra-data-access_datasource.test", "name", "tfTestDataSource-"+testId),
 						resource.TestCheckResourceAttr("collibra-data-access_datasource.test", "description", "test description"),
-						resource.TestCheckResourceAttr("collibra-data-access_datasource.test", "sync_method", string(dataAccessType.DataSourceSyncMethodOnprem)),
 						resource.TestCheckNoResourceAttr("collibra-data-access_datasource.test", "parent"),
 						resource.TestCheckResourceAttr("collibra-data-access_datasource.test", "owners.#", "1"),
 						resource.TestCheckResourceAttr("collibra-data-access_datasource.test", "owners.0", TestUser2Id),

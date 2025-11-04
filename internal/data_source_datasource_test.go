@@ -4,7 +4,6 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/collibra/data-access-go-sdk/types"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/tfversion"
 )
@@ -34,7 +33,6 @@ func TestAccDataSourceDataSource(t *testing.T) {
 
 						return nil
 					}),
-					resource.TestCheckResourceAttr("data.collibra-data-access_datasource.test", "sync_method", string(types.DataSourceSyncMethodOnprem)),
 					resource.TestCheckResourceAttrSet("data.collibra-data-access_datasource.test", "owners.0"),
 				),
 			},
