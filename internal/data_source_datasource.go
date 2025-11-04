@@ -17,7 +17,6 @@ type DataSourceDataSourceModel struct {
 	Id          types.String `tfsdk:"id"`
 	Name        types.String `tfsdk:"name"`
 	Description types.String `tfsdk:"description"`
-	SyncMethod  types.String `tfsdk:"sync_method"`
 	Parent      types.String `tfsdk:"parent"`
 	Owners      types.Set    `tfsdk:"owners"`
 }
@@ -121,7 +120,6 @@ func (d *DataSourceDataSource) Read(ctx context.Context, request datasource.Read
 
 			data.Id = types.StringValue(dsItem.Id)
 			data.Description = types.StringValue(dsItem.Description)
-			data.SyncMethod = types.StringValue(string(dsItem.SyncMethod))
 			data.Parent = types.StringPointerValue(parentId)
 
 			owners, diagn := getOwners(ctx, dsItem.Id, d.client)
