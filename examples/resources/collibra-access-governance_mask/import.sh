@@ -1,2 +1,2 @@
 #Import mask. Not that who and columns will not be imported
-terraform import collibra-access-governance_mask.example MaskId
+terraform import collibra-data-access_mask.example MaskId

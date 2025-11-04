@@ -1,8 +1,8 @@
-resource "collibra-access-governance_datasource" "ds" {
+resource "collibra-data-access_datasource" "ds" {
   name = "exampleDS"
 }
 
-resource "collibra-access-governance_grant_category" "example_category" {
+resource "collibra-data-access_grant_category" "example_category" {
   name                   = "exampleCategory"
   description            = "A simple category"
   icon                   = "testIcon"
@@ -11,7 +11,7 @@ resource "collibra-access-governance_grant_category" "example_category" {
   multi_data_source      = true
   default_type_per_data_source = [
     {
-      data_source : collibra-access-governance_datasource.ds.id
+      data_source : collibra-data-access_datasource.ds.id
       type : "table"
     }
   ]

@@ -20,16 +20,16 @@ func TestAccFilterResource(t *testing.T) {
 			ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 			Steps: []resource.TestStep{
 				{
-					ResourceName: "collibra-access-governance_filter.test",
+					ResourceName: "collibra-data-access_filter.test",
 					Config: providerConfig + `
-				data "collibra-access-governance_datasource" "ds" {
+				data "collibra-data-access_datasource" "ds" {
 				   name = "Snowflake"
 				}
 				
-				resource "collibra-access-governance_filter" "test" {
+				resource "collibra-data-access_filter" "test" {
 					name        = "tfTestFilter"
 				   description = "filter description"
-					data_source = data.collibra-access-governance_datasource.ds.id
+					data_source = data.collibra-data-access_datasource.ds.id
 					table = "MASTER_DATA.SALES.SPECIALOFFER"
 					who = [
 						{
@@ -40,58 +40,58 @@ func TestAccFilterResource(t *testing.T) {
 				}
 				`,
 					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("collibra-access-governance_filter.test", "name", "tfTestFilter"),
-						resource.TestCheckResourceAttr("collibra-access-governance_filter.test", "description", "filter description"),
-						resource.TestCheckResourceAttrPair("collibra-access-governance_filter.test", "data_source", "data.collibra-access-governance_datasource.ds", "id"),
-						resource.TestCheckResourceAttr("collibra-access-governance_filter.test", "table", "MASTER_DATA.SALES.SPECIALOFFER"),
-						resource.TestCheckResourceAttr("collibra-access-governance_filter.test", "filter_policy", "{Category} = 'Reseller'"),
-						resource.TestCheckResourceAttr("collibra-access-governance_filter.test", "who_locked", "true"),
-						resource.TestCheckResourceAttr("collibra-access-governance_filter.test", "inheritance_locked", "false"),
-						resource.TestCheckResourceAttr("collibra-access-governance_filter.test", "what_locked", "true"),
+						resource.TestCheckResourceAttr("collibra-data-access_filter.test", "name", "tfTestFilter"),
+						resource.TestCheckResourceAttr("collibra-data-access_filter.test", "description", "filter description"),
+						resource.TestCheckResourceAttrPair("collibra-data-access_filter.test", "data_source", "data.collibra-data-access_datasource.ds", "id"),
+						resource.TestCheckResourceAttr("collibra-data-access_filter.test", "table", "MASTER_DATA.SALES.SPECIALOFFER"),
+						resource.TestCheckResourceAttr("collibra-data-access_filter.test", "filter_policy", "{Category} = 'Reseller'"),
+						resource.TestCheckResourceAttr("collibra-data-access_filter.test", "who_locked", "true"),
+						resource.TestCheckResourceAttr("collibra-data-access_filter.test", "inheritance_locked", "false"),
+						resource.TestCheckResourceAttr("collibra-data-access_filter.test", "what_locked", "true"),
 					),
 				},
 				{
-					ResourceName:            "collibra-access-governance_filter.test",
+					ResourceName:            "collibra-data-access_filter.test",
 					ImportState:             true,
 					ImportStateVerify:       true,
 					ImportStateVerifyIgnore: []string{"who", "table"},
 				},
 				{
-					ResourceName: "collibra-access-governance_filter.test",
+					ResourceName: "collibra-data-access_filter.test",
 					Config: providerConfig + `
-				data "collibra-access-governance_datasource" "ds" {
+				data "collibra-data-access_datasource" "ds" {
 				   name = "Snowflake"
 				}
 				
-				resource "collibra-access-governance_filter" "test" {
+				resource "collibra-data-access_filter" "test" {
 					name        = "tfTestFilter"
 				   description = "filter description"
-					data_source = data.collibra-access-governance_datasource.ds.id
+					data_source = data.collibra-data-access_datasource.ds.id
 					filter_policy = "{Category} = 'Reseller'"
 				}
 				`,
 					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("collibra-access-governance_filter.test", "name", "tfTestFilter"),
-						resource.TestCheckResourceAttr("collibra-access-governance_filter.test", "description", "filter description"),
-						resource.TestCheckResourceAttrPair("collibra-access-governance_filter.test", "data_source", "data.collibra-access-governance_datasource.ds", "id"),
-						resource.TestCheckNoResourceAttr("collibra-access-governance_filter.test", "table"),
-						resource.TestCheckResourceAttr("collibra-access-governance_filter.test", "filter_policy", "{Category} = 'Reseller'"),
-						resource.TestCheckResourceAttr("collibra-access-governance_filter.test", "who_locked", "false"),
-						resource.TestCheckResourceAttr("collibra-access-governance_filter.test", "inheritance_locked", "false"),
-						resource.TestCheckResourceAttr("collibra-access-governance_filter.test", "what_locked", "false"),
+						resource.TestCheckResourceAttr("collibra-data-access_filter.test", "name", "tfTestFilter"),
+						resource.TestCheckResourceAttr("collibra-data-access_filter.test", "description", "filter description"),
+						resource.TestCheckResourceAttrPair("collibra-data-access_filter.test", "data_source", "data.collibra-data-access_datasource.ds", "id"),
+						resource.TestCheckNoResourceAttr("collibra-data-access_filter.test", "table"),
+						resource.TestCheckResourceAttr("collibra-data-access_filter.test", "filter_policy", "{Category} = 'Reseller'"),
+						resource.TestCheckResourceAttr("collibra-data-access_filter.test", "who_locked", "false"),
+						resource.TestCheckResourceAttr("collibra-data-access_filter.test", "inheritance_locked", "false"),
+						resource.TestCheckResourceAttr("collibra-data-access_filter.test", "what_locked", "false"),
 					),
 				},
 				{
-					ResourceName: "collibra-access-governance_filter.test",
+					ResourceName: "collibra-data-access_filter.test",
 					Config: providerConfig + `
-data "collibra-access-governance_datasource" "ds" {
+data "collibra-data-access_datasource" "ds" {
     name = "Snowflake"
 }
 
-resource "collibra-access-governance_filter" "test" {
+resource "collibra-data-access_filter" "test" {
 	name        = "tfTestFilter"
     description = "filter description"
-	data_source = data.collibra-access-governance_datasource.ds.id
+	data_source = data.collibra-data-access_datasource.ds.id
 	filter_policy = "{Category} = 'Reseller'"
 	what_locked = false
 	who = [
@@ -102,14 +102,14 @@ resource "collibra-access-governance_filter" "test" {
 }
 `,
 					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("collibra-access-governance_filter.test", "name", "tfTestFilter"),
-						resource.TestCheckResourceAttr("collibra-access-governance_filter.test", "description", "filter description"),
-						resource.TestCheckResourceAttrPair("collibra-access-governance_filter.test", "data_source", "data.collibra-access-governance_datasource.ds", "id"),
-						resource.TestCheckNoResourceAttr("collibra-access-governance_filter.test", "table"),
-						resource.TestCheckResourceAttr("collibra-access-governance_filter.test", "filter_policy", "{Category} = 'Reseller'"),
-						resource.TestCheckResourceAttr("collibra-access-governance_filter.test", "who_locked", "true"),
-						resource.TestCheckResourceAttr("collibra-access-governance_filter.test", "inheritance_locked", "false"),
-						resource.TestCheckResourceAttr("collibra-access-governance_filter.test", "what_locked", "false"),
+						resource.TestCheckResourceAttr("collibra-data-access_filter.test", "name", "tfTestFilter"),
+						resource.TestCheckResourceAttr("collibra-data-access_filter.test", "description", "filter description"),
+						resource.TestCheckResourceAttrPair("collibra-data-access_filter.test", "data_source", "data.collibra-data-access_datasource.ds", "id"),
+						resource.TestCheckNoResourceAttr("collibra-data-access_filter.test", "table"),
+						resource.TestCheckResourceAttr("collibra-data-access_filter.test", "filter_policy", "{Category} = 'Reseller'"),
+						resource.TestCheckResourceAttr("collibra-data-access_filter.test", "who_locked", "true"),
+						resource.TestCheckResourceAttr("collibra-data-access_filter.test", "inheritance_locked", "false"),
+						resource.TestCheckResourceAttr("collibra-data-access_filter.test", "what_locked", "false"),
 					),
 				},
 			},

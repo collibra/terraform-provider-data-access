@@ -1,3 +1,3 @@
-data "collibra-access-governance_datasource" "example" {
+data "collibra-data-access_datasource" "example" {
   name = "Snowflake"
 }

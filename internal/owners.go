@@ -4,19 +4,19 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/collibra/access-governance-go-sdk"
-	"github.com/collibra/access-governance-go-sdk/services"
-	accessGovernanceType "github.com/collibra/access-governance-go-sdk/types"
+	"github.com/collibra/data-access-go-sdk"
+	"github.com/collibra/data-access-go-sdk/services"
+	dataAccessType "github.com/collibra/data-access-go-sdk/types"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
-	"github.com/collibra/access-governance-terraform-provider/internal/utils"
+	"github.com/collibra/data-access-terraform-provider/internal/utils"
 )
 
 func getOwners(ctx context.Context, id string, client *sdk.CollibraClient) (result types.Set, diagnostics diag.Diagnostics) {
 	ownersSeq := client.Role().ListRoleAssignments(ctx, services.WithRoleAssignmentListFilter(
-		&accessGovernanceType.RoleAssignmentFilterInput{
+		&dataAccessType.RoleAssignmentFilterInput{
 			Role:               utils.Ptr(ownerRole),
 			Resource:           &id,
 			ExcludeDelegated:   utils.Ptr(true),
@@ -36,9 +36,9 @@ func getOwners(ctx context.Context, id string, client *sdk.CollibraClient) (resu
 		}
 
 		switch ownerItem := owner.GetTo().(type) {
-		case *accessGovernanceType.RoleAssignmentToUser:
+		case *dataAccessType.RoleAssignmentToUser:
 			owners = append(owners, types.StringValue(ownerItem.Id))
-		case *accessGovernanceType.RoleAssignmentToGroup:
+		case *dataAccessType.RoleAssignmentToGroup:
 			owners = append(owners, types.StringValue(ownerItem.Id))
 		default:
 			diagnostics.AddError("Unexpected owner type", fmt.Sprintf("Expected *types2.RoleAssignmentToUser or *types2.RoleAssignmentToGroup, got: %T. Please report this issue to the provider developers.", ownerItem))

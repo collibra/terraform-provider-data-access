@@ -1,3 +1,3 @@
-data "collibra-access-governance_grant_category" "example" {
+data "collibra-data-access_grant_category" "example" {
   name = "Purpose"
 }

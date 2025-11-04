@@ -1,8 +1,8 @@
-resource "collibra-access-governance_datasource" "ds" {
+resource "collibra-data-access_datasource" "ds" {
   name = "exampleDS"
 }
 
-resource "collibra-access-governance_purpose" "purpose1" {
+resource "collibra-data-access_purpose" "purpose1" {
   name        = "Purpose1"
   description = "Purpose"
   state       = "Active"
@@ -13,7 +13,7 @@ resource "collibra-access-governance_purpose" "purpose1" {
   ]
 }
 
-resource "collibra-access-governance_filter" "filter1" {
+resource "collibra-data-access_filter" "filter1" {
   name        = "First filter"
   description = "A simple filter"
   state       = "Active"
@@ -26,10 +26,10 @@ resource "collibra-access-governance_filter" "filter1" {
       promise_duration : 604800
     },
     {
-      access_control : collibra-access-governance_purpose.purpose1.id
+      access_control : collibra-data-access_purpose.purpose1.id
     }
   ]
-  data_source   = collibra-access-governance_datasource.ds.id
+  data_source   = collibra-data-access_datasource.ds.id
   table         = "database.schema.table"
   filter_policy = "{state} = 'NJ'"
 }

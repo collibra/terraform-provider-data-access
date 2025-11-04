@@ -7,7 +7,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 
-	"github.com/collibra/access-governance-terraform-provider/internal"
+	"github.com/collibra/data-access-terraform-provider/internal"
 )
 
 // Run "go generate" to format example terraform files and generate the docs for the registry/website
@@ -18,7 +18,7 @@ import (
 
 // Run the docs generation tool, check its repository for more information on how it works and how docs
 // can be customized.
-//go:generate go run github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs generate --provider-name collibra-access-governance --rendered-provider-name collibra_access_governance
+//go:generate go run github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs generate --provider-name collibra-data-access --rendered-provider-name collibra_data_access
 
 var (
 	// these will be set by the goreleaser configuration
@@ -36,7 +36,7 @@ func main() {
 	flag.Parse()
 
 	opts := providerserver.ServeOpts{
-		Address: "registry.terraform.io/collibra/collibra-access-governance",
+		Address: "registry.terraform.io/collibra/collibra-data-access",
 		Debug:   debug,
 	}
 

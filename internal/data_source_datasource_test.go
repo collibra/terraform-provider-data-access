@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/collibra/access-governance-go-sdk/types"
+	"github.com/collibra/data-access-go-sdk/types"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/tfversion"
 )
@@ -21,21 +21,21 @@ func TestAccDataSourceDataSource(t *testing.T) {
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: providerConfig + `data "collibra-access-governance_datasource" "test" {
+				Config: providerConfig + `data "collibra-data-access_datasource" "test" {
     name = "Snowflake"
 }
 `,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("data.collibra-access-governance_datasource.test", "name", "Snowflake"),
-					resource.TestCheckResourceAttrWith("data.collibra-access-governance_datasource.test", "id", func(value string) error {
+					resource.TestCheckResourceAttr("data.collibra-data-access_datasource.test", "name", "Snowflake"),
+					resource.TestCheckResourceAttrWith("data.collibra-data-access_datasource.test", "id", func(value string) error {
 						if value == "" {
 							return errors.New("ID is not set")
 						}
 
 						return nil
 					}),
-					resource.TestCheckResourceAttr("data.collibra-access-governance_datasource.test", "sync_method", string(types.DataSourceSyncMethodOnprem)),
-					resource.TestCheckResourceAttrSet("data.collibra-access-governance_datasource.test", "owners.0"),
+					resource.TestCheckResourceAttr("data.collibra-data-access_datasource.test", "sync_method", string(types.DataSourceSyncMethodOnprem)),
+					resource.TestCheckResourceAttrSet("data.collibra-data-access_datasource.test", "owners.0"),
 				),
 			},
 		},

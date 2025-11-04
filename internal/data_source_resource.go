@@ -5,9 +5,9 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/collibra/access-governance-go-sdk"
-	accessGovernanceType "github.com/collibra/access-governance-go-sdk/types"
-	"github.com/collibra/access-governance-terraform-provider/internal/utils"
+	"github.com/collibra/data-access-go-sdk"
+	dataAccessType "github.com/collibra/data-access-go-sdk/types"
+	"github.com/collibra/data-access-terraform-provider/internal/utils"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -31,11 +31,11 @@ type DataSourceResourceModel struct {
 	Owners      types.Set    `tfsdk:"owners"`
 }
 
-func (m *DataSourceResourceModel) ToDataSourceInput() accessGovernanceType.DataSourceInput {
-	return accessGovernanceType.DataSourceInput{
+func (m *DataSourceResourceModel) ToDataSourceInput() dataAccessType.DataSourceInput {
+	return dataAccessType.DataSourceInput{
 		Name:        m.Name.ValueStringPointer(),
 		Description: m.Description.ValueStringPointer(),
-		SyncMethod:  utils.Ptr(accessGovernanceType.DataSourceSyncMethod(m.SyncMethod.ValueString())),
+		SyncMethod:  utils.Ptr(dataAccessType.DataSourceSyncMethod(m.SyncMethod.ValueString())),
 		Parent:      m.Parent.ValueStringPointer(),
 	}
 }
@@ -91,8 +91,8 @@ func (d *DataSourceResource) Schema(_ context.Context, _ resource.SchemaRequest,
 				Sensitive:           false,
 				Description:         "The sync method of the data source (should be ON_PREM for now)",
 				MarkdownDescription: "The sync method of the data source (should be `ON_PREM` for now)",
-				Default:             stringdefault.StaticString(string(accessGovernanceType.DataSourceSyncMethodOnprem)),
-				Validators:          []validator.String{stringvalidator.OneOf(string(accessGovernanceType.DataSourceSyncMethodOnprem), string(accessGovernanceType.DataSourceSyncMethodCloudmanualtrigger))},
+				Default:             stringdefault.StaticString(string(dataAccessType.DataSourceSyncMethodOnprem)),
+				Validators:          []validator.String{stringvalidator.OneOf(string(dataAccessType.DataSourceSyncMethodOnprem), string(dataAccessType.DataSourceSyncMethodCloudmanualtrigger))},
 			},
 			"parent": schema.StringAttribute{
 				Required:            false,
@@ -172,7 +172,7 @@ func (d *DataSourceResource) Read(ctx context.Context, request resource.ReadRequ
 
 	ds, err := d.client.DataSource().GetDataSource(ctx, stateData.Id.ValueString())
 	if err != nil {
-		var notFoundErr *accessGovernanceType.ErrNotFound
+		var notFoundErr *dataAccessType.ErrNotFound
 		if errors.As(err, &notFoundErr) {
 			response.State.RemoveResource(ctx)
 		} else {

@@ -1,22 +1,22 @@
 ---
-page_title: "Provider: Collibra Access Governance"
+page_title: "Provider: Collibra Data Access"
 subcategory: ""
 description: |-
-    Provider used to initialize resources on Collibra Access Governance
+    Provider used to initialize resources on Collibra Data Access
 ---
 
-# Collibra Access Governance Provider
+# Collibra Data Access Provider
 
-Use the Collibra Access Governance provider to interact with the resources supported by [Collibra Access Governance](https://www.collibra.com/).
+Use the Collibra Data Access provider to interact with the resources supported by [Collibra Data Access](https://www.collibra.com/).
 You must configure the provider with the proper credentials before you can use it.
 
-To learn more about Collibra Access Governance, you can visit the Collibra documentation on [https://productresources.collibra.com/](https://productresources.collibra.com/).
+To learn more about Collibra Data Access, you can visit the Collibra documentation on [https://productresources.collibra.com/](https://productresources.collibra.com/).
 
 ## Example Usage
 
 ```terraform
 # Configuration-based authentication
-provider "collibra-access-governance" {
+provider "collibra-data-access" {
   url    = "https://mycompany.collibra.com"
   user   = "terraform@mycompany.com"
   secret = "password"

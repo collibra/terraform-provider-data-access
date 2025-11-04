@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/collibra/access-governance-go-sdk"
+	"github.com/collibra/data-access-go-sdk"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"

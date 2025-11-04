@@ -21,15 +21,15 @@ func TestAccMaskResource(t *testing.T) {
 			Steps: []resource.TestStep{
 				{
 					Config: providerConfig + `
-data "collibra-access-governance_datasource" "ds" {
+data "collibra-data-access_datasource" "ds" {
     name = "Snowflake"
 }
 
-resource "collibra-access-governance_mask" "test" {
+resource "collibra-data-access_mask" "test" {
 	name        = "tfTestMask"
 	type        = "NULL"
     description = "test description"
-	data_source = data.collibra-access-governance_datasource.ds.id
+	data_source = data.collibra-data-access_datasource.ds.id
 	columns = []
 	who = [
      {
@@ -40,35 +40,35 @@ resource "collibra-access-governance_mask" "test" {
 }
 `,
 					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("collibra-access-governance_mask.test", "name", "tfTestMask"),
-						resource.TestCheckResourceAttr("collibra-access-governance_mask.test", "description", "test description"),
-						resource.TestCheckResourceAttrPair("collibra-access-governance_mask.test", "data_source", "data.collibra-access-governance_datasource.ds", "id"),
-						resource.TestCheckResourceAttr("collibra-access-governance_mask.test", "columns.#", "0"),
-						resource.TestCheckResourceAttr("collibra-access-governance_mask.test", "who.#", "1"),
-						resource.TestCheckResourceAttr("collibra-access-governance_mask.test", "who.0.user", "terraform-acc-test-1@collibra.com"),
-						resource.TestCheckResourceAttr("collibra-access-governance_mask.test", "who.0.promise_duration", "604800"),
-						resource.TestCheckResourceAttr("collibra-access-governance_mask.test", "type", "NULL"),
-						resource.TestCheckResourceAttr("collibra-access-governance_mask.test", "who_locked", "true"),
-						resource.TestCheckResourceAttr("collibra-access-governance_mask.test", "inheritance_locked", "false"),
-						resource.TestCheckResourceAttr("collibra-access-governance_mask.test", "what_locked", "true"),
+						resource.TestCheckResourceAttr("collibra-data-access_mask.test", "name", "tfTestMask"),
+						resource.TestCheckResourceAttr("collibra-data-access_mask.test", "description", "test description"),
+						resource.TestCheckResourceAttrPair("collibra-data-access_mask.test", "data_source", "data.collibra-data-access_datasource.ds", "id"),
+						resource.TestCheckResourceAttr("collibra-data-access_mask.test", "columns.#", "0"),
+						resource.TestCheckResourceAttr("collibra-data-access_mask.test", "who.#", "1"),
+						resource.TestCheckResourceAttr("collibra-data-access_mask.test", "who.0.user", "terraform-acc-test-1@collibra.com"),
+						resource.TestCheckResourceAttr("collibra-data-access_mask.test", "who.0.promise_duration", "604800"),
+						resource.TestCheckResourceAttr("collibra-data-access_mask.test", "type", "NULL"),
+						resource.TestCheckResourceAttr("collibra-data-access_mask.test", "who_locked", "true"),
+						resource.TestCheckResourceAttr("collibra-data-access_mask.test", "inheritance_locked", "false"),
+						resource.TestCheckResourceAttr("collibra-data-access_mask.test", "what_locked", "true"),
 					),
 				},
 				{
-					ResourceName:            "collibra-access-governance_mask.test",
+					ResourceName:            "collibra-data-access_mask.test",
 					ImportState:             true,
 					ImportStateVerify:       true,
 					ImportStateVerifyIgnore: []string{"who", "columns"},
 				},
 				{
-					Config: providerConfig + `data "collibra-access-governance_datasource" "ds" {
+					Config: providerConfig + `data "collibra-data-access_datasource" "ds" {
     name = "Snowflake"
 }
 
-resource "collibra-access-governance_mask" "test" {
+resource "collibra-data-access_mask" "test" {
 	name        = "Terraform Mask name edit"
 	type        = "NULL"
     description = "test description"
-	data_source = data.collibra-access-governance_datasource.ds.id
+	data_source = data.collibra-data-access_datasource.ds.id
 	who = [
      {
        user             = "terraform-acc-test-1@collibra.com"
@@ -78,21 +78,21 @@ resource "collibra-access-governance_mask" "test" {
 }
 `,
 					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("collibra-access-governance_mask.test", "name", "Terraform Mask name edit"),
-						resource.TestCheckResourceAttr("collibra-access-governance_mask.test", "description", "test description"),
-						resource.TestCheckResourceAttrPair("collibra-access-governance_mask.test", "data_source", "data.collibra-access-governance_datasource.ds", "id"),
-						resource.TestCheckNoResourceAttr("collibra-access-governance_mask.test", "columns"),
-						resource.TestCheckResourceAttr("collibra-access-governance_mask.test", "who.#", "1"),
-						resource.TestCheckResourceAttr("collibra-access-governance_mask.test", "who.0.user", "terraform-acc-test-1@collibra.com"),
-						resource.TestCheckNoResourceAttr("collibra-access-governance_mask.test", "who.0.promise_duration"),
-						resource.TestCheckResourceAttr("collibra-access-governance_mask.test", "type", "NULL"),
-						resource.TestCheckResourceAttr("collibra-access-governance_mask.test", "who_locked", "true"),
-						resource.TestCheckResourceAttr("collibra-access-governance_mask.test", "inheritance_locked", "true"),
-						resource.TestCheckResourceAttr("collibra-access-governance_mask.test", "what_locked", "false"),
+						resource.TestCheckResourceAttr("collibra-data-access_mask.test", "name", "Terraform Mask name edit"),
+						resource.TestCheckResourceAttr("collibra-data-access_mask.test", "description", "test description"),
+						resource.TestCheckResourceAttrPair("collibra-data-access_mask.test", "data_source", "data.collibra-data-access_datasource.ds", "id"),
+						resource.TestCheckNoResourceAttr("collibra-data-access_mask.test", "columns"),
+						resource.TestCheckResourceAttr("collibra-data-access_mask.test", "who.#", "1"),
+						resource.TestCheckResourceAttr("collibra-data-access_mask.test", "who.0.user", "terraform-acc-test-1@collibra.com"),
+						resource.TestCheckNoResourceAttr("collibra-data-access_mask.test", "who.0.promise_duration"),
+						resource.TestCheckResourceAttr("collibra-data-access_mask.test", "type", "NULL"),
+						resource.TestCheckResourceAttr("collibra-data-access_mask.test", "who_locked", "true"),
+						resource.TestCheckResourceAttr("collibra-data-access_mask.test", "inheritance_locked", "true"),
+						resource.TestCheckResourceAttr("collibra-data-access_mask.test", "what_locked", "false"),
 					),
 				},
 				{
-					Config: providerConfig + `data "collibra-access-governance_datasource" "ds" {
+					Config: providerConfig + `data "collibra-data-access_datasource" "ds" {
     name = "Snowflake"
 }
 
@@ -122,29 +122,29 @@ locals {
 	})
 }
 
-resource "collibra-access-governance_mask" "test" {
+resource "collibra-data-access_mask" "test" {
 	name        = "Terraform Mask name edit"
 	type        = "NULL"
     description = "test description"
-	data_source = data.collibra-access-governance_datasource.ds.id
+	data_source = data.collibra-data-access_datasource.ds.id
 	who_abac_rule = local.abac_rule
 }
 `,
 					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("collibra-access-governance_mask.test", "name", "Terraform Mask name edit"),
-						resource.TestCheckResourceAttr("collibra-access-governance_mask.test", "description", "test description"),
-						resource.TestCheckResourceAttrPair("collibra-access-governance_mask.test", "data_source", "data.collibra-access-governance_datasource.ds", "id"),
-						resource.TestCheckNoResourceAttr("collibra-access-governance_mask.test", "columns"),
-						resource.TestCheckNoResourceAttr("collibra-access-governance_mask.test", "who"),
-						resource.TestCheckResourceAttr("collibra-access-governance_mask.test", "who_abac_rule", "{\"aggregator\":{\"operands\":[{\"aggregator\":{\"operands\":[{\"comparison\":{\"leftOperand\":\"Test\",\"operator\":\"HasTag\",\"rightOperand\":{\"literal\":{\"string\":\"test\"}}}}],\"operator\":\"And\"}}],\"operator\":\"Or\"}}"),
-						resource.TestCheckResourceAttr("collibra-access-governance_mask.test", "type", "NULL"),
-						resource.TestCheckResourceAttr("collibra-access-governance_mask.test", "who_locked", "true"),
-						resource.TestCheckResourceAttr("collibra-access-governance_mask.test", "inheritance_locked", "false"),
-						resource.TestCheckResourceAttr("collibra-access-governance_mask.test", "what_locked", "false"),
+						resource.TestCheckResourceAttr("collibra-data-access_mask.test", "name", "Terraform Mask name edit"),
+						resource.TestCheckResourceAttr("collibra-data-access_mask.test", "description", "test description"),
+						resource.TestCheckResourceAttrPair("collibra-data-access_mask.test", "data_source", "data.collibra-data-access_datasource.ds", "id"),
+						resource.TestCheckNoResourceAttr("collibra-data-access_mask.test", "columns"),
+						resource.TestCheckNoResourceAttr("collibra-data-access_mask.test", "who"),
+						resource.TestCheckResourceAttr("collibra-data-access_mask.test", "who_abac_rule", "{\"aggregator\":{\"operands\":[{\"aggregator\":{\"operands\":[{\"comparison\":{\"leftOperand\":\"Test\",\"operator\":\"HasTag\",\"rightOperand\":{\"literal\":{\"string\":\"test\"}}}}],\"operator\":\"And\"}}],\"operator\":\"Or\"}}"),
+						resource.TestCheckResourceAttr("collibra-data-access_mask.test", "type", "NULL"),
+						resource.TestCheckResourceAttr("collibra-data-access_mask.test", "who_locked", "true"),
+						resource.TestCheckResourceAttr("collibra-data-access_mask.test", "inheritance_locked", "false"),
+						resource.TestCheckResourceAttr("collibra-data-access_mask.test", "what_locked", "false"),
 					),
 				},
 				{
-					Config: providerConfig + `data "collibra-access-governance_datasource" "ds" {
+					Config: providerConfig + `data "collibra-data-access_datasource" "ds" {
     name = "Snowflake"
 }
 
@@ -174,26 +174,26 @@ locals {
 	})
 }
 
-resource "collibra-access-governance_mask" "test" {
+resource "collibra-data-access_mask" "test" {
 	name        = "Terraform Mask name edit"
 	type        = "NULL"
     description = "test description"
-	data_source = data.collibra-access-governance_datasource.ds.id
+	data_source = data.collibra-data-access_datasource.ds.id
 	who_abac_rule = local.abac_rule
 	what_locked = true
 }
 `,
 					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("collibra-access-governance_mask.test", "name", "Terraform Mask name edit"),
-						resource.TestCheckResourceAttr("collibra-access-governance_mask.test", "description", "test description"),
-						resource.TestCheckResourceAttrPair("collibra-access-governance_mask.test", "data_source", "data.collibra-access-governance_datasource.ds", "id"),
-						resource.TestCheckNoResourceAttr("collibra-access-governance_mask.test", "columns"),
-						resource.TestCheckNoResourceAttr("collibra-access-governance_mask.test", "who"),
-						resource.TestCheckResourceAttr("collibra-access-governance_mask.test", "who_abac_rule", "{\"aggregator\":{\"operands\":[{\"aggregator\":{\"operands\":[{\"comparison\":{\"leftOperand\":\"Test\",\"operator\":\"HasTag\",\"rightOperand\":{\"literal\":{\"string\":\"test\"}}}}],\"operator\":\"And\"}}],\"operator\":\"Or\"}}"),
-						resource.TestCheckResourceAttr("collibra-access-governance_mask.test", "type", "NULL"),
-						resource.TestCheckResourceAttr("collibra-access-governance_mask.test", "who_locked", "true"),
-						resource.TestCheckResourceAttr("collibra-access-governance_mask.test", "inheritance_locked", "false"),
-						resource.TestCheckResourceAttr("collibra-access-governance_mask.test", "what_locked", "true"),
+						resource.TestCheckResourceAttr("collibra-data-access_mask.test", "name", "Terraform Mask name edit"),
+						resource.TestCheckResourceAttr("collibra-data-access_mask.test", "description", "test description"),
+						resource.TestCheckResourceAttrPair("collibra-data-access_mask.test", "data_source", "data.collibra-data-access_datasource.ds", "id"),
+						resource.TestCheckNoResourceAttr("collibra-data-access_mask.test", "columns"),
+						resource.TestCheckNoResourceAttr("collibra-data-access_mask.test", "who"),
+						resource.TestCheckResourceAttr("collibra-data-access_mask.test", "who_abac_rule", "{\"aggregator\":{\"operands\":[{\"aggregator\":{\"operands\":[{\"comparison\":{\"leftOperand\":\"Test\",\"operator\":\"HasTag\",\"rightOperand\":{\"literal\":{\"string\":\"test\"}}}}],\"operator\":\"And\"}}],\"operator\":\"Or\"}}"),
+						resource.TestCheckResourceAttr("collibra-data-access_mask.test", "type", "NULL"),
+						resource.TestCheckResourceAttr("collibra-data-access_mask.test", "who_locked", "true"),
+						resource.TestCheckResourceAttr("collibra-data-access_mask.test", "inheritance_locked", "false"),
+						resource.TestCheckResourceAttr("collibra-data-access_mask.test", "what_locked", "true"),
 					),
 				},
 			},
@@ -213,7 +213,7 @@ resource "collibra-access-governance_mask" "test" {
 			Steps: []resource.TestStep{
 				{
 					Config: providerConfig + `
-data "collibra-access-governance_datasource" "ds" {
+data "collibra-data-access_datasource" "ds" {
     name = "Snowflake"
 }
 
@@ -223,11 +223,11 @@ locals {
 	})
 }
 
-resource "collibra-access-governance_mask" "abac_mask" {
+resource "collibra-data-access_mask" "abac_mask" {
 	name        = "tfTestMask"
 	type        = "NULL"
     description = "test description"
-	data_source = data.collibra-access-governance_datasource.ds.id
+	data_source = data.collibra-data-access_datasource.ds.id
 	who = [
 	     {
 	       user             = "terraform-acc-test-1@collibra.com"
@@ -241,24 +241,24 @@ resource "collibra-access-governance_mask" "abac_mask" {
 }
 `,
 					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("collibra-access-governance_mask.abac_mask", "name", "tfTestMask"),
-						resource.TestCheckResourceAttr("collibra-access-governance_mask.abac_mask", "description", "test description"),
-						resource.TestCheckResourceAttrPair("collibra-access-governance_mask.abac_mask", "data_source", "data.collibra-access-governance_datasource.ds", "id"),
-						resource.TestCheckNoResourceAttr("collibra-access-governance_mask.abac_mask", "columns"),
-						resource.TestCheckResourceAttr("collibra-access-governance_mask.abac_mask", "what_abac_rule.scope.#", "2"),
-						resource.TestCheckResourceAttr("collibra-access-governance_mask.abac_mask", "who.#", "1"),
-						resource.TestCheckResourceAttr("collibra-access-governance_mask.abac_mask", "who.#", "1"),
-						resource.TestCheckResourceAttr("collibra-access-governance_mask.abac_mask", "who.0.user", "terraform-acc-test-1@collibra.com"),
-						resource.TestCheckResourceAttr("collibra-access-governance_mask.abac_mask", "who.0.promise_duration", "604800"),
-						resource.TestCheckResourceAttr("collibra-access-governance_mask.abac_mask", "type", "NULL"),
-						resource.TestCheckResourceAttr("collibra-access-governance_mask.abac_mask", "what_abac_rule.rule", "{\"literal\":true}"),
-						resource.TestCheckResourceAttr("collibra-access-governance_mask.abac_mask", "who_locked", "true"),
-						resource.TestCheckResourceAttr("collibra-access-governance_mask.abac_mask", "inheritance_locked", "false"),
-						resource.TestCheckResourceAttr("collibra-access-governance_mask.abac_mask", "what_locked", "true"),
+						resource.TestCheckResourceAttr("collibra-data-access_mask.abac_mask", "name", "tfTestMask"),
+						resource.TestCheckResourceAttr("collibra-data-access_mask.abac_mask", "description", "test description"),
+						resource.TestCheckResourceAttrPair("collibra-data-access_mask.abac_mask", "data_source", "data.collibra-data-access_datasource.ds", "id"),
+						resource.TestCheckNoResourceAttr("collibra-data-access_mask.abac_mask", "columns"),
+						resource.TestCheckResourceAttr("collibra-data-access_mask.abac_mask", "what_abac_rule.scope.#", "2"),
+						resource.TestCheckResourceAttr("collibra-data-access_mask.abac_mask", "who.#", "1"),
+						resource.TestCheckResourceAttr("collibra-data-access_mask.abac_mask", "who.#", "1"),
+						resource.TestCheckResourceAttr("collibra-data-access_mask.abac_mask", "who.0.user", "terraform-acc-test-1@collibra.com"),
+						resource.TestCheckResourceAttr("collibra-data-access_mask.abac_mask", "who.0.promise_duration", "604800"),
+						resource.TestCheckResourceAttr("collibra-data-access_mask.abac_mask", "type", "NULL"),
+						resource.TestCheckResourceAttr("collibra-data-access_mask.abac_mask", "what_abac_rule.rule", "{\"literal\":true}"),
+						resource.TestCheckResourceAttr("collibra-data-access_mask.abac_mask", "who_locked", "true"),
+						resource.TestCheckResourceAttr("collibra-data-access_mask.abac_mask", "inheritance_locked", "false"),
+						resource.TestCheckResourceAttr("collibra-data-access_mask.abac_mask", "what_locked", "true"),
 					),
 				},
 				{
-					ResourceName:            "collibra-access-governance_mask.abac_mask",
+					ResourceName:            "collibra-data-access_mask.abac_mask",
 					ImportState:             true,
 					ImportStateVerify:       true,
 					ImportStateVerifyIgnore: []string{"who", "columns"},

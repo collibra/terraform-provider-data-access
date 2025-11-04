@@ -34,5 +34,5 @@ website/vendor
 # Keep windows files with windows line endings
 *.winfile eol=crlf
 /tests/
-/access-governance-terraform-provider
+/data-access-terraform-provider
 /.tests/

@@ -1,5 +1,5 @@
 # Terraform Provider testing workflow.
-name: Collibra Access Governance Terraform Provider - Acceptance tests
+name: Collibra Data Access Terraform Provider - Acceptance tests
 
 # This GitHub action runs your tests for each pull request and push.
 # Optionally, you can turn it on using a schedule for regular testing.
@@ -18,7 +18,7 @@ permissions:
   contents: read
 
 env:
-  GOPRIVATE: github.com/collibra/access-governance-go-sdk
+  GOPRIVATE: github.com/collibra/data-access-go-sdk
 
 jobs:
   # Ensure project builds before running testing matrix

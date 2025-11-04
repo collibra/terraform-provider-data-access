@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/collibra/access-governance-go-sdk"
-	"github.com/collibra/access-governance-go-sdk/services"
-	types2 "github.com/collibra/access-governance-go-sdk/types"
+	"github.com/collibra/data-access-go-sdk"
+	"github.com/collibra/data-access-go-sdk/services"
+	types2 "github.com/collibra/data-access-go-sdk/types"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -17,7 +17,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
-	"github.com/collibra/access-governance-terraform-provider/internal/utils"
+	"github.com/collibra/data-access-terraform-provider/internal/utils"
 )
 
 var _ resource.Resource = (*GlobalRoleAssignmentResource)(nil)

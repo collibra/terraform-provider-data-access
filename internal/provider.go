@@ -3,7 +3,7 @@ package internal
 import (
 	"context"
 
-	"github.com/collibra/access-governance-go-sdk"
+	"github.com/collibra/data-access-go-sdk"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
@@ -12,30 +12,30 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-// Ensure CollibraAccessGovernanceProvider satisfies various provider interfaces.
-var _ provider.Provider = &CollibraAccessGovernanceProvider{}
+// Ensure CollibraDataAccessProvider satisfies various provider interfaces.
+var _ provider.Provider = &CollibraDataAccessProvider{}
 
-// CollibraAccessGovernanceProvider defines the provider implementation.
-type CollibraAccessGovernanceProvider struct {
+// CollibraDataAccessProvider defines the provider implementation.
+type CollibraDataAccessProvider struct {
 	// version is set to the provider version on release, "dev" when the
 	// provider is built and ran locally, and "test" when running acceptance
 	// testing.
 	version string
 }
 
-// CollibraAccessGovernanceProviderModel describes the provider data model.
-type CollibraAccessGovernanceProviderModel struct {
+// CollibraDataAccessProviderModel describes the provider data model.
+type CollibraDataAccessProviderModel struct {
 	Url    types.String `tfsdk:"url"`
 	User   types.String `tfsdk:"user"`
 	Secret types.String `tfsdk:"secret"`
 }
 
-func (p *CollibraAccessGovernanceProvider) Metadata(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
-	resp.TypeName = "collibra-access-governance"
+func (p *CollibraDataAccessProvider) Metadata(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
+	resp.TypeName = "collibra-data-access"
 	resp.Version = p.version
 }
 
-func (p *CollibraAccessGovernanceProvider) Schema(ctx context.Context, req provider.SchemaRequest, resp *provider.SchemaResponse) {
+func (p *CollibraDataAccessProvider) Schema(ctx context.Context, req provider.SchemaRequest, resp *provider.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"url": schema.StringAttribute{
@@ -63,8 +63,8 @@ func (p *CollibraAccessGovernanceProvider) Schema(ctx context.Context, req provi
 	}
 }
 
-func (p *CollibraAccessGovernanceProvider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
-	var data CollibraAccessGovernanceProviderModel
+func (p *CollibraDataAccessProvider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
+	var data CollibraDataAccessProviderModel
 
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
 
@@ -78,7 +78,7 @@ func (p *CollibraAccessGovernanceProvider) Configure(ctx context.Context, req pr
 	resp.ResourceData = client
 }
 
-func (p *CollibraAccessGovernanceProvider) Resources(_ context.Context) []func() resource.Resource {
+func (p *CollibraDataAccessProvider) Resources(_ context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
 		NewDataSourceResource,
 		NewGlobalRoleAssignmentResource,
@@ -89,7 +89,7 @@ func (p *CollibraAccessGovernanceProvider) Resources(_ context.Context) []func()
 	}
 }
 
-func (p *CollibraAccessGovernanceProvider) DataSources(_ context.Context) []func() datasource.DataSource {
+func (p *CollibraDataAccessProvider) DataSources(_ context.Context) []func() datasource.DataSource {
 	return []func() datasource.DataSource{
 		NewDataSourceDataSource,
 		NewGrantCategoryDataSource,
@@ -99,7 +99,7 @@ func (p *CollibraAccessGovernanceProvider) DataSources(_ context.Context) []func
 
 func New(version string) func() provider.Provider {
 	return func() provider.Provider {
-		return &CollibraAccessGovernanceProvider{
+		return &CollibraDataAccessProvider{
 			version: version,
 		}
 	}
