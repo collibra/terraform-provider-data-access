@@ -88,7 +88,7 @@ func (d *DataSourceDataSource) Schema(_ context.Context, _ datasource.SchemaRequ
 			},
 		},
 		Description:         "Find a data source based on the name",
-		MarkdownDescription: "Find a [Data Source](https://docs.raito.io/docs/cloud/datasources) based on the name",
+		MarkdownDescription: "Find a Data Source based on the name",
 	}
 }
 

@@ -624,7 +624,7 @@ func (g *GrantResource) Schema(_ context.Context, _ resource.SchemaRequest, resp
 	response.Schema = schema.Schema{
 		Attributes:          attributes,
 		Description:         "Grant access control resource",
-		MarkdownDescription: "The resource for representing a Collibra Data Access [Grant](https://docs.raito.io/docs/cloud/access_management/grants) access control.",
+		MarkdownDescription: "The resource for representing a Collibra Data Access Grant access control.",
 		Version:             1,
 	}
 }

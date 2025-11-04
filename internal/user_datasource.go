@@ -77,7 +77,7 @@ func (u *UserDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, r
 			},
 		},
 		Description:         "Find a user by email address",
-		MarkdownDescription: "Find a Collibra [User](https://docs.raito.io/docs/cloud/admin/user_management) by email address",
+		MarkdownDescription: "Find a Collibra User by email address",
 	}
 }
 
