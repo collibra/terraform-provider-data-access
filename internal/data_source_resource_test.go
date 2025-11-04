@@ -45,7 +45,6 @@ resource "collibra-data-access_datasource" "test" {
 resource "collibra-data-access_datasource" "test" {
 	name        = "tfTestDataSourceUpdateName-%s"
 	description = "test update description"
-	sync_method = "%s"
 }
 `, testId),
 					Check: resource.ComposeAggregateTestCheckFunc(
