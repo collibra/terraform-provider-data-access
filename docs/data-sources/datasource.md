@@ -31,4 +31,3 @@ data "collibra-data-access_datasource" "example" {
 - `id` (String) The ID of the requested data source
 - `owners` (Set of String) The IDs of the owners of the data source
 - `parent` (String) The ID of the parent data source, if applicable
-- `sync_method` (String) The sync method of the data source. Should be set to `ON_PREM` for now.

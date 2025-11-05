@@ -61,14 +61,6 @@ func (d *DataSourceDataSource) Schema(_ context.Context, _ datasource.SchemaRequ
 				Description:         "The description of the data source",
 				MarkdownDescription: "The description of the data source",
 			},
-			"sync_method": schema.StringAttribute{
-				Required:            false,
-				Optional:            false,
-				Computed:            true,
-				Sensitive:           false,
-				Description:         "The sync method of the data source. Should be set to ON_PREM for now.",
-				MarkdownDescription: "The sync method of the data source. Should be set to `ON_PREM` for now.",
-			},
 			"parent": schema.StringAttribute{
 				Required:            false,
 				Optional:            false,
