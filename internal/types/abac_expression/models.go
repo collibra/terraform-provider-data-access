@@ -3,9 +3,9 @@ package abac_expression
 import (
 	"fmt"
 
-	accessGovernanceType "github.com/collibra/access-governance-go-sdk/types"
+	dataAccessType "github.com/collibra/data-access-go-sdk/types"
 
-	"github.com/collibra/access-governance-terraform-provider/internal/utils"
+	"github.com/collibra/data-access-terraform-provider/internal/utils"
 )
 
 type BinaryExpression struct {
@@ -15,10 +15,10 @@ type BinaryExpression struct {
 	UnaryExpression *UnaryExpression `json:"unaryExpression,omitempty"`
 }
 
-func (b BinaryExpression) ToGqlInput() (*accessGovernanceType.AbacComparisonExpressionInput, error) {
-	var comparison *accessGovernanceType.AbacComparisonExpressionComparisonInput
-	var aggregator *accessGovernanceType.AbacComparisonExpressionAggregatorInput
-	var unaryExpression *accessGovernanceType.AbacComparisonExpressionUnaryExpressionInput
+func (b BinaryExpression) ToGqlInput() (*dataAccessType.AbacComparisonExpressionInput, error) {
+	var comparison *dataAccessType.AbacComparisonExpressionComparisonInput
+	var aggregator *dataAccessType.AbacComparisonExpressionAggregatorInput
+	var unaryExpression *dataAccessType.AbacComparisonExpressionUnaryExpressionInput
 
 	var err error
 
@@ -36,7 +36,7 @@ func (b BinaryExpression) ToGqlInput() (*accessGovernanceType.AbacComparisonExpr
 		}
 	}
 
-	return &accessGovernanceType.AbacComparisonExpressionInput{
+	return &dataAccessType.AbacComparisonExpressionInput{
 		Literal:         b.Literal,
 		Comparison:      comparison,
 		Aggregator:      aggregator,
@@ -60,9 +60,9 @@ type AbacComparison struct {
 	RightOperand Operand      `json:"rightOperand"`
 }
 
-func (c AbacComparison) ToGqlInput() accessGovernanceType.AbacComparisonExpressionComparisonInput {
-	return accessGovernanceType.AbacComparisonExpressionComparisonInput{
-		Operator:     accessGovernanceType.AbacComparisonExpressionComparisonOperator(c.Operator.String()),
+func (c AbacComparison) ToGqlInput() dataAccessType.AbacComparisonExpressionComparisonInput {
+	return dataAccessType.AbacComparisonExpressionComparisonInput{
+		Operator:     dataAccessType.AbacComparisonExpressionComparisonOperator(c.Operator.String()),
 		LeftOperand:  c.LeftOperand,
 		RightOperand: c.RightOperand.ToGqlInput(),
 	}
@@ -72,14 +72,14 @@ type Operand struct {
 	Literal *Literal `json:"literal,omitempty"`
 }
 
-func (o Operand) ToGqlInput() accessGovernanceType.AbacComparisonExpressionOperandInput {
-	var literal *accessGovernanceType.AbacComparisonExpressionLiteral
+func (o Operand) ToGqlInput() dataAccessType.AbacComparisonExpressionOperandInput {
+	var literal *dataAccessType.AbacComparisonExpressionLiteral
 
 	if o.Literal != nil {
 		literal = utils.Ptr(o.Literal.ToGqlInput())
 	}
 
-	return accessGovernanceType.AbacComparisonExpressionOperandInput{
+	return dataAccessType.AbacComparisonExpressionOperandInput{
 		Literal: literal,
 	}
 }
@@ -90,8 +90,8 @@ type Literal struct {
 	StringList []string `json:"stringList,omitempty"`
 }
 
-func (l Literal) ToGqlInput() accessGovernanceType.AbacComparisonExpressionLiteral {
-	return accessGovernanceType.AbacComparisonExpressionLiteral{
+func (l Literal) ToGqlInput() dataAccessType.AbacComparisonExpressionLiteral {
+	return dataAccessType.AbacComparisonExpressionLiteral{
 		Bool:       l.Bool,
 		String:     l.String,
 		StringList: l.StringList,
@@ -111,8 +111,8 @@ type Aggregator struct {
 	Operands []BinaryExpression `json:"operands"`
 }
 
-func (a Aggregator) ToGqlInput() (*accessGovernanceType.AbacComparisonExpressionAggregatorInput, error) {
-	operands := make([]accessGovernanceType.AbacComparisonExpressionInput, 0, len(a.Operands))
+func (a Aggregator) ToGqlInput() (*dataAccessType.AbacComparisonExpressionAggregatorInput, error) {
+	operands := make([]dataAccessType.AbacComparisonExpressionInput, 0, len(a.Operands))
 
 	for _, operand := range a.Operands {
 		operandInput, err := operand.ToGqlInput()
@@ -123,8 +123,8 @@ func (a Aggregator) ToGqlInput() (*accessGovernanceType.AbacComparisonExpression
 		operands = append(operands, *operandInput)
 	}
 
-	return &accessGovernanceType.AbacComparisonExpressionAggregatorInput{
-		Operator: accessGovernanceType.BinaryExpressionAggregatorOperator(a.Operator.String()),
+	return &dataAccessType.AbacComparisonExpressionAggregatorInput{
+		Operator: dataAccessType.BinaryExpressionAggregatorOperator(a.Operator.String()),
 		Operands: operands,
 	}, nil
 }
@@ -141,14 +141,14 @@ type UnaryExpression struct {
 	Operand  BinaryExpression `json:"expression"`
 }
 
-func (u UnaryExpression) ToGqlInput() (*accessGovernanceType.AbacComparisonExpressionUnaryExpressionInput, error) {
+func (u UnaryExpression) ToGqlInput() (*dataAccessType.AbacComparisonExpressionUnaryExpressionInput, error) {
 	operandInput, err := u.Operand.ToGqlInput()
 	if err != nil {
 		return nil, fmt.Errorf("operand to gql input: %w", err)
 	}
 
-	return &accessGovernanceType.AbacComparisonExpressionUnaryExpressionInput{
-		Operator: accessGovernanceType.BinaryExpressionUnaryExpressionOperator(u.Operator.String()),
+	return &dataAccessType.AbacComparisonExpressionUnaryExpressionInput{
+		Operator: dataAccessType.BinaryExpressionUnaryExpressionOperator(u.Operator.String()),
 		Operand:  *operandInput,
 	}, nil
 }

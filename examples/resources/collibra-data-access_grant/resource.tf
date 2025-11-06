@@ -1,8 +1,8 @@
-resource "collibra-access-governance_datasource" "ds" {
+resource "collibra-data-access_datasource" "ds" {
   name = "exampleDS"
 }
 
-resource "collibra-access-governance_grant" "grant1" {
+resource "collibra-data-access_grant" "grant1" {
   name        = "First grant"
   description = "A simple grant"
   state       = "Active"
@@ -18,7 +18,7 @@ resource "collibra-access-governance_grant" "grant1" {
   type = "role"
   data_source = [
     {
-      data_source : collibra-access-governance_datasource.ds.id
+      data_source : collibra-data-access_datasource.ds.id
       type : "role"
     }
   ]
@@ -37,19 +37,19 @@ resource "collibra-access-governance_grant" "grant1" {
   }
 }
 
-resource "collibra-access-governance_grant" "grant_purpose1" {
+resource "collibra-data-access_grant" "grant_purpose1" {
   name        = "Grant2"
   description = "Grant with inherited who"
   category    = "purpose"
   state       = "Active"
   who = [
     {
-      access_control = collibra-access-governance_grant.grant1.id
+      access_control = collibra-data-access_grant.grant1.id
     }
   ]
   data_source = [
     {
-      data_source : collibra-access-governance_datasource.ds.id
+      data_source : collibra-data-access_datasource.ds.id
       type : "role"
     }
   ]

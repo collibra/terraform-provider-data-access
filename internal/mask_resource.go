@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/collibra/access-governance-go-sdk"
-	accessGovernanceType "github.com/collibra/access-governance-go-sdk/types"
+	"github.com/collibra/data-access-go-sdk"
+	dataAccessType "github.com/collibra/data-access-go-sdk/types"
 	"github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -16,8 +16,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
-	"github.com/collibra/access-governance-terraform-provider/internal/types/abac_expression"
-	"github.com/collibra/access-governance-terraform-provider/internal/utils"
+	"github.com/collibra/data-access-terraform-provider/internal/types/abac_expression"
+	"github.com/collibra/data-access-terraform-provider/internal/utils"
 )
 
 var _ resource.Resource = (*MaskResource)(nil)
@@ -68,7 +68,7 @@ func (m *MaskResourceModel) SetAccessControlResourceModel(ap *AccessControlResou
 	m.InheritanceLocked = ap.InheritanceLocked
 }
 
-func (m *MaskResourceModel) ToAccessControlInput(ctx context.Context, client *sdk.CollibraClient, result *accessGovernanceType.AccessControlInput) diag.Diagnostics {
+func (m *MaskResourceModel) ToAccessControlInput(ctx context.Context, client *sdk.CollibraClient, result *dataAccessType.AccessControlInput) diag.Diagnostics {
 	diagnostics := m.GetAccessControlResourceModel().ToAccessControlInput(ctx, client, result)
 
 	if diagnostics.HasError() {
@@ -81,7 +81,7 @@ func (m *MaskResourceModel) ToAccessControlInput(ctx context.Context, client *sd
 			apType = m.Type.ValueStringPointer()
 		}
 
-		result.DataSources = []accessGovernanceType.AccessControlDataSourceInput{
+		result.DataSources = []dataAccessType.AccessControlDataSourceInput{
 			{
 				DataSource: m.DataSource.ValueString(),
 				Type:       apType,
@@ -89,12 +89,12 @@ func (m *MaskResourceModel) ToAccessControlInput(ctx context.Context, client *sd
 		}
 	}
 
-	result.Action = utils.Ptr(accessGovernanceType.AccessControlActionMask)
+	result.Action = utils.Ptr(dataAccessType.AccessControlActionMask)
 
 	if !m.Columns.IsNull() && !m.Columns.IsUnknown() {
 		elements := m.Columns.Elements()
 
-		result.WhatDataObjects = make([]accessGovernanceType.AccessControlWhatInputDO, 0, len(elements))
+		result.WhatDataObjects = make([]dataAccessType.AccessControlWhatInputDO, 0, len(elements))
 
 		// Assume that currently only 1 dataSource is provided
 		dataSource := result.DataSources[0].DataSource
@@ -102,8 +102,8 @@ func (m *MaskResourceModel) ToAccessControlInput(ctx context.Context, client *sd
 		for _, whatDataObject := range elements {
 			columnName := whatDataObject.(types.String).ValueString()
 
-			result.WhatDataObjects = append(result.WhatDataObjects, accessGovernanceType.AccessControlWhatInputDO{
-				DataObjectByName: []accessGovernanceType.AccessControlWhatDoByNameInput{{
+			result.WhatDataObjects = append(result.WhatDataObjects, dataAccessType.AccessControlWhatInputDO{
+				DataObjectByName: []dataAccessType.AccessControlWhatDoByNameInput{{
 					FullName:   columnName,
 					DataSource: dataSource,
 				}},
@@ -118,9 +118,9 @@ func (m *MaskResourceModel) ToAccessControlInput(ctx context.Context, client *sd
 	}
 
 	if m.WhatLocked.ValueBool() {
-		result.Locks = append(result.Locks, accessGovernanceType.AccessControlLockDataInput{
-			LockKey: accessGovernanceType.AccessControlLockWhatlock,
-			Details: &accessGovernanceType.AccessControlLockDetailsInput{
+		result.Locks = append(result.Locks, dataAccessType.AccessControlLockDataInput{
+			LockKey: dataAccessType.AccessControlLockWhatlock,
+			Details: &dataAccessType.AccessControlLockDetailsInput{
 				Reason: utils.Ptr(lockMsg),
 			},
 		})
@@ -129,7 +129,7 @@ func (m *MaskResourceModel) ToAccessControlInput(ctx context.Context, client *sd
 	return diagnostics
 }
 
-func (m *MaskResourceModel) FromAccessControl(ctx context.Context, client *sdk.CollibraClient, input *accessGovernanceType.AccessControl) diag.Diagnostics {
+func (m *MaskResourceModel) FromAccessControl(ctx context.Context, client *sdk.CollibraClient, input *dataAccessType.AccessControl) diag.Diagnostics {
 	apResourceModel := m.GetAccessControlResourceModel()
 	diagnostics := apResourceModel.FromAccessControl(input)
 
@@ -146,8 +146,8 @@ func (m *MaskResourceModel) FromAccessControl(ctx context.Context, client *sdk.C
 	}
 
 	m.DataSource = types.StringValue(input.SyncData[0].DataSource.Id)
-	m.WhatLocked = types.BoolValue(slices.ContainsFunc(input.Locks, func(data accessGovernanceType.AccessControlLocksAccessControlLockData) bool {
-		return data.LockKey == accessGovernanceType.AccessControlLockWhatlock
+	m.WhatLocked = types.BoolValue(slices.ContainsFunc(input.Locks, func(data dataAccessType.AccessControlLocksAccessControlLockData) bool {
+		return data.LockKey == dataAccessType.AccessControlLockWhatlock
 	}))
 
 	if input.SyncData[0].AccessControlType == nil || input.SyncData[0].AccessControlType.Type == nil {
@@ -163,7 +163,7 @@ func (m *MaskResourceModel) FromAccessControl(ctx context.Context, client *sdk.C
 		m.Type = types.StringPointerValue(input.SyncData[0].AccessControlType.Type)
 	}
 
-	if input.WhatType == accessGovernanceType.WhoAndWhatTypeDynamic && input.WhatAbacRule != nil {
+	if input.WhatType == dataAccessType.WhoAndWhatTypeDynamic && input.WhatAbacRule != nil {
 		object, objectDiagnostics := m.abacWhatFromAccessControl(ctx, client, input)
 		diagnostics.Append(objectDiagnostics...)
 
@@ -181,7 +181,7 @@ func (m *MaskResourceModel) UpdateOwners(owners types.Set) {
 	m.Owners = owners
 }
 
-func (m *MaskResourceModel) abacWhatToAccessControlInput(ctx context.Context, client *sdk.CollibraClient, result *accessGovernanceType.AccessControlInput) (diagnostics diag.Diagnostics) {
+func (m *MaskResourceModel) abacWhatToAccessControlInput(ctx context.Context, client *sdk.CollibraClient, result *dataAccessType.AccessControlInput) (diagnostics diag.Diagnostics) {
 	attributes := m.WhatAbacRule.Attributes()
 
 	scopeAttr := attributes["scope"]
@@ -227,8 +227,8 @@ func (m *MaskResourceModel) abacWhatToAccessControlInput(ctx context.Context, cl
 		return diagnostics
 	}
 
-	result.WhatType = utils.Ptr(accessGovernanceType.WhoAndWhatTypeDynamic)
-	result.WhatAbacRule = &accessGovernanceType.WhatAbacRuleInput{
+	result.WhatType = utils.Ptr(dataAccessType.WhoAndWhatTypeDynamic)
+	result.WhatAbacRule = &dataAccessType.WhatAbacRuleInput{
 		DoTypes: []string{"column"},
 		Scope:   scope,
 		Rule:    *abacInput,
@@ -237,7 +237,7 @@ func (m *MaskResourceModel) abacWhatToAccessControlInput(ctx context.Context, cl
 	return diagnostics
 }
 
-func (m *MaskResourceModel) abacWhatFromAccessControl(ctx context.Context, client *sdk.CollibraClient, ap *accessGovernanceType.AccessControl) (_ types.Object, diagnostics diag.Diagnostics) {
+func (m *MaskResourceModel) abacWhatFromAccessControl(ctx context.Context, client *sdk.CollibraClient, ap *dataAccessType.AccessControl) (_ types.Object, diagnostics diag.Diagnostics) {
 	objectTypes := map[string]attr.Type{
 		"scope": types.SetType{ElemType: types.StringType},
 		"rule":  jsontypes.NormalizedType{},
@@ -330,7 +330,7 @@ func (m *MaskResource) Schema(_ context.Context, _ resource.SchemaRequest, respo
 		Computed:            false,
 		Sensitive:           false,
 		Description:         "The full name of columns that should be included in the mask",
-		MarkdownDescription: "The full name of columns that should be included in the mask. Items are managed by Collibra Access Governance if columns is not set (nil).",
+		MarkdownDescription: "The full name of columns that should be included in the mask. Items are managed by Collibra Data Access if columns is not set (nil).",
 	}
 
 	attributes["what_abac_rule"] = schema.SingleNestedAttribute{
@@ -374,7 +374,7 @@ func (m *MaskResource) Schema(_ context.Context, _ resource.SchemaRequest, respo
 	response.Schema = schema.Schema{
 		Attributes:          attributes,
 		Description:         "The mask access control resource",
-		MarkdownDescription: "The resource for representing a [Column Mask](https://docs.raito.io/docs/cloud/access_management/masks) access control.",
+		MarkdownDescription: "The resource for representing a Column Mask access control.",
 		Version:             1,
 	}
 }

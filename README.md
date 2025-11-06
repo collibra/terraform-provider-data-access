@@ -1,5 +1,5 @@
-# access-governance-terraform-provider
-access-governance-terraform-provider
+# data-access-terraform-provider
+data-access-terraform-provider
 
 
 **Note: This repository is still in an early stage of development.

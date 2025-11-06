@@ -1,0 +1,1 @@
+terraform import collibra-data-access_datasource.example DataSourceId

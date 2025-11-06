@@ -1,8 +1,8 @@
-resource "collibra-access-governance_datasource" "ds" {
+resource "collibra-data-access_datasource" "ds" {
   name = "exampleDS"
 }
 
-resource "collibra-access-governance_mask" "example" {
+resource "collibra-data-access_mask" "example" {
   name        = "A Mask"
   description = "A simple mask"
   state       = "Active"
@@ -12,7 +12,7 @@ resource "collibra-access-governance_mask" "example" {
     },
   ]
   type        = "SHA256"
-  data_source = collibra-access-governance_datasource.ds.id
+  data_source = collibra-data-access_datasource.ds.id
   columns = [
     "SOME_DB.SOME_SCHEMA.SOME_TABLE.SOME_COLUMN"
   ]

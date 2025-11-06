@@ -5,9 +5,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/collibra/access-governance-go-sdk"
-	accessGovernanceType "github.com/collibra/access-governance-go-sdk/types"
-	"github.com/collibra/access-governance-terraform-provider/internal/utils"
+	"github.com/collibra/data-access-go-sdk"
+	dataAccessType "github.com/collibra/data-access-go-sdk/types"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -26,16 +25,14 @@ type DataSourceResourceModel struct {
 	Id          types.String `tfsdk:"id"`
 	Name        types.String `tfsdk:"name"`
 	Description types.String `tfsdk:"description"`
-	SyncMethod  types.String `tfsdk:"sync_method"`
 	Parent      types.String `tfsdk:"parent"`
 	Owners      types.Set    `tfsdk:"owners"`
 }
 
-func (m *DataSourceResourceModel) ToDataSourceInput() accessGovernanceType.DataSourceInput {
-	return accessGovernanceType.DataSourceInput{
+func (m *DataSourceResourceModel) ToDataSourceInput() dataAccessType.DataSourceInput {
+	return dataAccessType.DataSourceInput{
 		Name:        m.Name.ValueStringPointer(),
 		Description: m.Description.ValueStringPointer(),
-		SyncMethod:  utils.Ptr(accessGovernanceType.DataSourceSyncMethod(m.SyncMethod.ValueString())),
 		Parent:      m.Parent.ValueStringPointer(),
 	}
 }
@@ -84,16 +81,6 @@ func (d *DataSourceResource) Schema(_ context.Context, _ resource.SchemaRequest,
 				MarkdownDescription: "The description of the data source",
 				Default:             stringdefault.StaticString(""),
 			},
-			"sync_method": schema.StringAttribute{
-				Required:            false,
-				Optional:            true,
-				Computed:            true,
-				Sensitive:           false,
-				Description:         "The sync method of the data source (should be ON_PREM for now)",
-				MarkdownDescription: "The sync method of the data source (should be `ON_PREM` for now)",
-				Default:             stringdefault.StaticString(string(accessGovernanceType.DataSourceSyncMethodOnprem)),
-				Validators:          []validator.String{stringvalidator.OneOf(string(accessGovernanceType.DataSourceSyncMethodOnprem), string(accessGovernanceType.DataSourceSyncMethodCloudmanualtrigger))},
-			},
 			"parent": schema.StringAttribute{
 				Required:            false,
 				Optional:            true,
@@ -113,7 +100,7 @@ func (d *DataSourceResource) Schema(_ context.Context, _ resource.SchemaRequest,
 			},
 		},
 		Description:         "The data source resource",
-		MarkdownDescription: "The resource for representing a [Data Source](https://docs.raito.io/docs/cloud/datasources).",
+		MarkdownDescription: "The resource for representing a Data Source.",
 		Version:             1,
 	}
 }
@@ -172,7 +159,7 @@ func (d *DataSourceResource) Read(ctx context.Context, request resource.ReadRequ
 
 	ds, err := d.client.DataSource().GetDataSource(ctx, stateData.Id.ValueString())
 	if err != nil {
-		var notFoundErr *accessGovernanceType.ErrNotFound
+		var notFoundErr *dataAccessType.ErrNotFound
 		if errors.As(err, &notFoundErr) {
 			response.State.RemoveResource(ctx)
 		} else {
@@ -195,7 +182,6 @@ func (d *DataSourceResource) Read(ctx context.Context, request resource.ReadRequ
 		Id:          types.StringValue(ds.Id),
 		Name:        types.StringValue(ds.Name),
 		Description: types.StringValue(ds.Description),
-		SyncMethod:  types.StringValue(string(ds.SyncMethod)),
 		Parent:      types.StringPointerValue(parentId),
 	}
 

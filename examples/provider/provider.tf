@@ -1,5 +1,5 @@
 # Configuration-based authentication
-provider "collibra-access-governance" {
+provider "collibra-data-access" {
   url    = "https://mycompany.collibra.com"
   user   = "terraform@mycompany.com"
   secret = "password"

@@ -155,7 +155,7 @@ linters:
 
     wrapcheck:
       ignore-package-globs:
-        - github.com/collibra/access-governance-backend/internal/shared/gerror
+        - github.com/collibra/data-access-backend/internal/shared/gerror
 
   exclusions:
     generated: lax

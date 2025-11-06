@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/collibra/access-governance-go-sdk"
-	"github.com/collibra/access-governance-go-sdk/services"
+	"github.com/collibra/data-access-go-sdk"
+	"github.com/collibra/data-access-go-sdk/services"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -17,7 +17,6 @@ type DataSourceDataSourceModel struct {
 	Id          types.String `tfsdk:"id"`
 	Name        types.String `tfsdk:"name"`
 	Description types.String `tfsdk:"description"`
-	SyncMethod  types.String `tfsdk:"sync_method"`
 	Parent      types.String `tfsdk:"parent"`
 	Owners      types.Set    `tfsdk:"owners"`
 }
@@ -62,14 +61,6 @@ func (d *DataSourceDataSource) Schema(_ context.Context, _ datasource.SchemaRequ
 				Description:         "The description of the data source",
 				MarkdownDescription: "The description of the data source",
 			},
-			"sync_method": schema.StringAttribute{
-				Required:            false,
-				Optional:            false,
-				Computed:            true,
-				Sensitive:           false,
-				Description:         "The sync method of the data source. Should be set to ON_PREM for now.",
-				MarkdownDescription: "The sync method of the data source. Should be set to `ON_PREM` for now.",
-			},
 			"parent": schema.StringAttribute{
 				Required:            false,
 				Optional:            false,
@@ -89,7 +80,7 @@ func (d *DataSourceDataSource) Schema(_ context.Context, _ datasource.SchemaRequ
 			},
 		},
 		Description:         "Find a data source based on the name",
-		MarkdownDescription: "Find a [Data Source](https://docs.raito.io/docs/cloud/datasources) based on the name",
+		MarkdownDescription: "Find a Data Source based on the name",
 	}
 }
 
@@ -121,7 +112,6 @@ func (d *DataSourceDataSource) Read(ctx context.Context, request datasource.Read
 
 			data.Id = types.StringValue(dsItem.Id)
 			data.Description = types.StringValue(dsItem.Description)
-			data.SyncMethod = types.StringValue(string(dsItem.SyncMethod))
 			data.Parent = types.StringPointerValue(parentId)
 
 			owners, diagn := getOwners(ctx, dsItem.Id, d.client)

@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/collibra/access-governance-go-sdk"
+	"github.com/collibra/data-access-go-sdk"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -77,7 +77,7 @@ func (u *UserDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, r
 			},
 		},
 		Description:         "Find a user by email address",
-		MarkdownDescription: "Find a Collibra [User](https://docs.raito.io/docs/cloud/admin/user_management) by email address",
+		MarkdownDescription: "Find a Collibra User by email address",
 	}
 }
 

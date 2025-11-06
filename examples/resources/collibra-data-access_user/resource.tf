@@ -1,4 +1,4 @@
-resource "collibra-access-governance_user" "u1" {
+resource "collibra-data-access_user" "u1" {
   name          = "user name"
   email         = "test-user@collibra.com"
   collibra_user = true

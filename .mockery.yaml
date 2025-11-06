@@ -2,4 +2,4 @@ inpackage: True
 testonly: True
 with-expecter: True
 keeptree: False
-replace-type: github.com/collibra/access-governance-go-sdk/internal/schema=github.com/collibra/access-governance-go-sdk/types
+replace-type: github.com/collibra/data-access-go-sdk/internal/schema=github.com/collibra/data-access-go-sdk/types

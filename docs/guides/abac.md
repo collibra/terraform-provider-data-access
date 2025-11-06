@@ -1,8 +1,8 @@
 ---
-page_title: "Abac Rules in Collibra Access Governance"
+page_title: "Abac Rules in Collibra Data Access"
 ---
 
-# Abac Rules in the Collibra Access Governance Provider
+# Abac Rules in the Collibra Data Access Provider
 
 Access provider resources (grants, masks, filters, and purposes) can the define what- and/or who-items that are authorized based on Attribute-Based Access Control (ABAC) rules. These rules are specified in JSON format following the outlined structure below.
 
@@ -135,17 +135,17 @@ locals {
   )
 }
 
-resource "collibra-access-governance_datasource" "ds" {
+resource "collibra-data-access_datasource" "ds" {
   name = "exampleDS"
 }
 
-resource "collibra-access-governance_grant" "example_grant" {
+resource "collibra-data-access_grant" "example_grant" {
   name        = "Grant with abac"
   description = "Grant with what abac rule"
   state       = "Active"
   what_abac_rule = {
     rule = local.example_grant_abac_rule
   }
-  data_source = collibra-access-governance_datasource.ds.id
+  data_source = collibra-data-access_datasource.ds.id
 }
 ```
