@@ -1,6 +1,6 @@
 module github.com/collibra/data-access-terraform-provider
 
-go 1.25.2
+go 1.25.4
 
 tool (
 	github.com/dmarkham/enumer
@@ -8,7 +8,7 @@ tool (
 )
 
 require (
-	github.com/collibra/data-access-go-sdk v0.0.28
+	github.com/collibra/data-access-go-sdk v0.0.29
 	github.com/collibra/go-set v0.1.0
 	github.com/hashicorp/terraform-plugin-framework v1.16.1
 	github.com/hashicorp/terraform-plugin-framework-jsontypes v0.2.0
