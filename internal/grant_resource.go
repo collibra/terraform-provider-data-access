@@ -123,7 +123,7 @@ func (m *GrantResourceModel) whatDoToApInput(result *dataAccessType.AccessContro
 		whatDataObjectAttributes := whatDataObjectObject.Attributes()
 
 		dataObject := whatDataObjectAttributes["data_object"].(types.Object)
-		doType, doPath, dsId := dataObjectReferenceToComponents(dataObject)
+		doType, doPath, dsId := dataObjectReferenceToComponents(dataObject.Attributes())
 		fullName := dataAccessType.FullName{
 			Type: doType,
 			Path: doPath,
@@ -299,8 +299,8 @@ func (m *GrantResourceModel) abacWhatToAccessControlInput(ctx context.Context, c
 	return diagnostics
 }
 
-func dataObjectReferenceToId(ctx context.Context, client *sdk.CollibraClient, dataObject types.Object) (string, error) {
-	doType, path, dataSourceId := dataObjectReferenceToComponents(dataObject)
+func dataObjectReferenceToId(ctx context.Context, client *sdk.CollibraClient, dataObjectAttributes  map[string]attr.Value) (string, error) {
+	doType, path, dataSourceId := dataObjectReferenceToComponents(dataObjectAttributes)
 
 	fullName := dataAccessType.FullName{
 		Type: doType,
@@ -315,8 +315,7 @@ func dataObjectReferenceToId(ctx context.Context, client *sdk.CollibraClient, da
 	return ret, nil
 }
 
-func dataObjectReferenceToComponents(dataObject types.Object) (dataObjectType string, dataObjectPath []string, dataSourceId string) {
-	dataObjectAttributes := dataObject.Attributes()
+func dataObjectReferenceToComponents(dataObjectAttributes  map[string]attr.Value) (dataObjectType string, dataObjectPath []string, dataSourceId string) {
 	dataObjectType = dataObjectAttributes["type"].(types.String).ValueString()
 	path := dataObjectAttributes["path"].(types.List).Elements()
 	dataSourceId = dataObjectAttributes["data_source"].(types.String).ValueString()
@@ -361,7 +360,7 @@ func abacWhatScopeToAccessControlInput(ctx context.Context, client *sdk.Collibra
 		scopeObject := scopeItem.(types.Object)
 		scopeAttributes := scopeObject.Attributes()
 
-		id, err := dataObjectReferenceToId(ctx, client, scopeAttributes["data_object"].(types.Object))
+		id, err := dataObjectReferenceToId(ctx, client, scopeAttributes)
 		if err != nil {
 			diagnostics.AddError("Failed to get data object id", err.Error())
 

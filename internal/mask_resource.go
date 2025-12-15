@@ -87,7 +87,7 @@ func (m *MaskResourceModel) ToAccessControlInput(ctx context.Context, client *sd
 
 		for _, whatDataObject := range elements {
 			dataObject := whatDataObject.(types.Object)
-			doType, doPath, dsId := dataObjectReferenceToComponents(dataObject)
+			doType, doPath, dsId := dataObjectReferenceToComponents(dataObject.Attributes())
 			fullName := dataAccessType.FullName{
 				Type: doType,
 				Path: doPath,
@@ -195,9 +195,10 @@ func (m *MaskResourceModel) abacWhatToAccessControlInput(ctx context.Context, cl
 		}
 
 		result.WhatAbacRules = append(result.WhatAbacRules, &dataAccessType.WhatAbacRuleInput{
-			Scope: scope,
-			Rule:  *abacInput,
-			Id:    getOptionalString(attributes, "id"),
+			Scope:   scope,
+			Rule:    *abacInput,
+			Id:      getOptionalString(attributes, "id"),
+			DoTypes: []string{"column"},
 		})
 	}
 
@@ -209,12 +210,9 @@ func (m *MaskResourceModel) abacWhatFromAccessControl(ctx context.Context, clien
 
 	scopeType := types.ObjectType{AttrTypes: dataObjectReferenceTypeAttributeTypes}
 	whatAbacRuleType := map[string]attr.Type{
-		"do_types":           types.SetType{ElemType: types.StringType},
-		"permissions":        types.SetType{ElemType: types.StringType},
-		"global_permissions": types.SetType{ElemType: types.StringType},
-		"scope":              types.SetType{ElemType: scopeType},
-		"rule":               jsontypes.NormalizedType{},
-		"id":                 types.StringType,
+		"scope": types.SetType{ElemType: scopeType},
+		"rule":  jsontypes.NormalizedType{},
+		"id":    types.StringType,
 	}
 	whatAbacRulesType := types.ObjectType{AttrTypes: whatAbacRuleType}
 
@@ -291,14 +289,6 @@ func (m *MaskResource) Metadata(_ context.Context, request resource.MetadataRequ
 
 func (m *MaskResource) Schema(_ context.Context, _ resource.SchemaRequest, response *resource.SchemaResponse) {
 	attributes := m.schema("mask")
-	attributes["type"] = schema.StringAttribute{
-		Required:            true,
-		Optional:            false,
-		Computed:            false,
-		Sensitive:           false,
-		Description:         "The masking method",
-		MarkdownDescription: "The masking method, which defines how the data is masked. Available types are defined by the data source.",
-	}
 	attributes["data_sources"] = schema.SetNestedAttribute{
 		NestedObject: schema.NestedAttributeObject{
 			Attributes: map[string]schema.Attribute{
@@ -314,12 +304,12 @@ func (m *MaskResource) Schema(_ context.Context, _ resource.SchemaRequest, respo
 					},
 				},
 				"type": schema.StringAttribute{
-					Required:            false,
-					Optional:            true,
-					Computed:            true,
+					Required:            true,
+					Optional:            false,
+					Computed:            false,
 					Sensitive:           false,
 					Description:         "The masking type to use for the mask in this data source",
-					MarkdownDescription: "The masking type to use for the mask in this data source",
+					MarkdownDescription: "The masking type to use for the mask in this data source. Available types are defined by the data source.",
 					PlanModifiers: []planmodifier.String{
 						stringplanmodifier.UseStateForUnknown(),
 					},
@@ -429,7 +419,8 @@ func readMaskResourceColumns(ctx context.Context, client *sdk.CollibraClient, da
 			}
 		}
 
-		columnsObject, columnsDiag := types.SetValue(types.StringType, stateWhatItems)
+		scopeType := types.ObjectType{AttrTypes: dataObjectReferenceTypeAttributeTypes}
+		columnsObject, columnsDiag := types.SetValue(scopeType, stateWhatItems)
 
 		diagnostics.Append(columnsDiag...)
 

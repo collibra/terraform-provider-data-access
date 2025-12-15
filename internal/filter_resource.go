@@ -79,7 +79,7 @@ func (f *FilterResourceModel) ToAccessControlInput(ctx context.Context, client *
 			},
 		})
 
-		doType, doPath, dsId := dataObjectReferenceToComponents(f.Table)
+		doType, doPath, dsId := dataObjectReferenceToComponents(f.Table.Attributes())
 		fullName := dataAccessType.FullName{
 			Type: doType,
 			Path: doPath,
