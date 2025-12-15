@@ -11,9 +11,17 @@ resource "collibra-data-access_mask" "example" {
       user : "user1@company.com"
     },
   ]
-  type        = "SHA256"
-  data_source = collibra-data-access_datasource.ds.id
+  data_sources = [
+    {
+      data_source = data.collibra-data-access_datasource.ds.id
+      type        = "SHA256"
+    }
+  ]
   columns = [
-    "SOME_DB.SOME_SCHEMA.SOME_TABLE.SOME_COLUMN"
+    {
+      type        = "column"
+      path        = ["SOME_DB", "SOME_SCHEMA", "SOME_TABLE", "SOME_COLUMN"]
+      data_source = data.collibra-data-access_datasource.ds.id
+    }
   ]
 }

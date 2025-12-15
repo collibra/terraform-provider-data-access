@@ -31,25 +31,32 @@ resource "collibra-data-access_grant" "grant1" {
     }
   ]
   type = "role"
-  data_source = [
+  data_sources = [
     {
-      data_source : collibra-data-access_datasource.ds.id
+      data_source : data.collibra-data-access_datasource.ds.id
       type : "role"
     }
   ]
-  what_data_objects = {
-    data_object : [
-      {
-        name : "data_object1"
-        permissions : ["SELECT", "INSERT"]
-        global_permissions : []
-      },
-      {
-        name : "data_object2"
-        global_permissions : ["READ"]
+  what_data_objects = [
+    {
+      data_object = {
+        type        = "table"
+        path        = ["DB1", "SCHEMA1", "TABLE1"]
+        data_source = data.collibra-data-access_datasource.ds.id
       }
-    ]
-  }
+      permissions : ["SELECT", "INSERT"]
+      global_permissions : []
+    },
+    {
+      data_object = {
+        type        = "table"
+        path        = ["DB1", "SCHEMA1", "TABLE2"]
+        data_source = data.collibra-data-access_datasource.ds.id
+      }
+      permissions : []
+      global_permissions : ["READ"]
+    }
+  ]
 }
 
 resource "collibra-data-access_grant" "grant_purpose1" {
@@ -62,7 +69,7 @@ resource "collibra-data-access_grant" "grant_purpose1" {
       access_control = collibra-data-access_grant.grant1.id
     }
   ]
-  data_source = [
+  data_sources = [
     {
       data_source : collibra-data-access_datasource.ds.id
       type : "role"

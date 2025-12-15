@@ -29,7 +29,10 @@ resource "collibra-data-access_filter" "filter1" {
       access_control : collibra-data-access_purpose.purpose1.id
     }
   ]
-  data_source   = collibra-data-access_datasource.ds.id
-  table         = "database.schema.table"
+  table = {
+    type        = "table"
+    path        = ["DB1", "SCHEMA1", "TABLE1"]
+    data_source = data.collibra-data-access_datasource.ds.id
+  }
   filter_policy = "{state} = 'NJ'"
 }

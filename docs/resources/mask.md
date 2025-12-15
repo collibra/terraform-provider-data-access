@@ -26,10 +26,18 @@ resource "collibra-data-access_mask" "example" {
       user : "user1@company.com"
     },
   ]
-  type        = "SHA256"
-  data_source = collibra-data-access_datasource.ds.id
+  data_sources = [
+    {
+      data_source = data.collibra-data-access_datasource.ds.id
+      type        = "SHA256"
+    }
+  ]
   columns = [
-    "SOME_DB.SOME_SCHEMA.SOME_TABLE.SOME_COLUMN"
+    {
+      type        = "column"
+      path        = ["SOME_DB", "SOME_SCHEMA", "SOME_TABLE", "SOME_COLUMN"]
+      data_source = data.collibra-data-access_datasource.ds.id
+    }
   ]
 }
 ```
@@ -41,7 +49,6 @@ resource "collibra-data-access_mask" "example" {
 
 - `data_sources` (Attributes Set) The list of data sources that this mask is applicable to (see [below for nested schema](#nestedatt--data_sources))
 - `name` (String) The name of the mask
-- `type` (String) The masking method, which defines how the data is masked. Available types are defined by the data source.
 
 ### Optional
 
@@ -66,10 +73,7 @@ resource "collibra-data-access_mask" "example" {
 Required:
 
 - `data_source` (String) The ID of the data source that this mask is applicable to
-
-Optional:
-
-- `type` (String) The masking type to use for the mask in this data source
+- `type` (String) The masking type to use for the mask in this data source. Available types are defined by the data source.
 
 
 <a id="nestedatt--columns"></a>
