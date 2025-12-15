@@ -307,7 +307,12 @@ func dataObjectReferenceToId(ctx context.Context, client *sdk.CollibraClient, da
 		Path: path,
 	}
 
-	return client.DataObject().GetDataObjectIdByName(ctx, fullName.ToDataObjectURI(), dataSourceId)
+	ret, err := client.DataObject().GetDataObjectIdByName(ctx, fullName.ToDataObjectURI(), dataSourceId)
+	if err != nil {
+		return "", fmt.Errorf("get data object id for data object %s and data source %s: %w", fullName.ToDataObjectURI(), dataSourceId, err)
+	}
+
+	return ret, nil
 }
 
 func dataObjectReferenceToComponents(dataObject types.Object) (dataObjectType string, dataObjectPath []string, dataSourceId string) {
