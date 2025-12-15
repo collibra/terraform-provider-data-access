@@ -299,7 +299,7 @@ func (m *GrantResourceModel) abacWhatToAccessControlInput(ctx context.Context, c
 	return diagnostics
 }
 
-func dataObjectReferenceToId(ctx context.Context, client *sdk.CollibraClient, dataObjectAttributes  map[string]attr.Value) (string, error) {
+func dataObjectReferenceToId(ctx context.Context, client *sdk.CollibraClient, dataObjectAttributes map[string]attr.Value) (string, error) {
 	doType, path, dataSourceId := dataObjectReferenceToComponents(dataObjectAttributes)
 
 	fullName := dataAccessType.FullName{
@@ -315,7 +315,7 @@ func dataObjectReferenceToId(ctx context.Context, client *sdk.CollibraClient, da
 	return ret, nil
 }
 
-func dataObjectReferenceToComponents(dataObjectAttributes  map[string]attr.Value) (dataObjectType string, dataObjectPath []string, dataSourceId string) {
+func dataObjectReferenceToComponents(dataObjectAttributes map[string]attr.Value) (dataObjectType string, dataObjectPath []string, dataSourceId string) {
 	dataObjectType = dataObjectAttributes["type"].(types.String).ValueString()
 	path := dataObjectAttributes["path"].(types.List).Elements()
 	dataSourceId = dataObjectAttributes["data_source"].(types.String).ValueString()
