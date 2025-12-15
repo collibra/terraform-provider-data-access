@@ -8,12 +8,9 @@ import (
 	"github.com/collibra/data-access-go-sdk"
 	dataAccessType "github.com/collibra/data-access-go-sdk/types"
 	"github.com/collibra/data-access-terraform-provider/internal/utils"
-	"github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
-	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -21,19 +18,18 @@ var _ resource.Resource = (*FilterResource)(nil)
 
 type FilterResourceModel struct {
 	// AccessControlResourceModel properties. This has to be duplicated because of https://github.com/hashicorp/terraform-plugin-framework/issues/242
-	Id                types.String         `tfsdk:"id"`
-	Name              types.String         `tfsdk:"name"`
-	Description       types.String         `tfsdk:"description"`
-	State             types.String         `tfsdk:"state"`
-	Who               types.Set            `tfsdk:"who"`
-	Owners            types.Set            `tfsdk:"owners"`
-	WhoAbacRule       jsontypes.Normalized `tfsdk:"who_abac_rule"`
-	WhoLocked         types.Bool           `tfsdk:"who_locked"`
-	InheritanceLocked types.Bool           `tfsdk:"inheritance_locked"`
+	Id                types.String `tfsdk:"id"`
+	Name              types.String `tfsdk:"name"`
+	Description       types.String `tfsdk:"description"`
+	State             types.String `tfsdk:"state"`
+	Who               types.Set    `tfsdk:"who"`
+	Owners            types.Set    `tfsdk:"owners"`
+	WhoAbacRules      types.Set    `tfsdk:"who_abac_rules"`
+	WhoLocked         types.Bool   `tfsdk:"who_locked"`
+	InheritanceLocked types.Bool   `tfsdk:"inheritance_locked"`
 
 	// FilterResourceModel properties
-	DataSource   types.String `tfsdk:"data_source"`
-	Table        types.String `tfsdk:"table"`
+	Table        types.Object `tfsdk:"table"`
 	FilterPolicy types.String `tfsdk:"filter_policy"`
 	WhatLocked   types.Bool   `tfsdk:"what_locked"`
 }
@@ -46,7 +42,7 @@ func (f *FilterResourceModel) GetAccessControlResourceModel() *AccessControlReso
 		State:             f.State,
 		Who:               f.Who,
 		Owners:            f.Owners,
-		WhoAbacRule:       f.WhoAbacRule,
+		WhoAbacRules:      f.WhoAbacRules,
 		WhoLocked:         f.WhoLocked,
 		InheritanceLocked: f.InheritanceLocked,
 	}
@@ -59,7 +55,7 @@ func (f *FilterResourceModel) SetAccessControlResourceModel(ap *AccessControlRes
 	f.State = ap.State
 	f.Who = ap.Who
 	f.Owners = ap.Owners
-	f.WhoAbacRule = ap.WhoAbacRule
+	f.WhoAbacRules = ap.WhoAbacRules
 	f.WhoLocked = ap.WhoLocked
 	f.InheritanceLocked = ap.InheritanceLocked
 }
@@ -73,14 +69,6 @@ func (f *FilterResourceModel) ToAccessControlInput(ctx context.Context, client *
 
 	result.Action = utils.Ptr(dataAccessType.AccessControlActionFilter)
 
-	if !f.DataSource.IsNull() && !f.DataSource.IsUnknown() {
-		result.DataSources = []dataAccessType.AccessControlDataSourceInput{
-			{
-				DataSource: f.DataSource.ValueString(),
-			},
-		}
-	}
-
 	result.PolicyRule = f.FilterPolicy.ValueStringPointer()
 
 	if !f.Table.IsNull() && !f.Table.IsUnknown() {
@@ -91,12 +79,24 @@ func (f *FilterResourceModel) ToAccessControlInput(ctx context.Context, client *
 			},
 		})
 
+		doType, doPath, dsId := dataObjectReferenceToComponents(f.Table)
+		fullName := dataAccessType.FullName{
+			Type: doType,
+			Path: doPath,
+		}
+
+		result.DataSources = []dataAccessType.AccessControlDataSourceInput{
+			{
+				DataSource: dsId,
+			},
+		}
+
 		result.WhatDataObjects = []dataAccessType.AccessControlWhatInputDO{
 			{
 				DataObjectByName: []dataAccessType.AccessControlWhatDoByNameInput{
 					{
-						FullName:   f.Table.ValueString(),
-						DataSource: f.DataSource.ValueString(),
+						FullName:   fullName.ToDataObjectURI(),
+						DataSource: dsId,
 					},
 				},
 			},
@@ -129,7 +129,6 @@ func (f *FilterResourceModel) FromAccessControl(_ context.Context, _ *sdk.Collib
 		return diagnostics
 	}
 
-	f.DataSource = types.StringValue(input.SyncData[0].DataSource.Id)
 	f.FilterPolicy = types.StringPointerValue(input.PolicyRule)
 	f.WhatLocked = types.BoolValue(slices.ContainsFunc(input.Locks, func(data dataAccessType.AccessControlLocksAccessControlLockData) bool {
 		return data.LockKey == dataAccessType.AccessControlLockWhatlock
@@ -168,24 +167,14 @@ func (f *FilterResource) Metadata(_ context.Context, request resource.MetadataRe
 
 func (f *FilterResource) Schema(ctx context.Context, request resource.SchemaRequest, response *resource.SchemaResponse) {
 	attributes := f.schema("filter")
-	attributes["data_source"] = schema.StringAttribute{
-		Required:            true,
-		Optional:            false,
-		Computed:            false,
-		Sensitive:           false,
-		Description:         "The ID of the data source of the filter",
-		MarkdownDescription: "The ID of the data source of the filter",
-		Validators: []validator.String{
-			stringvalidator.LengthAtLeast(3),
-		},
-	}
-	attributes["table"] = schema.StringAttribute{
+	attributes["table"] = schema.ObjectAttribute{
+		AttributeTypes:      dataObjectReferenceTypeAttributeTypes,
 		Required:            false,
 		Optional:            true,
 		Computed:            false,
 		Sensitive:           false,
-		Description:         "The full name of the table that should be filtered",
-		MarkdownDescription: "The full name of the table that should be filtered",
+		Description:         "The table that should be filtered",
+		MarkdownDescription: "The table that should be filtered",
 	}
 	attributes["what_locked"] = schema.BoolAttribute{
 		Required:            false,
@@ -233,7 +222,14 @@ func readFilterResourceTable(ctx context.Context, client *sdk.CollibraClient, da
 				return diagnostics
 			}
 
-			data.Table = types.StringValue(whatItem.DataObject.FullName)
+			table, diags := dataObjectToReference(&whatItem.DataObject.DataObject, diagnostics)
+			diagnostics.Append(diags...)
+
+			if diagnostics.HasError() {
+				return diagnostics
+			}
+
+			data.Table = table
 		}
 	}
 

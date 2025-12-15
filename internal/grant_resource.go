@@ -20,9 +20,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 
 	types2 "github.com/collibra/data-access-terraform-provider/internal/types"
-	"github.com/collibra/data-access-terraform-provider/internal/types/abac_expression"
 	"github.com/collibra/data-access-terraform-provider/internal/utils"
 )
 
@@ -30,21 +30,21 @@ var _ resource.Resource = (*GrantResource)(nil)
 
 type GrantResourceModel struct {
 	// AccessControlResourceModel properties. This has to be duplicated because of https://github.com/hashicorp/terraform-plugin-framework/issues/242
-	Id                types.String         `tfsdk:"id"`
-	Name              types.String         `tfsdk:"name"`
-	Description       types.String         `tfsdk:"description"`
-	State             types.String         `tfsdk:"state"`
-	Who               types.Set            `tfsdk:"who"`
-	Owners            types.Set            `tfsdk:"owners"`
-	WhoAbacRule       jsontypes.Normalized `tfsdk:"who_abac_rule"`
-	WhoLocked         types.Bool           `tfsdk:"who_locked"`
-	InheritanceLocked types.Bool           `tfsdk:"inheritance_locked"`
+	Id                types.String `tfsdk:"id"`
+	Name              types.String `tfsdk:"name"`
+	Description       types.String `tfsdk:"description"`
+	State             types.String `tfsdk:"state"`
+	Who               types.Set    `tfsdk:"who"`
+	Owners            types.Set    `tfsdk:"owners"`
+	WhoAbacRules      types.Set    `tfsdk:"who_abac_rules"`
+	WhoLocked         types.Bool   `tfsdk:"who_locked"`
+	InheritanceLocked types.Bool   `tfsdk:"inheritance_locked"`
 
 	// GrantResourceModel properties.
 	Category        types.String `tfsdk:"category"`
-	DataSource      types.Set    `tfsdk:"data_source"`
+	DataSources     types.Set    `tfsdk:"data_sources"`
 	WhatDataObjects types.Set    `tfsdk:"what_data_objects"`
-	WhatAbacRule    types.Object `tfsdk:"what_abac_rule"`
+	WhatAbacRules   types.Set    `tfsdk:"what_abac_rules"`
 	WhatLocked      types.Bool   `tfsdk:"what_locked"`
 }
 
@@ -56,7 +56,7 @@ func (m *GrantResourceModel) GetAccessControlResourceModel() *AccessControlResou
 		State:             m.State,
 		Who:               m.Who,
 		Owners:            m.Owners,
-		WhoAbacRule:       m.WhoAbacRule,
+		WhoAbacRules:      m.WhoAbacRules,
 		WhoLocked:         m.WhoLocked,
 		InheritanceLocked: m.InheritanceLocked,
 	}
@@ -69,7 +69,7 @@ func (m *GrantResourceModel) SetAccessControlResourceModel(ac *AccessControlReso
 	m.State = ac.State
 	m.Who = ac.Who
 	m.Owners = ac.Owners
-	m.WhoAbacRule = ac.WhoAbacRule
+	m.WhoAbacRules = ac.WhoAbacRules
 	m.WhoLocked = ac.WhoLocked
 	m.InheritanceLocked = ac.InheritanceLocked
 }
@@ -81,33 +81,15 @@ func (m *GrantResourceModel) ToAccessControlInput(ctx context.Context, client *s
 		return diagnostics
 	}
 
-	if !m.DataSource.IsNull() && !m.DataSource.IsUnknown() {
-		dataSourceElements := m.DataSource.Elements()
-
-		result.DataSources = make([]dataAccessType.AccessControlDataSourceInput, 0, len(dataSourceElements))
-
-		for _, dsElement := range dataSourceElements {
-			dsAttributes := dsElement.(types.Object).Attributes()
-
-			var apType *string
-
-			if !dsAttributes["type"].(types.String).IsUnknown() {
-				apType = dsAttributes["type"].(types.String).ValueStringPointer()
-			}
-
-			result.DataSources = append(result.DataSources, dataAccessType.AccessControlDataSourceInput{
-				DataSource: dsAttributes["data_source"].(types.String).ValueString(),
-				Type:       apType,
-			})
-		}
-	}
+	dataSourcesToAccessControlInput(m.DataSources, result)
 
 	result.Action = utils.Ptr(dataAccessType.AccessControlActionGrant)
-	result.WhatType = utils.Ptr(dataAccessType.WhoAndWhatTypeStatic)
 
 	if !m.WhatDataObjects.IsNull() && !m.WhatDataObjects.IsUnknown() {
 		m.whatDoToApInput(result)
-	} else if !m.WhatAbacRule.IsNull() {
+	}
+
+	if !m.WhatAbacRules.IsNull() {
 		diagnostics.Append(m.abacWhatToAccessControlInput(ctx, client, result)...)
 
 		if diagnostics.HasError() {
@@ -140,8 +122,12 @@ func (m *GrantResourceModel) whatDoToApInput(result *dataAccessType.AccessContro
 		whatDataObjectObject := whatDataObject.(types.Object)
 		whatDataObjectAttributes := whatDataObjectObject.Attributes()
 
-		fullname := whatDataObjectAttributes["fullname"].(types.String).ValueString()
-		dataSource := whatDataObjectAttributes["data_source"].(types.String).ValueString()
+		dataObject := whatDataObjectAttributes["data_object"].(types.Object)
+		doType, doPath, dsId := dataObjectReferenceToComponents(dataObject)
+		fullName := dataAccessType.FullName{
+			Type: doType,
+			Path: doPath,
+		}
 
 		permissionSet := whatDataObjectAttributes["permissions"].(types.Set)
 		permissions := make([]*string, 0, len(permissionSet.Elements()))
@@ -161,8 +147,8 @@ func (m *GrantResourceModel) whatDoToApInput(result *dataAccessType.AccessContro
 
 		result.WhatDataObjects = append(result.WhatDataObjects, dataAccessType.AccessControlWhatInputDO{
 			DataObjectByName: []dataAccessType.AccessControlWhatDoByNameInput{{
-				FullName:   fullname,
-				DataSource: dataSource,
+				FullName:   fullName.ToDataObjectURI(),
+				DataSource: dsId,
 			},
 			},
 			Permissions:       permissions,
@@ -181,12 +167,45 @@ func (m *GrantResourceModel) FromAccessControl(ctx context.Context, client *sdk.
 
 	m.SetAccessControlResourceModel(apResourceModel)
 
+	dataSources, d, done := dataSourceFromAccessControl(ac, diagnostics, nil)
+	if done {
+		return d
+	}
+
+	m.DataSources = dataSources
+
+	m.WhatLocked = types.BoolValue(slices.ContainsFunc(ac.Locks, func(l dataAccessType.AccessControlLocksAccessControlLockData) bool {
+		return l.LockKey == dataAccessType.AccessControlLockWhatlock
+	}))
+
+	if ac.WhatAbacRules != nil {
+		object, objectDiagnostics := m.abacWhatFromAccessControl(ctx, client, ac)
+		diagnostics.Append(objectDiagnostics...)
+
+		if diagnostics.HasError() {
+			return diagnostics
+		}
+
+		m.WhatAbacRules = object
+	}
+
+	m.Category = types.StringValue(ac.Category.Id)
+
+	return diagnostics
+}
+
+func dataSourceFromAccessControl(ac *dataAccessType.AccessControl, diagnostics diag.Diagnostics, defaultType *string) (basetypes.SetValue, diag.Diagnostics, bool) {
 	dataSourceValues := make([]attr.Value, 0, len(ac.SyncData))
 
 	for i := range ac.SyncData {
 		ds := &ac.SyncData[i]
 		dsId := types.StringValue(ds.DataSource.Id)
-		dsType := types.StringPointerValue(ds.AccessControlType.Type)
+
+		dsType := types.StringPointerValue(defaultType)
+
+		if ds.AccessControlType != nil && ds.AccessControlType.Type != nil {
+			dsType = types.StringPointerValue(ds.AccessControlType.Type)
+		}
 
 		dataSource, diag := types.ObjectValue(map[string]attr.Type{
 			"data_source": types.StringType,
@@ -200,7 +219,7 @@ func (m *GrantResourceModel) FromAccessControl(ctx context.Context, client *sdk.
 		diagnostics.Append(diag...)
 
 		if diagnostics.HasError() {
-			return diagnostics
+			return basetypes.SetValue{}, diagnostics, true
 		}
 
 		dataSourceValues = append(dataSourceValues, dataSource)
@@ -216,29 +235,10 @@ func (m *GrantResourceModel) FromAccessControl(ctx context.Context, client *sdk.
 	diagnostics.Append(diag...)
 
 	if diagnostics.HasError() {
-		return diagnostics
+		return basetypes.SetValue{}, diagnostics, true
 	}
 
-	m.DataSource = dataSources
-
-	m.WhatLocked = types.BoolValue(slices.ContainsFunc(ac.Locks, func(l dataAccessType.AccessControlLocksAccessControlLockData) bool {
-		return l.LockKey == dataAccessType.AccessControlLockWhatlock
-	}))
-
-	if ac.WhatType == dataAccessType.WhoAndWhatTypeDynamic && ac.WhatAbacRule != nil {
-		object, objectDiagnostics := m.abacWhatFromAccessControl(ctx, client, ac)
-		diagnostics.Append(objectDiagnostics...)
-
-		if diagnostics.HasError() {
-			return diagnostics
-		}
-
-		m.WhatAbacRule = object
-	}
-
-	m.Category = types.StringValue(ac.Category.Id)
-
-	return diagnostics
+	return dataSources, nil, false
 }
 
 func (m *GrantResourceModel) UpdateOwners(owners types.Set) {
@@ -246,149 +246,214 @@ func (m *GrantResourceModel) UpdateOwners(owners types.Set) {
 }
 
 func (m *GrantResourceModel) abacWhatToAccessControlInput(ctx context.Context, client *sdk.CollibraClient, result *dataAccessType.AccessControlInput) (diagnostics diag.Diagnostics) {
-	attributes := m.WhatAbacRule.Attributes()
+	result.WhatAbacRules = make([]*dataAccessType.WhatAbacRuleInput, 0, len(m.WhatAbacRules.Elements()))
 
-	doTypes, doDiagnostics := utils.StringSetToSlice(ctx, attributes["do_types"].(types.Set))
-	diagnostics.Append(doDiagnostics...)
+	for _, abacRuleItem := range m.WhatAbacRules.Elements() {
+		abacRuleObject := abacRuleItem.(types.Object)
+		attributes := abacRuleObject.Attributes()
 
-	if diagnostics.HasError() {
-		return diagnostics
-	}
+		doTypes, doDiagnostics := utils.StringSetToSlice(ctx, attributes["do_types"].(types.Set))
+		diagnostics.Append(doDiagnostics...)
 
-	permissions, permissionDiagnostics := utils.StringSetToSlice(ctx, attributes["permissions"].(types.Set))
-	diagnostics.Append(permissionDiagnostics...)
-
-	if diagnostics.HasError() {
-		return diagnostics
-	}
-
-	globalPermissions, globalPermissionDiagnostics := utils.StringSetToSlice(ctx, attributes["global_permissions"].(types.Set))
-	diagnostics.Append(globalPermissionDiagnostics...)
-
-	if diagnostics.HasError() {
-		return diagnostics
-	}
-
-	scope := make([]string, 0)
-	scopeSet := attributes["scope"].(types.Set)
-
-	for _, scopeItem := range scopeSet.Elements() {
-		scopeObject := scopeItem.(types.Object)
-		scopeAttributes := scopeObject.Attributes()
-
-		dataSourceId := scopeAttributes["data_source"].(types.String).ValueString()
-		fullname := scopeAttributes["fullname"].(types.String).ValueString()
-
-		id, err := client.DataObject().GetDataObjectIdByName(ctx, fullname, dataSourceId)
-		if err != nil {
-			diagnostics.AddError("Failed to get data object id", err.Error())
-
+		if diagnostics.HasError() {
 			return diagnostics
 		}
 
-		scope = append(scope, id)
-	}
+		permissions, permissionDiagnostics := utils.StringSetToSlice(ctx, attributes["permissions"].(types.Set))
+		diagnostics.Append(permissionDiagnostics...)
 
-	jsonRule := attributes["rule"].(jsontypes.Normalized)
+		if diagnostics.HasError() {
+			return diagnostics
+		}
 
-	var abacRule abac_expression.BinaryExpression
-	diagnostics.Append(jsonRule.Unmarshal(&abacRule)...)
+		globalPermissions, globalPermissionDiagnostics := utils.StringSetToSlice(ctx, attributes["global_permissions"].(types.Set))
+		diagnostics.Append(globalPermissionDiagnostics...)
 
-	if diagnostics.HasError() {
-		return diagnostics
-	}
+		if diagnostics.HasError() {
+			return diagnostics
+		}
 
-	abacInput, err := abacRule.ToGqlInput()
-	if err != nil {
-		diagnostics.AddError("Failed to convert abac rule to gql input", err.Error())
+		scope := make([]string, 0)
+		scopeSet := attributes["scope"].(types.Set)
 
-		return diagnostics
-	}
+		scope, d, done := abacWhatScopeToAccessControlInput(ctx, client, scopeSet, diagnostics, scope)
+		if done {
+			return d
+		}
 
-	result.WhatType = utils.Ptr(dataAccessType.WhoAndWhatTypeDynamic)
-	result.WhatAbacRule = &dataAccessType.WhatAbacRuleInput{
-		DoTypes:           doTypes,
-		Permissions:       permissions,
-		GlobalPermissions: globalPermissions,
-		Scope:             scope,
-		Rule:              *abacInput,
+		abacInput, ruleDiag := abacRuleToGqlInput(attributes, "rule")
+		if ruleDiag.HasError() {
+			return ruleDiag
+		}
+
+		result.WhatAbacRules = append(result.WhatAbacRules, &dataAccessType.WhatAbacRuleInput{
+			DoTypes:           doTypes,
+			Permissions:       permissions,
+			GlobalPermissions: globalPermissions,
+			Scope:             scope,
+			Rule:              *abacInput,
+			Id:                getOptionalString(attributes, "id"),
+		})
 	}
 
 	return diagnostics
 }
 
-func (m *GrantResourceModel) abacWhatFromAccessControl(ctx context.Context, client *sdk.CollibraClient, ac *dataAccessType.AccessControl) (_ types.Object, diagnostics diag.Diagnostics) {
-	scopeType := types.ObjectType{AttrTypes: map[string]attr.Type{"data_source": types.StringType, "fullname": types.StringType}}
-	objectTypes := map[string]attr.Type{
+func dataObjectReferenceToId(ctx context.Context, client *sdk.CollibraClient, dataObject types.Object) (string, error) {
+	doType, path, dataSourceId := dataObjectReferenceToComponents(dataObject)
+
+	fullName := dataAccessType.FullName{
+		Type: doType,
+		Path: path,
+	}
+
+	return client.DataObject().GetDataObjectIdByName(ctx, fullName.ToDataObjectURI(), dataSourceId)
+}
+
+func dataObjectReferenceToComponents(dataObject types.Object) (dataObjectType string, dataObjectPath []string, dataSourceId string) {
+	dataObjectAttributes := dataObject.Attributes()
+	dataObjectType = dataObjectAttributes["type"].(types.String).ValueString()
+	path := dataObjectAttributes["path"].(types.List).Elements()
+	dataSourceId = dataObjectAttributes["data_source"].(types.String).ValueString()
+
+	dataObjectPath = make([]string, len(path))
+	for i, doPathElement := range path {
+		dataObjectPath[i] = doPathElement.(types.String).ValueString()
+	}
+
+	return
+}
+
+func dataObjectToReference(dataObject *dataAccessType.DataObject, diagnostics diag.Diagnostics) (basetypes.ObjectValue, diag.Diagnostics) {
+	fullName, err := dataAccessType.FromDataObjectURI(dataObject.FullName)
+	if err != nil {
+		diagnostics.AddError("Failed to parse data object full name", err.Error())
+
+		return basetypes.ObjectValue{}, diagnostics
+	}
+
+	pathItems := make([]attr.Value, 0, len(fullName.Path))
+	for _, pathItem := range fullName.Path {
+		pathItems = append(pathItems, types.StringValue(pathItem))
+	}
+
+	pathValue, diag := types.ListValue(types.StringType, pathItems)
+	if diag.HasError() {
+		diagnostics = append(diagnostics, diag...)
+
+		return basetypes.ObjectValue{}, diagnostics
+	}
+
+	return types.ObjectValueMust(dataObjectReferenceTypeAttributeTypes, map[string]attr.Value{
+		"type":        types.StringValue(fullName.Type),
+		"path":        pathValue,
+		"data_source": types.StringValue(dataObject.DataSource.Id),
+	}), nil
+}
+
+func abacWhatScopeToAccessControlInput(ctx context.Context, client *sdk.CollibraClient, scopeSet types.Set, diagnostics diag.Diagnostics, scope []string) ([]string, diag.Diagnostics, bool) {
+	for _, scopeItem := range scopeSet.Elements() {
+		scopeObject := scopeItem.(types.Object)
+		scopeAttributes := scopeObject.Attributes()
+
+		id, err := dataObjectReferenceToId(ctx, client, scopeAttributes["data_object"].(types.Object))
+		if err != nil {
+			diagnostics.AddError("Failed to get data object id", err.Error())
+
+			return nil, diagnostics, true
+		}
+
+		scope = append(scope, id)
+	}
+
+	return scope, nil, false
+}
+
+func (m *GrantResourceModel) abacWhatFromAccessControl(ctx context.Context, client *sdk.CollibraClient, ac *dataAccessType.AccessControl) (_ types.Set, diagnostics diag.Diagnostics) {
+	whatAbacRuleList := make([]attr.Value, 0, len(ac.WhatAbacRules))
+
+	scopeType := types.ObjectType{AttrTypes: dataObjectReferenceTypeAttributeTypes}
+	whatAbacRuleType := map[string]attr.Type{
 		"do_types":           types.SetType{ElemType: types.StringType},
 		"permissions":        types.SetType{ElemType: types.StringType},
 		"global_permissions": types.SetType{ElemType: types.StringType},
 		"scope":              types.SetType{ElemType: scopeType},
 		"rule":               jsontypes.NormalizedType{},
+		"id":                 types.StringType,
 	}
+	whatAbacRulesType := types.ObjectType{AttrTypes: whatAbacRuleType}
 
-	permissions, pDiagnostics := utils.SliceToStringSet(ctx, ac.WhatAbacRule.Permissions)
-	diagnostics.Append(pDiagnostics...)
+	for _, rule := range ac.WhatAbacRules {
+		permissions, pDiagnostics := utils.SliceToStringSet(ctx, rule.Permissions)
+		diagnostics.Append(pDiagnostics...)
 
-	if diagnostics.HasError() {
-		return types.ObjectNull(objectTypes), diagnostics
-	}
-
-	globalPermissionList := utils.Map(ac.WhatAbacRule.GlobalPermissions, strings.ToUpper)
-	globalPermissions, gpDiagnostics := utils.SliceToStringSet(ctx, globalPermissionList)
-
-	diagnostics.Append(gpDiagnostics...)
-
-	if diagnostics.HasError() {
-		return types.ObjectNull(objectTypes), diagnostics
-	}
-
-	doTypes, dtDiagnostics := utils.SliceToStringSet(ctx, ac.WhatAbacRule.DoTypes)
-	diagnostics.Append(dtDiagnostics...)
-
-	if diagnostics.HasError() {
-		return types.ObjectNull(objectTypes), diagnostics
-	}
-
-	abacRule := jsontypes.NewNormalizedPointerValue(ac.WhatAbacRule.RuleJson)
-
-	var scopeItems []attr.Value //nolint:prealloc
-
-	for scopeItem, err := range client.AccessControl().GetAccessControlAbacWhatScope(ctx, ac.Id) {
-		if err != nil {
-			diagnostics.AddError("Failed to load access provider abac scope", err.Error())
-
-			return types.ObjectNull(objectTypes), diagnostics
+		if diagnostics.HasError() {
+			return types.SetNull(whatAbacRulesType), diagnostics
 		}
 
-		scopeItems = append(scopeItems, types.ObjectValueMust(scopeType.AttrTypes, map[string]attr.Value{
-			"fullname":    types.StringValue(scopeItem.FullName),
-			"data_source": types.StringValue(scopeItem.DataSource.Id),
+		globalPermissionList := utils.Map(rule.GlobalPermissions, strings.ToUpper)
+		globalPermissions, gpDiagnostics := utils.SliceToStringSet(ctx, globalPermissionList)
+
+		diagnostics.Append(gpDiagnostics...)
+
+		if diagnostics.HasError() {
+			return types.SetNull(whatAbacRulesType), diagnostics
+		}
+
+		doTypes, dtDiagnostics := utils.SliceToStringSet(ctx, rule.DoTypes)
+		diagnostics.Append(dtDiagnostics...)
+
+		if diagnostics.HasError() {
+			return types.SetNull(whatAbacRulesType), diagnostics
+		}
+
+		abacRule := jsontypes.NewNormalizedPointerValue(rule.RuleJson)
+
+		var scopeItems []attr.Value //nolint:prealloc
+
+		for scopeItem, err := range client.AccessControl().GetAccessControlAbacWhatScope(ctx, ac.Id, rule.Id) {
+			if err != nil {
+				diagnostics.AddError("Failed to load access provider abac scope", err.Error())
+
+				return types.SetNull(whatAbacRulesType), diagnostics
+			}
+
+			scopeItemValue, diags := dataObjectToReference(scopeItem, diagnostics)
+			diagnostics.Append(diags...)
+
+			if diagnostics.HasError() {
+				return types.SetNull(whatAbacRulesType), diagnostics
+			}
+
+			scopeItems = append(scopeItems, scopeItemValue)
+		}
+
+		scope, scopeDiagnostics := types.SetValue(scopeType, scopeItems)
+		diagnostics.Append(scopeDiagnostics...)
+
+		if diagnostics.HasError() {
+			return types.SetNull(whatAbacRulesType), diagnostics
+		}
+
+		whatAbacRuleList = append(whatAbacRuleList, types.ObjectValueMust(whatAbacRuleType, map[string]attr.Value{
+			"do_types":           doTypes,
+			"permissions":        permissions,
+			"global_permissions": globalPermissions,
+			"rule":               abacRule,
+			"scope":              scope,
+			"id":                 types.StringValue(rule.Id),
 		}))
 	}
 
-	scope, scopeDiagnostics := types.SetValue(scopeType, scopeItems)
-	diagnostics.Append(scopeDiagnostics...)
+	whatAbacRules, whatAbacRulesDiag := types.SetValue(whatAbacRulesType, whatAbacRuleList)
+
+	diagnostics.Append(whatAbacRulesDiag...)
 
 	if diagnostics.HasError() {
-		return types.ObjectNull(objectTypes), diagnostics
+		return types.SetNull(whatAbacRulesType), diagnostics
 	}
 
-	object, whatAbacDiagnostics := types.ObjectValue(objectTypes, map[string]attr.Value{
-		"do_types":           doTypes,
-		"permissions":        permissions,
-		"global_permissions": globalPermissions,
-		"rule":               abacRule,
-		"scope":              scope,
-	})
-
-	diagnostics.Append(whatAbacDiagnostics...)
-
-	if diagnostics.HasError() {
-		return types.ObjectNull(objectTypes), diagnostics
-	}
-
-	return object, diagnostics
+	return whatAbacRules, diagnostics
 }
 
 type GrantResource struct {
@@ -423,7 +488,7 @@ func (g *GrantResource) Schema(_ context.Context, _ resource.SchemaRequest, resp
 			stringplanmodifier.RequiresReplace(),
 		},
 	}
-	attributes["data_source"] = schema.SetNestedAttribute{
+	attributes["data_sources"] = schema.SetNestedAttribute{
 		NestedObject: schema.NestedAttributeObject{
 			Attributes: map[string]schema.Attribute{
 				"data_source": schema.StringAttribute{
@@ -454,32 +519,14 @@ func (g *GrantResource) Schema(_ context.Context, _ resource.SchemaRequest, resp
 		Optional:            false,
 		Computed:            false,
 		Sensitive:           false,
-		Description:         "The ID of the data source of the grant",
-		MarkdownDescription: "The ID of the data source of the grant",
+		Description:         "The list of data sources that this grant is applicable to",
+		MarkdownDescription: "The list of data sources that this grant is applicable to",
 		Validators:          []validator.Set{setvalidator.SizeAtLeast(1)},
 	}
 	attributes["what_data_objects"] = schema.SetNestedAttribute{
 		NestedObject: schema.NestedAttributeObject{
 			Attributes: map[string]schema.Attribute{
-				"fullname": schema.StringAttribute{
-					Required:            true,
-					Optional:            false,
-					Computed:            false,
-					Sensitive:           false,
-					Description:         "The full name of the data object in the data source",
-					MarkdownDescription: "The full name of the data object in the data source",
-				},
-				"data_source": schema.StringAttribute{
-					Required:            true,
-					Optional:            false,
-					Computed:            false,
-					Sensitive:           false,
-					Description:         "The data source of the data object",
-					MarkdownDescription: "The data source of the data object",
-					Validators: []validator.String{
-						stringvalidator.LengthAtLeast(3),
-					},
-				},
+				"data_object": dataObjectReferenceType,
 				"permissions": schema.SetAttribute{
 					ElementType:         types.StringType,
 					Required:            false,
@@ -516,101 +563,89 @@ func (g *GrantResource) Schema(_ context.Context, _ resource.SchemaRequest, resp
 		Description:         "The data object what items associated to the grant.",
 		MarkdownDescription: "The data object what items associated to the grant. When this is not set (nil), the what list will not be overridden. This is typically used when this should be managed from Collibra Data Access.",
 	}
-	attributes["what_abac_rule"] = schema.SingleNestedAttribute{
-		Attributes: map[string]schema.Attribute{
-			"scope": schema.SetNestedAttribute{
-				NestedObject: schema.NestedAttributeObject{
-					Attributes: map[string]schema.Attribute{
-						"fullname": schema.StringAttribute{
-							Required:            true,
-							Optional:            false,
-							Computed:            false,
-							Sensitive:           false,
-							Description:         "The full name of the data object in the data source",
-							MarkdownDescription: "The full name of the data object in the data source",
-						},
-						"data_source": schema.StringAttribute{
-							Required:            true,
-							Optional:            false,
-							Computed:            false,
-							Sensitive:           false,
-							Description:         "The data source of the data object",
-							MarkdownDescription: "The data source of the data object",
-							Validators: []validator.String{
-								stringvalidator.LengthAtLeast(3),
-							},
-						},
+	attributes["what_abac_rules"] = schema.SetNestedAttribute{
+		NestedObject: schema.NestedAttributeObject{
+			Attributes: map[string]schema.Attribute{
+				"id": schema.StringAttribute{
+					Required:            false,
+					Optional:            true,
+					Computed:            true,
+					Sensitive:           false,
+					Description:         "The ID of the abac rule",
+					MarkdownDescription: "The ID of the abac rule",
+					Default:             nil,
+				},
+				"scope": schema.SetNestedAttribute{
+					NestedObject: schema.NestedAttributeObject{
+						Attributes: dataObjectReferenceTypeAttributes,
 					},
-					CustomType:    nil,
-					Validators:    nil,
-					PlanModifiers: nil,
+					Required:            true,
+					Optional:            false,
+					Computed:            false,
+					Sensitive:           false,
+					Description:         "Scope of the defined abac rule as a list of data objects",
+					MarkdownDescription: "Scope of the defined abac rule as a list of data objects",
+					Validators: []validator.Set{
+						setvalidator.SizeAtLeast(1),
+					},
 				},
-				Required:            true,
-				Optional:            false,
-				Computed:            false,
-				Sensitive:           false,
-				Description:         "Scope of the defined abac rule",
-				MarkdownDescription: "Scope of the defined abac rule",
-				Validators: []validator.Set{
-					setvalidator.SizeAtLeast(1),
+				"do_types": schema.SetAttribute{
+					ElementType:         types.StringType,
+					Required:            true,
+					Optional:            false,
+					Computed:            false,
+					Sensitive:           false,
+					Description:         "Set of data object types associated to the abac rule",
+					MarkdownDescription: "Set of data object types associated to the abac rule",
+					Validators: []validator.Set{
+						setvalidator.SizeAtLeast(1),
+					},
 				},
-			},
-			"do_types": schema.SetAttribute{
-				ElementType:         types.StringType,
-				Required:            true,
-				Optional:            false,
-				Computed:            false,
-				Sensitive:           false,
-				Description:         "Set of data object types associated to the abac rule",
-				MarkdownDescription: "Set of data object types associated to the abac rule",
-				Validators: []validator.Set{
-					setvalidator.SizeAtLeast(1),
+				"permissions": schema.SetAttribute{
+					ElementType:         types.StringType,
+					Required:            false,
+					Optional:            true,
+					Computed:            true,
+					Sensitive:           false,
+					Description:         "Set of permissions that should be granted on the matching data object",
+					MarkdownDescription: "Set of permissions that should be granted on the matching data object",
+					Default:             setdefault.StaticValue(types.SetValueMust(types.StringType, []attr.Value{})),
 				},
-			},
-			"permissions": schema.SetAttribute{
-				ElementType:         types.StringType,
-				Required:            false,
-				Optional:            true,
-				Computed:            true,
-				Sensitive:           false,
-				Description:         "Set of permissions that should be granted on the matching data object",
-				MarkdownDescription: "Set of permissions that should be granted on the matching data object",
-				Default:             setdefault.StaticValue(types.SetValueMust(types.StringType, []attr.Value{})),
-			},
-			"global_permissions": schema.SetAttribute{
-				ElementType:         types.StringType,
-				Required:            false,
-				Optional:            true,
-				Computed:            true,
-				Sensitive:           false,
-				Description:         "Set of global permissions that should be granted on the matching data object",
-				MarkdownDescription: fmt.Sprintf("Set of global permissions that should be granted on the matching data object. Allowed values are %v", types2.AllGlobalPermissions),
-				Validators: []validator.Set{
-					setvalidator.ValueStringsAre(
-						stringvalidator.OneOf(types2.AllGlobalPermissions...),
-					),
+				"global_permissions": schema.SetAttribute{
+					ElementType:         types.StringType,
+					Required:            false,
+					Optional:            true,
+					Computed:            true,
+					Sensitive:           false,
+					Description:         "Set of global permissions that should be granted on the matching data object",
+					MarkdownDescription: fmt.Sprintf("Set of global permissions that should be granted on the matching data object. Allowed values are %v", types2.AllGlobalPermissions),
+					Validators: []validator.Set{
+						setvalidator.ValueStringsAre(
+							stringvalidator.OneOf(types2.AllGlobalPermissions...),
+						),
+					},
+					Default: setdefault.StaticValue(types.SetValueMust(types.StringType, []attr.Value{
+						types.StringValue(types2.GlobalPermissionRead),
+					})),
 				},
-				Default: setdefault.StaticValue(types.SetValueMust(types.StringType, []attr.Value{
-					types.StringValue(types2.GlobalPermissionRead),
-				})),
-			},
-			"rule": schema.StringAttribute{
-				CustomType:          jsontypes.NormalizedType{},
-				Required:            true,
-				Optional:            false,
-				Computed:            false,
-				Sensitive:           false,
-				Description:         "json representation of the abac rule",
-				MarkdownDescription: "json representation of the abac rule",
-				Default:             nil,
+				"rule": schema.StringAttribute{
+					CustomType:          jsontypes.NormalizedType{},
+					Required:            true,
+					Optional:            false,
+					Computed:            false,
+					Sensitive:           false,
+					Description:         "json representation of the abac rule",
+					MarkdownDescription: "json representation of the abac rule",
+					Default:             nil,
+				},
 			},
 		},
 		Required:            false,
 		Optional:            true,
 		Computed:            false,
 		Sensitive:           false,
-		Description:         "What data object defined by abac rule. Cannot be set when what_data_objects is set.",
-		MarkdownDescription: "What data object defined by abac rule. Cannot be set when what_data_objects is set.",
+		Description:         "The abac rules for defining the what of a grant.",
+		MarkdownDescription: "The abac rules for defining the what of a grant.",
 	}
 	attributes["what_locked"] = schema.BoolAttribute{
 		Required:            false,
@@ -642,16 +677,11 @@ func readGrantWhatItems(ctx context.Context, client *sdk.CollibraClient, data *G
 				return diagnostics
 			}
 
-			var id *string
-			var dataSourceId *string
+			whatItemDataObject, diags := dataObjectToReference(&whatItem.DataObject.DataObject, diagnostics)
+			diagnostics.Append(diags...)
 
-			if whatItem.DataObject != nil {
-				id = &whatItem.DataObject.FullName
-				dataSourceId = &whatItem.DataObject.DataSource.Id
-			} else {
-				diagnostics.AddError("Invalid what data object", "Received data object is nil")
-
-				continue
+			if diagnostics.HasError() {
+				return diagnostics
 			}
 
 			permissions := make([]attr.Value, 0, len(whatItem.Permissions))
@@ -665,8 +695,7 @@ func readGrantWhatItems(ctx context.Context, client *sdk.CollibraClient, data *G
 			}
 
 			stateWhatItems = append(stateWhatItems, types.ObjectValueMust(map[string]attr.Type{
-				"fullname":    types.StringType,
-				"data_source": types.StringType,
+				"data_object": types.ObjectType{AttrTypes: dataObjectReferenceTypeAttributeTypes},
 				"permissions": types.SetType{
 					ElemType: types.StringType,
 				},
@@ -674,8 +703,7 @@ func readGrantWhatItems(ctx context.Context, client *sdk.CollibraClient, data *G
 					ElemType: types.StringType,
 				},
 			}, map[string]attr.Value{
-				"fullname":           types.StringPointerValue(id),
-				"data_source":        types.StringPointerValue(dataSourceId),
+				"data_object":        whatItemDataObject,
 				"permissions":        types.SetValueMust(types.StringType, permissions),
 				"global_permissions": types.SetValueMust(types.StringType, globalPermissions),
 			}))
@@ -683,8 +711,7 @@ func readGrantWhatItems(ctx context.Context, client *sdk.CollibraClient, data *G
 
 		whatDataObject, whatDiag := types.SetValue(types.ObjectType{
 			AttrTypes: map[string]attr.Type{
-				"fullname":    types.StringType,
-				"data_source": types.StringType,
+				"data_object": types.ObjectType{AttrTypes: dataObjectReferenceTypeAttributeTypes},
 				"permissions": types.SetType{
 					ElemType: types.StringType,
 				},
@@ -707,11 +734,7 @@ func readGrantWhatItems(ctx context.Context, client *sdk.CollibraClient, data *G
 }
 
 func validateGrantWhatItems(_ context.Context, data *GrantResourceModel) (diagnostics diag.Diagnostics) {
-	if !data.WhatDataObjects.IsNull() && !data.WhatAbacRule.IsNull() {
-		diagnostics.AddError("Cannot set both what_data_objects and what_abac_rule", "Grant Resource cannot have both what_data_objects and what_abac_rule")
-	}
-
-	if (!data.WhatDataObjects.IsNull() || !data.WhatAbacRule.IsNull()) && (!data.WhatLocked.IsNull() && !data.WhatLocked.ValueBool()) {
+	if (!data.WhatDataObjects.IsNull() || !data.WhatAbacRules.IsNull()) && (!data.WhatLocked.IsNull() && !data.WhatLocked.ValueBool()) {
 		diagnostics.AddError("What lock should be true", "What data objects or what abac rule is set, so what lock should be true")
 	}
 
@@ -719,7 +742,7 @@ func validateGrantWhatItems(_ context.Context, data *GrantResourceModel) (diagno
 }
 
 func grantModifyPlan(_ context.Context, data *GrantResourceModel) (_ *GrantResourceModel, diagnostics diag.Diagnostics) {
-	if !data.WhatDataObjects.IsNull() || !data.WhatAbacRule.IsNull() {
+	if !data.WhatDataObjects.IsNull() || (!data.WhatAbacRules.IsNull() && len(data.WhatAbacRules.Elements()) > 0) {
 		data.WhatLocked = types.BoolValue(true)
 	} else if data.WhatLocked.IsUnknown() {
 		data.WhatLocked = types.BoolValue(false)

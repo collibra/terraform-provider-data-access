@@ -76,7 +76,7 @@ resource "collibra-data-access_grant" "grant_purpose1" {
 
 ### Required
 
-- `data_source` (Attributes Set) The ID of the data source of the grant (see [below for nested schema](#nestedatt--data_source))
+- `data_sources` (Attributes Set) The list of data sources that this grant is applicable to (see [below for nested schema](#nestedatt--data_sources))
 - `name` (String) The name of the grant
 
 ### Optional
@@ -86,19 +86,19 @@ resource "collibra-data-access_grant" "grant_purpose1" {
 - `inheritance_locked` (Boolean) Indicates if who should be locked. This should be true if who access providers are set.
 - `owners` (Set of String) User id of the owners of this grant
 - `state` (String) The state of the grant Possible values are: ["Active", "Inactive"]
-- `what_abac_rule` (Attributes) What data object defined by abac rule. Cannot be set when what_data_objects is set. (see [below for nested schema](#nestedatt--what_abac_rule))
+- `what_abac_rules` (Attributes Set) The abac rules for defining the what of a grant. (see [below for nested schema](#nestedatt--what_abac_rules))
 - `what_data_objects` (Attributes Set) The data object what items associated to the grant. When this is not set (nil), the what list will not be overridden. This is typically used when this should be managed from Collibra Data Access. (see [below for nested schema](#nestedatt--what_data_objects))
 - `what_locked` (Boolean) Indicates whether it should lock the what. Should be set to true if what_data_objects or what_abac_rule is set.
 - `who` (Attributes Set) The who-items associated with the grant. When this is not set (nil), the who-list will not be overridden. This is typically used when this should be managed from Collibra Data Access. (see [below for nested schema](#nestedatt--who))
-- `who_abac_rule` (String) json representation of the abac rule for who-items associated with the grant
+- `who_abac_rules` (Attributes Set) The abac rules for defining the dynamic who-items associated with the grant (see [below for nested schema](#nestedatt--who_abac_rules))
 - `who_locked` (Boolean) Indicates if who should be locked. This should be true if who users or who_abac_rule is set.
 
 ### Read-Only
 
 - `id` (String) The ID of the grant
 
-<a id="nestedatt--data_source"></a>
-### Nested Schema for `data_source`
+<a id="nestedatt--data_sources"></a>
+### Nested Schema for `data_sources`
 
 Required:
 
@@ -109,27 +109,29 @@ Optional:
 - `type` (String) The implementation type of the grant for this data source
 
 
-<a id="nestedatt--what_abac_rule"></a>
-### Nested Schema for `what_abac_rule`
+<a id="nestedatt--what_abac_rules"></a>
+### Nested Schema for `what_abac_rules`
 
 Required:
 
 - `do_types` (Set of String) Set of data object types associated to the abac rule
 - `rule` (String) json representation of the abac rule
-- `scope` (Attributes Set) Scope of the defined abac rule (see [below for nested schema](#nestedatt--what_abac_rule--scope))
+- `scope` (Attributes Set) Scope of the defined abac rule as a list of data objects (see [below for nested schema](#nestedatt--what_abac_rules--scope))
 
 Optional:
 
 - `global_permissions` (Set of String) Set of global permissions that should be granted on the matching data object. Allowed values are [READ WRITE ADMIN]
+- `id` (String) The ID of the abac rule
 - `permissions` (Set of String) Set of permissions that should be granted on the matching data object
 
-<a id="nestedatt--what_abac_rule--scope"></a>
-### Nested Schema for `what_abac_rule.scope`
+<a id="nestedatt--what_abac_rules--scope"></a>
+### Nested Schema for `what_abac_rules.scope`
 
 Required:
 
-- `data_source` (String) The data source of the data object
-- `fullname` (String) The full name of the data object in the data source
+- `data_source` (String) The ID of the data source the data object belongs to
+- `path` (List of String) The path of the data object
+- `type` (String) The type of the data object
 
 
 
@@ -138,13 +140,22 @@ Required:
 
 Required:
 
-- `data_source` (String) The data source of the data object
-- `fullname` (String) The full name of the data object in the data source
+- `data_object` (Object) The reference to the data object (see [below for nested schema](#nestedatt--what_data_objects--data_object))
 
 Optional:
 
 - `global_permissions` (Set of String) The set of global permissions granted to the data object. Allowed values are [READ WRITE ADMIN]
 - `permissions` (Set of String) The set of permissions granted to the data object
+
+<a id="nestedatt--what_data_objects--data_object"></a>
+### Nested Schema for `what_data_objects.data_object`
+
+Optional:
+
+- `data_source` (String)
+- `path` (List of String)
+- `type` (String)
+
 
 
 <a id="nestedatt--who"></a>
@@ -155,6 +166,18 @@ Optional:
 - `access_control` (String) The ID of the access control in Collibra Data Access. Cannot be set if `user` is set.
 - `promise_duration` (Number) Specify this to indicate that this who-item is a promise instead of a direct grant. This is specified as the number of seconds that access should be granted when requested.
 - `user` (String) The email address of the user. This cannot be set if `access_control` is set.
+
+
+<a id="nestedatt--who_abac_rules"></a>
+### Nested Schema for `who_abac_rules`
+
+Required:
+
+- `rule` (String) The JSON representation of the abac rule
+
+Optional:
+
+- `id` (String) The ID of the abac rule
 
 ## Import
 

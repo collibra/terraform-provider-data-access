@@ -38,10 +38,10 @@ func getOwners(ctx context.Context, id string, client *sdk.CollibraClient) (resu
 		switch ownerItem := owner.GetTo().(type) {
 		case *dataAccessType.RoleAssignmentToUser:
 			owners = append(owners, types.StringValue(ownerItem.Id))
-		case *dataAccessType.RoleAssignmentToGroup:
+		case *dataAccessType.RoleAssignmentToAccessControl:
 			owners = append(owners, types.StringValue(ownerItem.Id))
 		default:
-			diagnostics.AddError("Unexpected owner type", fmt.Sprintf("Expected *types2.RoleAssignmentToUser or *types2.RoleAssignmentToGroup, got: %T. Please report this issue to the provider developers.", ownerItem))
+			diagnostics.AddError("Unexpected owner type", fmt.Sprintf("Expected *types2.RoleAssignmentToUser or *types2.RoleAssignmentToAccessControl, got: %T. Please report this issue to the provider developers.", ownerItem))
 
 			return result, diagnostics
 		}

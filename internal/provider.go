@@ -81,7 +81,6 @@ func (p *CollibraDataAccessProvider) Configure(ctx context.Context, req provider
 func (p *CollibraDataAccessProvider) Resources(_ context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
 		NewDataSourceResource,
-		NewGlobalRoleAssignmentResource,
 		NewGrantCategoryResource,
 		NewGrantResource,
 		NewFilterResource,

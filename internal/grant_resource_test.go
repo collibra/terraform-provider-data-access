@@ -29,7 +29,7 @@ data "collibra-data-access_datasource" "ds" {
 resource "collibra-data-access_grant" "test" {
 	name        = "tfTestGrant"
     description = "test description"
-	data_source = [
+	data_sources = [
 		{  
 			data_source = data.collibra-data-access_datasource.ds.id
 			type = "role"
@@ -37,8 +37,11 @@ resource "collibra-data-access_grant" "test" {
 	]
 	what_data_objects = [
 		{
-			fullname = "MASTER_DATA.SALES"
-			data_source = data.collibra-data-access_datasource.ds.id
+			data_object = {
+				type = "schema"
+				path = ["MASTER_DATA", "SALES"]
+				data_source = data.collibra-data-access_datasource.ds.id
+			}
 		}
 	]
 	who = [
@@ -53,7 +56,7 @@ resource "collibra-data-access_grant" "test" {
 						resource.TestCheckResourceAttr("collibra-data-access_grant.test", "description", "test description"),
 						resource.TestCheckResourceAttrPair("collibra-data-access_grant.test", "data_source.0.data_source", "data.collibra-data-access_datasource.ds", "id"),
 						resource.TestCheckResourceAttr("collibra-data-access_grant.test", "what_data_objects.#", "1"),
-						resource.TestCheckResourceAttr("collibra-data-access_grant.test", "what_data_objects.0.fullname", "MASTER_DATA.SALES"),
+						resource.TestCheckResourceAttr("collibra-data-access_grant.test", "what_data_objects.0.full_name", "MASTER_DATA.SALES"),
 						resource.TestCheckResourceAttr("collibra-data-access_grant.test", "who.#", "1"),
 						resource.TestCheckResourceAttr("collibra-data-access_grant.test", "who.0.user", "terraform-acc-test-1@collibra.com"),
 						resource.TestCheckResourceAttr("collibra-data-access_grant.test", "who_locked", "true"),
@@ -86,7 +89,7 @@ resource "collibra-data-access_grant" "test" {
 	state = "Inactive"
 	what_data_objects = [
 		{
-			fullname = "MASTER_DATA.SALES"
+			full_name = "MASTER_DATA.SALES"
 			data_source = data.collibra-data-access_datasource.ds.id
 			permissions: ["SELECT"]
 		}
@@ -104,7 +107,7 @@ resource "collibra-data-access_grant" "test" {
 						resource.TestCheckResourceAttr("collibra-data-access_grant.test", "description", "test description"),
 						resource.TestCheckResourceAttrPair("collibra-data-access_grant.test", "data_source.0.data_source", "data.collibra-data-access_datasource.ds", "id"),
 						resource.TestCheckResourceAttr("collibra-data-access_grant.test", "what_data_objects.#", "1"),
-						resource.TestCheckResourceAttr("collibra-data-access_grant.test", "what_data_objects.0.fullname", "MASTER_DATA.SALES"),
+						resource.TestCheckResourceAttr("collibra-data-access_grant.test", "what_data_objects.0.full_name", "MASTER_DATA.SALES"),
 						resource.TestCheckResourceAttr("collibra-data-access_grant.test", "what_data_objects.0.permissions.#", "1"),
 						resource.TestCheckResourceAttr("collibra-data-access_grant.test", "what_data_objects.0.permissions.0", "SELECT"),
 						resource.TestCheckResourceAttr("collibra-data-access_grant.test", "who.#", "1"),
@@ -228,7 +231,7 @@ resource "collibra-data-access_grant" "test" {
 	]
 	what_data_objects = [
 		{
-			fullname = "MASTER_DATA.SALES"
+			full_name = "MASTER_DATA.SALES"
 			data_source = data.collibra-data-access_datasource.ds.id
 		}
 	]
@@ -244,7 +247,7 @@ resource "collibra-data-access_grant" "test" {
 						resource.TestCheckResourceAttr("collibra-data-access_grant.test", "description", "test description"),
 						resource.TestCheckResourceAttrPair("collibra-data-access_grant.test", "data_source.0.data_source", "data.collibra-data-access_datasource.ds", "id"),
 						resource.TestCheckResourceAttr("collibra-data-access_grant.test", "what_data_objects.#", "1"),
-						resource.TestCheckResourceAttr("collibra-data-access_grant.test", "what_data_objects.0.fullname", "MASTER_DATA.SALES"),
+						resource.TestCheckResourceAttr("collibra-data-access_grant.test", "what_data_objects.0.full_name", "MASTER_DATA.SALES"),
 						resource.TestCheckResourceAttr("collibra-data-access_grant.test", "who.#", "1"),
 						resource.TestCheckResourceAttrPair("collibra-data-access_grant.test", "who.0.access_control", "collibra-data-access_grant.purpose1", "id"),
 						resource.TestCheckResourceAttr("collibra-data-access_grant.test", "who_locked", "false"),
@@ -287,7 +290,7 @@ resource "collibra-data-access_grant" "test" {
 	]
 	what_data_objects = [
 		{
-			fullname = "MASTER_DATA.SALES"
+			full_name = "MASTER_DATA.SALES"
 			data_source = data.collibra-data-access_datasource.ds.id
 		}
 	]
@@ -306,7 +309,7 @@ resource "collibra-data-access_grant" "test" {
 						resource.TestCheckResourceAttr("collibra-data-access_grant.test", "description", "test description"),
 						resource.TestCheckResourceAttrPair("collibra-data-access_grant.test", "data_source.0.data_source", "data.collibra-data-access_datasource.ds", "id"),
 						resource.TestCheckResourceAttr("collibra-data-access_grant.test", "what_data_objects.#", "1"),
-						resource.TestCheckResourceAttr("collibra-data-access_grant.test", "what_data_objects.0.fullname", "MASTER_DATA.SALES"),
+						resource.TestCheckResourceAttr("collibra-data-access_grant.test", "what_data_objects.0.full_name", "MASTER_DATA.SALES"),
 						resource.TestCheckResourceAttr("collibra-data-access_grant.test", "who.#", "2"),
 						resource.TestCheckResourceAttr("collibra-data-access_grant.test", "who_locked", "true"),
 						resource.TestCheckResourceAttr("collibra-data-access_grant.test", "inheritance_locked", "true"),
@@ -355,7 +358,7 @@ resource "collibra-data-access_grant" "abac_grant" {
 		scope = [
 			{
 				data_source: data.collibra-data-access_datasource.ds.id
-				fullname: "MASTER_DATA"
+				full_name: "MASTER_DATA"
 			}
 		]
     }
@@ -373,7 +376,7 @@ resource "collibra-data-access_grant" "abac_grant" {
 						resource.TestCheckNoResourceAttr("collibra-data-access_grant.abac_grant", "what_data_objects"),
 						resource.TestCheckResourceAttr("collibra-data-access_grant.abac_grant", "what_abac_rule.rule", "{\"literal\":true}"),
 						resource.TestCheckResourceAttr("collibra-data-access_grant.abac_grant", "what_abac_rule.scope.#", "1"),
-						resource.TestCheckResourceAttr("collibra-data-access_grant.abac_grant", "what_abac_rule.scope.0.fullname", "MASTER_DATA"),
+						resource.TestCheckResourceAttr("collibra-data-access_grant.abac_grant", "what_abac_rule.scope.0.full_name", "MASTER_DATA"),
 						resource.TestCheckResourceAttrPair("collibra-data-access_grant.abac_grant", "what_abac_rule.scope.0.data_source", "data.collibra-data-access_datasource.ds", "id"),
 						resource.TestCheckResourceAttr("collibra-data-access_grant.abac_grant", "what_abac_rule.global_permissions.#", "1"),
 						resource.TestCheckResourceAttr("collibra-data-access_grant.abac_grant", "what_abac_rule.global_permissions.0", "READ"),
@@ -414,11 +417,11 @@ resource "collibra-data-access_grant" "abac_grant" {
         rule = local.abac_rule
 		scope = [
 			{
-				fullname: "MASTER_DATA.PERSON"
+				full_name: "MASTER_DATA.PERSON"
 				data_source: data.collibra-data-access_datasource.ds.id
 			},
 			{
-				fullname: "MASTER_DATA.SALES"
+				full_name: "MASTER_DATA.SALES"
 				data_source: data.collibra-data-access_datasource.ds.id
 			}
 		]
@@ -510,7 +513,7 @@ resource "collibra-data-access_grant" "who_abac_grant" {
 	]
 	what_data_objects = [
 		{
-			fullname = "MASTER_DATA.SALES"
+			full_name = "MASTER_DATA.SALES"
 			data_source = data.collibra-data-access_datasource.ds.id
 		}
 	]
@@ -522,7 +525,7 @@ resource "collibra-data-access_grant" "who_abac_grant" {
 						resource.TestCheckResourceAttr("collibra-data-access_grant.who_abac_grant", "description", "test description"),
 						resource.TestCheckResourceAttrPair("collibra-data-access_grant.who_abac_grant", "data_source.0.data_source", "data.collibra-data-access_datasource.ds", "id"),
 						resource.TestCheckResourceAttr("collibra-data-access_grant.who_abac_grant", "what_data_objects.#", "1"),
-						resource.TestCheckResourceAttr("collibra-data-access_grant.who_abac_grant", "what_data_objects.0.fullname", "MASTER_DATA.SALES"),
+						resource.TestCheckResourceAttr("collibra-data-access_grant.who_abac_grant", "what_data_objects.0.full_name", "MASTER_DATA.SALES"),
 						resource.TestCheckNoResourceAttr("collibra-data-access_grant.who_abac_grant", "who"),
 						resource.TestCheckResourceAttr("collibra-data-access_grant.who_abac_grant", "who_abac_rule", "{\"aggregator\":{\"operands\":[{\"aggregator\":{\"operands\":[{\"comparison\":{\"leftOperand\":\"Test\",\"operator\":\"HasTag\",\"rightOperand\":{\"literal\":{\"string\":\"test\"}}}}],\"operator\":\"And\"}}],\"operator\":\"Or\"}}"),
 						resource.TestCheckResourceAttr("collibra-data-access_grant.who_abac_grant", "who_locked", "true"),
@@ -579,7 +582,7 @@ resource "collibra-data-access_grant" "who_abac_grant" {
 	]
 	what_data_objects = [
 		{
-			fullname = "MASTER_DATA.SALES"
+			full_name = "MASTER_DATA.SALES"
 			data_source = data.collibra-data-access_datasource.ds.id
 		}
 	]
@@ -592,7 +595,7 @@ resource "collibra-data-access_grant" "who_abac_grant" {
 						resource.TestCheckResourceAttr("collibra-data-access_grant.who_abac_grant", "description", "test description"),
 						resource.TestCheckResourceAttrPair("collibra-data-access_grant.who_abac_grant", "data_source.0.data_source", "data.collibra-data-access_datasource.ds", "id"),
 						resource.TestCheckResourceAttr("collibra-data-access_grant.who_abac_grant", "what_data_objects.#", "1"),
-						resource.TestCheckResourceAttr("collibra-data-access_grant.who_abac_grant", "what_data_objects.0.fullname", "MASTER_DATA.SALES"),
+						resource.TestCheckResourceAttr("collibra-data-access_grant.who_abac_grant", "what_data_objects.0.full_name", "MASTER_DATA.SALES"),
 						resource.TestCheckNoResourceAttr("collibra-data-access_grant.who_abac_grant", "who"),
 						resource.TestCheckResourceAttr("collibra-data-access_grant.who_abac_grant", "who_abac_rule", "{\"aggregator\":{\"operands\":[{\"aggregator\":{\"operands\":[{\"comparison\":{\"leftOperand\":\"Test\",\"operator\":\"HasTag\",\"rightOperand\":{\"literal\":{\"string\":\"test\"}}}}],\"operator\":\"And\"}}],\"operator\":\"Or\"}}"),
 						resource.TestCheckResourceAttr("collibra-data-access_grant.who_abac_grant", "who_locked", "true"),
