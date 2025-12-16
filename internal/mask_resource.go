@@ -159,7 +159,7 @@ func (m *MaskResource) Schema(_ context.Context, _ resource.SchemaRequest, respo
 			Attributes: map[string]schema.Attribute{
 				"id": schema.StringAttribute{
 					Required:            false,
-					Optional:            true,
+					Optional:            false,
 					Computed:            true,
 					Sensitive:           false,
 					Description:         "The ID of the abac rule",

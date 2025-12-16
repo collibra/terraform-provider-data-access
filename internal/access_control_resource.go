@@ -230,7 +230,7 @@ func (a *AccessControlResource[T, ApModel]) schema(typeName string) map[string]s
 					// TODO we currently don't support the other attributes in a who abac rule.
 					"id": schema.StringAttribute{
 						Required:            false,
-						Optional:            true,
+						Optional:            false,
 						Computed:            true,
 						Sensitive:           false,
 						Description:         "The ID of the abac rule",

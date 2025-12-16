@@ -94,7 +94,7 @@ Required:
 - `rule` (String) json representation of the abac rule
 - `scope` (Attributes Set) Scope of the defined abac rule as a list of data objects (see [below for nested schema](#nestedatt--what_abac_rules--scope))
 
-Optional:
+Read-Only:
 
 - `id` (String) The ID of the abac rule
 
@@ -126,7 +126,7 @@ Required:
 
 - `rule` (String) The JSON representation of the abac rule
 
-Optional:
+Read-Only:
 
 - `id` (String) The ID of the abac rule
 

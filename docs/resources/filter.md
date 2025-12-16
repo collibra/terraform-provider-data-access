@@ -104,7 +104,7 @@ Required:
 
 - `rule` (String) The JSON representation of the abac rule
 
-Optional:
+Read-Only:
 
 - `id` (String) The ID of the abac rule
 

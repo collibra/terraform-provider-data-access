@@ -128,8 +128,11 @@ Required:
 Optional:
 
 - `global_permissions` (Set of String) Set of global permissions that should be granted on the matching data object. Allowed values are [READ WRITE ADMIN]
-- `id` (String) The ID of the abac rule
 - `permissions` (Set of String) Set of permissions that should be granted on the matching data object
+
+Read-Only:
+
+- `id` (String) The ID of the abac rule
 
 <a id="nestedatt--what_abac_rules--scope"></a>
 ### Nested Schema for `what_abac_rules.scope`
@@ -182,7 +185,7 @@ Required:
 
 - `rule` (String) The JSON representation of the abac rule
 
-Optional:
+Read-Only:
 
 - `id` (String) The ID of the abac rule
 
