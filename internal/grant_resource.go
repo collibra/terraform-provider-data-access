@@ -26,6 +26,10 @@ import (
 	"github.com/collibra/data-access-terraform-provider/internal/utils"
 )
 
+//
+// Model
+//
+
 var _ resource.Resource = (*GrantResource)(nil)
 
 type GrantResourceModel struct {
@@ -74,390 +78,8 @@ func (m *GrantResourceModel) SetAccessControlResourceModel(ac *AccessControlReso
 	m.InheritanceLocked = ac.InheritanceLocked
 }
 
-func (m *GrantResourceModel) ToAccessControlInput(ctx context.Context, client *sdk.CollibraClient, result *dataAccessType.AccessControlInput) diag.Diagnostics {
-	diagnostics := m.GetAccessControlResourceModel().ToAccessControlInput(ctx, client, result)
-
-	if diagnostics.HasError() {
-		return diagnostics
-	}
-
-	dataSourcesToAccessControlInput(m.DataSources, result)
-
-	result.Action = utils.Ptr(dataAccessType.AccessControlActionGrant)
-
-	if !m.WhatDataObjects.IsNull() && !m.WhatDataObjects.IsUnknown() {
-		m.whatDoToApInput(result)
-	}
-
-	if !m.WhatAbacRules.IsNull() {
-		diagnostics.Append(m.abacWhatToAccessControlInput(ctx, client, result)...)
-
-		if diagnostics.HasError() {
-			return diagnostics
-		}
-	}
-
-	if m.WhatLocked.ValueBool() {
-		result.Locks = append(result.Locks, dataAccessType.AccessControlLockDataInput{
-			LockKey: dataAccessType.AccessControlLockWhatlock,
-			Details: &dataAccessType.AccessControlLockDetailsInput{
-				Reason: utils.Ptr(lockMsg),
-			},
-		})
-	}
-
-	if !m.Category.IsUnknown() {
-		result.Category = m.Category.ValueStringPointer()
-	}
-
-	return diagnostics
-}
-
-func (m *GrantResourceModel) whatDoToApInput(result *dataAccessType.AccessControlInput) {
-	elements := m.WhatDataObjects.Elements()
-
-	result.WhatDataObjects = make([]dataAccessType.AccessControlWhatInputDO, 0, len(elements))
-
-	for _, whatDataObject := range elements {
-		whatDataObjectObject := whatDataObject.(types.Object)
-		whatDataObjectAttributes := whatDataObjectObject.Attributes()
-
-		dataObject := whatDataObjectAttributes["data_object"].(types.Object)
-		doType, doPath, dsId := dataObjectReferenceToComponents(dataObject.Attributes())
-		fullName := dataAccessType.FullName{
-			Type: doType,
-			Path: doPath,
-		}
-
-		permissionSet := whatDataObjectAttributes["permissions"].(types.Set)
-		permissions := make([]*string, 0, len(permissionSet.Elements()))
-
-		for _, p := range permissionSet.Elements() {
-			permission := p.(types.String)
-			permissions = append(permissions, permission.ValueStringPointer())
-		}
-
-		globalPermissionSet := whatDataObjectAttributes["global_permissions"].(types.Set)
-		globalPermissions := make([]*string, 0, len(globalPermissionSet.Elements()))
-
-		for _, p := range globalPermissionSet.Elements() {
-			permission := p.(types.String)
-			globalPermissions = append(globalPermissions, permission.ValueStringPointer())
-		}
-
-		result.WhatDataObjects = append(result.WhatDataObjects, dataAccessType.AccessControlWhatInputDO{
-			DataObjectByName: []dataAccessType.AccessControlWhatDoByNameInput{{
-				FullName:   fullName.ToDataObjectURI(),
-				DataSource: dsId,
-			},
-			},
-			Permissions:       permissions,
-			GlobalPermissions: globalPermissions,
-		})
-	}
-}
-
-func (m *GrantResourceModel) FromAccessControl(ctx context.Context, client *sdk.CollibraClient, ac *dataAccessType.AccessControl) diag.Diagnostics {
-	apResourceModel := m.GetAccessControlResourceModel()
-	diagnostics := apResourceModel.FromAccessControl(ac)
-
-	if diagnostics.HasError() {
-		return diagnostics
-	}
-
-	m.SetAccessControlResourceModel(apResourceModel)
-
-	dataSources, d, done := dataSourceFromAccessControl(ac, diagnostics, nil)
-	if done {
-		return d
-	}
-
-	m.DataSources = dataSources
-
-	m.WhatLocked = types.BoolValue(slices.ContainsFunc(ac.Locks, func(l dataAccessType.AccessControlLocksAccessControlLockData) bool {
-		return l.LockKey == dataAccessType.AccessControlLockWhatlock
-	}))
-
-	if ac.WhatAbacRules != nil {
-		object, objectDiagnostics := m.abacWhatFromAccessControl(ctx, client, ac)
-		diagnostics.Append(objectDiagnostics...)
-
-		if diagnostics.HasError() {
-			return diagnostics
-		}
-
-		m.WhatAbacRules = object
-	}
-
-	m.Category = types.StringValue(ac.Category.Id)
-
-	return diagnostics
-}
-
-func dataSourceFromAccessControl(ac *dataAccessType.AccessControl, diagnostics diag.Diagnostics, defaultType *string) (basetypes.SetValue, diag.Diagnostics, bool) {
-	dataSourceValues := make([]attr.Value, 0, len(ac.SyncData))
-
-	for i := range ac.SyncData {
-		ds := &ac.SyncData[i]
-		dsId := types.StringValue(ds.DataSource.Id)
-
-		dsType := types.StringPointerValue(defaultType)
-
-		if ds.AccessControlType != nil && ds.AccessControlType.Type != nil {
-			dsType = types.StringPointerValue(ds.AccessControlType.Type)
-		}
-
-		dataSource, diag := types.ObjectValue(map[string]attr.Type{
-			"data_source": types.StringType,
-			"type":        types.StringType,
-		},
-			map[string]attr.Value{
-				"data_source": dsId,
-				"type":        dsType,
-			})
-
-		diagnostics.Append(diag...)
-
-		if diagnostics.HasError() {
-			return basetypes.SetValue{}, diagnostics, true
-		}
-
-		dataSourceValues = append(dataSourceValues, dataSource)
-	}
-
-	dataSources, diag := types.SetValue(types.ObjectType{
-		AttrTypes: map[string]attr.Type{
-			"data_source": types.StringType,
-			"type":        types.StringType,
-		},
-	}, dataSourceValues)
-
-	diagnostics.Append(diag...)
-
-	if diagnostics.HasError() {
-		return basetypes.SetValue{}, diagnostics, true
-	}
-
-	return dataSources, nil, false
-}
-
 func (m *GrantResourceModel) UpdateOwners(owners types.Set) {
 	m.Owners = owners
-}
-
-func (m *GrantResourceModel) abacWhatToAccessControlInput(ctx context.Context, client *sdk.CollibraClient, result *dataAccessType.AccessControlInput) (diagnostics diag.Diagnostics) {
-	result.WhatAbacRules = make([]*dataAccessType.WhatAbacRuleInput, 0, len(m.WhatAbacRules.Elements()))
-
-	for _, abacRuleItem := range m.WhatAbacRules.Elements() {
-		abacRuleObject := abacRuleItem.(types.Object)
-		attributes := abacRuleObject.Attributes()
-
-		doTypes, doDiagnostics := utils.StringSetToSlice(ctx, attributes["do_types"].(types.Set))
-		diagnostics.Append(doDiagnostics...)
-
-		if diagnostics.HasError() {
-			return diagnostics
-		}
-
-		permissions, permissionDiagnostics := utils.StringSetToSlice(ctx, attributes["permissions"].(types.Set))
-		diagnostics.Append(permissionDiagnostics...)
-
-		if diagnostics.HasError() {
-			return diagnostics
-		}
-
-		globalPermissions, globalPermissionDiagnostics := utils.StringSetToSlice(ctx, attributes["global_permissions"].(types.Set))
-		diagnostics.Append(globalPermissionDiagnostics...)
-
-		if diagnostics.HasError() {
-			return diagnostics
-		}
-
-		scope := make([]string, 0)
-		scopeSet := attributes["scope"].(types.Set)
-
-		scope, d, done := abacWhatScopeToAccessControlInput(ctx, client, scopeSet, diagnostics, scope)
-		if done {
-			return d
-		}
-
-		abacInput, ruleDiag := abacRuleToGqlInput(attributes, "rule")
-		if ruleDiag.HasError() {
-			return ruleDiag
-		}
-
-		result.WhatAbacRules = append(result.WhatAbacRules, &dataAccessType.WhatAbacRuleInput{
-			DoTypes:           doTypes,
-			Permissions:       permissions,
-			GlobalPermissions: globalPermissions,
-			Scope:             scope,
-			Rule:              *abacInput,
-			Id:                getOptionalString(attributes, "id"),
-		})
-	}
-
-	return diagnostics
-}
-
-func dataObjectReferenceToId(ctx context.Context, client *sdk.CollibraClient, dataObjectAttributes map[string]attr.Value) (string, error) {
-	doType, path, dataSourceId := dataObjectReferenceToComponents(dataObjectAttributes)
-
-	fullName := dataAccessType.FullName{
-		Type: doType,
-		Path: path,
-	}
-
-	ret, err := client.DataObject().GetDataObjectIdByName(ctx, fullName.ToDataObjectURI(), dataSourceId)
-	if err != nil {
-		return "", fmt.Errorf("get data object id for data object %s and data source %s: %w", fullName.ToDataObjectURI(), dataSourceId, err)
-	}
-
-	return ret, nil
-}
-
-func dataObjectReferenceToComponents(dataObjectAttributes map[string]attr.Value) (dataObjectType string, dataObjectPath []string, dataSourceId string) {
-	dataObjectType = dataObjectAttributes["type"].(types.String).ValueString()
-	path := dataObjectAttributes["path"].(types.List).Elements()
-	dataSourceId = dataObjectAttributes["data_source"].(types.String).ValueString()
-
-	dataObjectPath = make([]string, len(path))
-	for i, doPathElement := range path {
-		dataObjectPath[i] = doPathElement.(types.String).ValueString()
-	}
-
-	return
-}
-
-func dataObjectToReference(dataObject *dataAccessType.DataObject, diagnostics diag.Diagnostics) (basetypes.ObjectValue, diag.Diagnostics) {
-	fullName, err := dataAccessType.FromDataObjectURI(dataObject.FullName)
-	if err != nil {
-		diagnostics.AddError("Failed to parse data object full name", err.Error())
-
-		return basetypes.ObjectValue{}, diagnostics
-	}
-
-	pathItems := make([]attr.Value, 0, len(fullName.Path))
-	for _, pathItem := range fullName.Path {
-		pathItems = append(pathItems, types.StringValue(pathItem))
-	}
-
-	pathValue, diag := types.ListValue(types.StringType, pathItems)
-	if diag.HasError() {
-		diagnostics = append(diagnostics, diag...)
-
-		return basetypes.ObjectValue{}, diagnostics
-	}
-
-	return types.ObjectValueMust(dataObjectReferenceTypeAttributeTypes, map[string]attr.Value{
-		"type":        types.StringValue(fullName.Type),
-		"path":        pathValue,
-		"data_source": types.StringValue(dataObject.DataSource.Id),
-	}), nil
-}
-
-func abacWhatScopeToAccessControlInput(ctx context.Context, client *sdk.CollibraClient, scopeSet types.Set, diagnostics diag.Diagnostics, scope []string) ([]string, diag.Diagnostics, bool) {
-	for _, scopeItem := range scopeSet.Elements() {
-		scopeObject := scopeItem.(types.Object)
-		scopeAttributes := scopeObject.Attributes()
-
-		id, err := dataObjectReferenceToId(ctx, client, scopeAttributes)
-		if err != nil {
-			diagnostics.AddError("Failed to get data object id", err.Error())
-
-			return nil, diagnostics, true
-		}
-
-		scope = append(scope, id)
-	}
-
-	return scope, nil, false
-}
-
-func (m *GrantResourceModel) abacWhatFromAccessControl(ctx context.Context, client *sdk.CollibraClient, ac *dataAccessType.AccessControl) (_ types.Set, diagnostics diag.Diagnostics) {
-	whatAbacRuleList := make([]attr.Value, 0, len(ac.WhatAbacRules))
-
-	scopeType := types.ObjectType{AttrTypes: dataObjectReferenceTypeAttributeTypes}
-	whatAbacRuleType := map[string]attr.Type{
-		"do_types":           types.SetType{ElemType: types.StringType},
-		"permissions":        types.SetType{ElemType: types.StringType},
-		"global_permissions": types.SetType{ElemType: types.StringType},
-		"scope":              types.SetType{ElemType: scopeType},
-		"rule":               jsontypes.NormalizedType{},
-		"id":                 types.StringType,
-	}
-	whatAbacRulesType := types.ObjectType{AttrTypes: whatAbacRuleType}
-
-	for _, rule := range ac.WhatAbacRules {
-		permissions, pDiagnostics := utils.SliceToStringSet(ctx, rule.Permissions)
-		diagnostics.Append(pDiagnostics...)
-
-		if diagnostics.HasError() {
-			return types.SetNull(whatAbacRulesType), diagnostics
-		}
-
-		globalPermissionList := utils.Map(rule.GlobalPermissions, strings.ToUpper)
-		globalPermissions, gpDiagnostics := utils.SliceToStringSet(ctx, globalPermissionList)
-
-		diagnostics.Append(gpDiagnostics...)
-
-		if diagnostics.HasError() {
-			return types.SetNull(whatAbacRulesType), diagnostics
-		}
-
-		doTypes, dtDiagnostics := utils.SliceToStringSet(ctx, rule.DoTypes)
-		diagnostics.Append(dtDiagnostics...)
-
-		if diagnostics.HasError() {
-			return types.SetNull(whatAbacRulesType), diagnostics
-		}
-
-		abacRule := jsontypes.NewNormalizedPointerValue(rule.RuleJson)
-
-		var scopeItems []attr.Value //nolint:prealloc
-
-		for scopeItem, err := range client.AccessControl().GetAccessControlAbacWhatScope(ctx, ac.Id, rule.Id) {
-			if err != nil {
-				diagnostics.AddError("Failed to load access provider abac scope", err.Error())
-
-				return types.SetNull(whatAbacRulesType), diagnostics
-			}
-
-			scopeItemValue, diags := dataObjectToReference(scopeItem, diagnostics)
-			diagnostics.Append(diags...)
-
-			if diagnostics.HasError() {
-				return types.SetNull(whatAbacRulesType), diagnostics
-			}
-
-			scopeItems = append(scopeItems, scopeItemValue)
-		}
-
-		scope, scopeDiagnostics := types.SetValue(scopeType, scopeItems)
-		diagnostics.Append(scopeDiagnostics...)
-
-		if diagnostics.HasError() {
-			return types.SetNull(whatAbacRulesType), diagnostics
-		}
-
-		whatAbacRuleList = append(whatAbacRuleList, types.ObjectValueMust(whatAbacRuleType, map[string]attr.Value{
-			"do_types":           doTypes,
-			"permissions":        permissions,
-			"global_permissions": globalPermissions,
-			"rule":               abacRule,
-			"scope":              scope,
-			"id":                 types.StringValue(rule.Id),
-		}))
-	}
-
-	whatAbacRules, whatAbacRulesDiag := types.SetValue(whatAbacRulesType, whatAbacRuleList)
-
-	diagnostics.Append(whatAbacRulesDiag...)
-
-	if diagnostics.HasError() {
-		return types.SetNull(whatAbacRulesType), diagnostics
-	}
-
-	return whatAbacRules, diagnostics
 }
 
 type GrantResource struct {
@@ -473,6 +95,10 @@ func NewGrantResource() resource.Resource {
 		},
 	}
 }
+
+//
+// Schema
+//
 
 func (g *GrantResource) Metadata(_ context.Context, request resource.MetadataRequest, response *resource.MetadataResponse) {
 	response.TypeName = request.ProviderTypeName + "_grant"
@@ -668,6 +294,325 @@ func (g *GrantResource) Schema(_ context.Context, _ resource.SchemaRequest, resp
 	}
 }
 
+//
+// Actions
+//
+
+// ToAccessControlInput converts the Terraform model to an AccessControlInput for a grant.
+func (m *GrantResourceModel) ToAccessControlInput(ctx context.Context, client *sdk.CollibraClient, result *dataAccessType.AccessControlInput) diag.Diagnostics {
+	diagnostics := m.GetAccessControlResourceModel().ToAccessControlInput(ctx, client, result)
+
+	if diagnostics.HasError() {
+		return diagnostics
+	}
+
+	dataSourcesToAccessControlInput(m.DataSources, result)
+
+	result.Action = utils.Ptr(dataAccessType.AccessControlActionGrant)
+
+	if !m.WhatDataObjects.IsNull() && !m.WhatDataObjects.IsUnknown() {
+		m.whatDoToApInput(result)
+	}
+
+	if !m.WhatAbacRules.IsNull() {
+		diagnostics.Append(m.abacWhatToAccessControlInput(ctx, client, result)...)
+
+		if diagnostics.HasError() {
+			return diagnostics
+		}
+	}
+
+	if m.WhatLocked.ValueBool() {
+		result.Locks = append(result.Locks, dataAccessType.AccessControlLockDataInput{
+			LockKey: dataAccessType.AccessControlLockWhatlock,
+			Details: &dataAccessType.AccessControlLockDetailsInput{
+				Reason: utils.Ptr(lockMsg),
+			},
+		})
+	}
+
+	if !m.Category.IsUnknown() {
+		result.Category = m.Category.ValueStringPointer()
+	}
+
+	return diagnostics
+}
+
+// whatDoToApInput converts the WHAT DataObjects from the Terraform model to the AccessControlInput.
+func (m *GrantResourceModel) whatDoToApInput(result *dataAccessType.AccessControlInput) {
+	elements := m.WhatDataObjects.Elements()
+
+	result.WhatDataObjects = make([]dataAccessType.AccessControlWhatInputDO, 0, len(elements))
+
+	for _, whatDataObject := range elements {
+		whatDataObjectObject := whatDataObject.(types.Object)
+		whatDataObjectAttributes := whatDataObjectObject.Attributes()
+
+		dataObject := whatDataObjectAttributes["data_object"].(types.Object)
+		doType, doPath, dsId := dataObjectReferenceToComponents(dataObject.Attributes())
+		fullName := dataAccessType.FullName{
+			Type: doType,
+			Path: doPath,
+		}
+
+		permissionSet := whatDataObjectAttributes["permissions"].(types.Set)
+		permissions := make([]*string, 0, len(permissionSet.Elements()))
+
+		for _, p := range permissionSet.Elements() {
+			permission := p.(types.String)
+			permissions = append(permissions, permission.ValueStringPointer())
+		}
+
+		globalPermissionSet := whatDataObjectAttributes["global_permissions"].(types.Set)
+		globalPermissions := make([]*string, 0, len(globalPermissionSet.Elements()))
+
+		for _, p := range globalPermissionSet.Elements() {
+			permission := p.(types.String)
+			globalPermissions = append(globalPermissions, permission.ValueStringPointer())
+		}
+
+		result.WhatDataObjects = append(result.WhatDataObjects, dataAccessType.AccessControlWhatInputDO{
+			DataObjectByName: []dataAccessType.AccessControlWhatDoByNameInput{{
+				FullName:   fullName.ToDataObjectURI(),
+				DataSource: dsId,
+			},
+			},
+			Permissions:       permissions,
+			GlobalPermissions: globalPermissions,
+		})
+	}
+}
+
+// FromAccessControl converts the AccessControl from Collibra to the Terraform model for a grant.
+func (m *GrantResourceModel) FromAccessControl(ctx context.Context, client *sdk.CollibraClient, ac *dataAccessType.AccessControl) diag.Diagnostics {
+	apResourceModel := m.GetAccessControlResourceModel()
+	diagnostics := apResourceModel.FromAccessControl(ac)
+
+	if diagnostics.HasError() {
+		return diagnostics
+	}
+
+	m.SetAccessControlResourceModel(apResourceModel)
+
+	dataSources, d, done := dataSourcesFromAccessControl(ac, diagnostics, nil)
+	if done {
+		return d
+	}
+
+	m.DataSources = dataSources
+
+	m.WhatLocked = types.BoolValue(slices.ContainsFunc(ac.Locks, func(l dataAccessType.AccessControlLocksAccessControlLockData) bool {
+		return l.LockKey == dataAccessType.AccessControlLockWhatlock
+	}))
+
+	if ac.WhatAbacRules != nil {
+		object, objectDiagnostics := m.abacWhatFromAccessControl(ctx, client, ac)
+		diagnostics.Append(objectDiagnostics...)
+
+		if diagnostics.HasError() {
+			return diagnostics
+		}
+
+		m.WhatAbacRules = object
+	}
+
+	m.Category = types.StringValue(ac.Category.Id)
+
+	return diagnostics
+}
+
+// dataSourcesFromAccessControl converts the data sources from the AccessControl Collibra model to the Terraform model.
+func dataSourcesFromAccessControl(ac *dataAccessType.AccessControl, diagnostics diag.Diagnostics, defaultType *string) (basetypes.SetValue, diag.Diagnostics, bool) {
+	dataSourceValues := make([]attr.Value, 0, len(ac.SyncData))
+
+	for i := range ac.SyncData {
+		ds := &ac.SyncData[i]
+		dsId := types.StringValue(ds.DataSource.Id)
+
+		dsType := types.StringPointerValue(defaultType)
+
+		if ds.AccessControlType != nil && ds.AccessControlType.Type != nil {
+			dsType = types.StringPointerValue(ds.AccessControlType.Type)
+		}
+
+		dataSource, diag := types.ObjectValue(map[string]attr.Type{
+			"data_source": types.StringType,
+			"type":        types.StringType,
+		},
+			map[string]attr.Value{
+				"data_source": dsId,
+				"type":        dsType,
+			})
+
+		diagnostics.Append(diag...)
+
+		if diagnostics.HasError() {
+			return basetypes.SetValue{}, diagnostics, true
+		}
+
+		dataSourceValues = append(dataSourceValues, dataSource)
+	}
+
+	dataSources, diag := types.SetValue(types.ObjectType{
+		AttrTypes: map[string]attr.Type{
+			"data_source": types.StringType,
+			"type":        types.StringType,
+		},
+	}, dataSourceValues)
+
+	diagnostics.Append(diag...)
+
+	if diagnostics.HasError() {
+		return basetypes.SetValue{}, diagnostics, true
+	}
+
+	return dataSources, nil, false
+}
+
+// abacWhatToAccessControlInput converts the WHAT ABAC rules from the Terraform model to the AccessControlInput.
+func (m *GrantResourceModel) abacWhatToAccessControlInput(ctx context.Context, client *sdk.CollibraClient, result *dataAccessType.AccessControlInput) (diagnostics diag.Diagnostics) {
+	result.WhatAbacRules = make([]*dataAccessType.WhatAbacRuleInput, 0, len(m.WhatAbacRules.Elements()))
+
+	for _, abacRuleItem := range m.WhatAbacRules.Elements() {
+		abacRuleObject := abacRuleItem.(types.Object)
+		attributes := abacRuleObject.Attributes()
+
+		doTypes, doDiagnostics := utils.StringSetToSlice(ctx, attributes["do_types"].(types.Set))
+		diagnostics.Append(doDiagnostics...)
+
+		if diagnostics.HasError() {
+			return diagnostics
+		}
+
+		permissions, permissionDiagnostics := utils.StringSetToSlice(ctx, attributes["permissions"].(types.Set))
+		diagnostics.Append(permissionDiagnostics...)
+
+		if diagnostics.HasError() {
+			return diagnostics
+		}
+
+		globalPermissions, globalPermissionDiagnostics := utils.StringSetToSlice(ctx, attributes["global_permissions"].(types.Set))
+		diagnostics.Append(globalPermissionDiagnostics...)
+
+		if diagnostics.HasError() {
+			return diagnostics
+		}
+
+		scope := make([]string, 0)
+		scopeSet := attributes["scope"].(types.Set)
+
+		scope, d, done := abacWhatScopeToAccessControlInput(ctx, client, scopeSet, diagnostics, scope)
+		if done {
+			return d
+		}
+
+		abacInput, ruleDiag := abacRuleToGqlInput(attributes, "rule")
+		if ruleDiag.HasError() {
+			return ruleDiag
+		}
+
+		result.WhatAbacRules = append(result.WhatAbacRules, &dataAccessType.WhatAbacRuleInput{
+			DoTypes:           doTypes,
+			Permissions:       permissions,
+			GlobalPermissions: globalPermissions,
+			Scope:             scope,
+			Rule:              *abacInput,
+			Id:                getOptionalString(attributes, "id"),
+		})
+	}
+
+	return diagnostics
+}
+
+// abacWhatFromAccessControl converts the WHAT ABAC rules from the AccessControl Collibra model to the Terraform model.
+func (m *GrantResourceModel) abacWhatFromAccessControl(ctx context.Context, client *sdk.CollibraClient, ac *dataAccessType.AccessControl) (_ types.Set, diagnostics diag.Diagnostics) {
+	whatAbacRuleList := make([]attr.Value, 0, len(ac.WhatAbacRules))
+
+	scopeType := types.ObjectType{AttrTypes: dataObjectReferenceTypeAttributeTypes}
+	whatAbacRuleType := map[string]attr.Type{
+		"do_types":           types.SetType{ElemType: types.StringType},
+		"permissions":        types.SetType{ElemType: types.StringType},
+		"global_permissions": types.SetType{ElemType: types.StringType},
+		"scope":              types.SetType{ElemType: scopeType},
+		"rule":               jsontypes.NormalizedType{},
+		"id":                 types.StringType,
+	}
+	whatAbacRulesType := types.ObjectType{AttrTypes: whatAbacRuleType}
+
+	for _, rule := range ac.WhatAbacRules {
+		permissions, pDiagnostics := utils.SliceToStringSet(ctx, rule.Permissions)
+		diagnostics.Append(pDiagnostics...)
+
+		if diagnostics.HasError() {
+			return types.SetNull(whatAbacRulesType), diagnostics
+		}
+
+		globalPermissionList := utils.Map(rule.GlobalPermissions, strings.ToUpper)
+		globalPermissions, gpDiagnostics := utils.SliceToStringSet(ctx, globalPermissionList)
+
+		diagnostics.Append(gpDiagnostics...)
+
+		if diagnostics.HasError() {
+			return types.SetNull(whatAbacRulesType), diagnostics
+		}
+
+		doTypes, dtDiagnostics := utils.SliceToStringSet(ctx, rule.DoTypes)
+		diagnostics.Append(dtDiagnostics...)
+
+		if diagnostics.HasError() {
+			return types.SetNull(whatAbacRulesType), diagnostics
+		}
+
+		abacRule := jsontypes.NewNormalizedPointerValue(rule.RuleJson)
+
+		var scopeItems []attr.Value //nolint:prealloc
+
+		for scopeItem, err := range client.AccessControl().GetAccessControlAbacWhatScope(ctx, ac.Id, rule.Id) {
+			if err != nil {
+				diagnostics.AddError("Failed to load access provider abac scope", err.Error())
+
+				return types.SetNull(whatAbacRulesType), diagnostics
+			}
+
+			scopeItemValue, diags := dataObjectToReference(scopeItem, diagnostics)
+			diagnostics.Append(diags...)
+
+			if diagnostics.HasError() {
+				return types.SetNull(whatAbacRulesType), diagnostics
+			}
+
+			scopeItems = append(scopeItems, scopeItemValue)
+		}
+
+		scope, scopeDiagnostics := types.SetValue(scopeType, scopeItems)
+		diagnostics.Append(scopeDiagnostics...)
+
+		if diagnostics.HasError() {
+			return types.SetNull(whatAbacRulesType), diagnostics
+		}
+
+		whatAbacRuleList = append(whatAbacRuleList, types.ObjectValueMust(whatAbacRuleType, map[string]attr.Value{
+			"do_types":           doTypes,
+			"permissions":        permissions,
+			"global_permissions": globalPermissions,
+			"rule":               abacRule,
+			"scope":              scope,
+			"id":                 types.StringValue(rule.Id),
+		}))
+	}
+
+	whatAbacRules, whatAbacRulesDiag := types.SetValue(whatAbacRulesType, whatAbacRuleList)
+
+	diagnostics.Append(whatAbacRulesDiag...)
+
+	if diagnostics.HasError() {
+		return types.SetNull(whatAbacRulesType), diagnostics
+	}
+
+	return whatAbacRules, diagnostics
+}
+
+// readGrantWhatItems reads the WHAT DataObjects from Collibra and converts it to the Terraform model (called as a hook)
 func readGrantWhatItems(ctx context.Context, client *sdk.CollibraClient, data *GrantResourceModel) (diagnostics diag.Diagnostics) {
 	if !data.WhatDataObjects.IsNull() {
 		whatItems := client.AccessControl().GetAccessControlWhatDataObjectList(ctx, data.Id.ValueString())
@@ -753,4 +698,86 @@ func grantModifyPlan(_ context.Context, data *GrantResourceModel) (_ *GrantResou
 	}
 
 	return data, diagnostics
+}
+
+//
+// Helper functions
+//
+
+// dataObjectReferenceToId converts a data object reference from the Terraform model to a data object ID by querying Collibra.
+func dataObjectReferenceToId(ctx context.Context, client *sdk.CollibraClient, dataObjectAttributes map[string]attr.Value) (string, error) {
+	doType, path, dataSourceId := dataObjectReferenceToComponents(dataObjectAttributes)
+
+	fullName := dataAccessType.FullName{
+		Type: doType,
+		Path: path,
+	}
+
+	ret, err := client.DataObject().GetDataObjectIdByName(ctx, fullName.ToDataObjectURI(), dataSourceId)
+	if err != nil {
+		return "", fmt.Errorf("get data object id for data object %s and data source %s: %w", fullName.ToDataObjectURI(), dataSourceId, err)
+	}
+
+	return ret, nil
+}
+
+// dataObjectReferenceToComponents extracts the components of a data object reference from the Terraform model (type, path and data source id).
+func dataObjectReferenceToComponents(dataObjectAttributes map[string]attr.Value) (dataObjectType string, dataObjectPath []string, dataSourceId string) {
+	dataObjectType = dataObjectAttributes["type"].(types.String).ValueString()
+	path := dataObjectAttributes["path"].(types.List).Elements()
+	dataSourceId = dataObjectAttributes["data_source"].(types.String).ValueString()
+
+	dataObjectPath = make([]string, len(path))
+	for i, doPathElement := range path {
+		dataObjectPath[i] = doPathElement.(types.String).ValueString()
+	}
+
+	return
+}
+
+// dataObjectToReference converts a DataObject from Collibra to a data object reference object in the Terraform model.
+func dataObjectToReference(dataObject *dataAccessType.DataObject, diagnostics diag.Diagnostics) (basetypes.ObjectValue, diag.Diagnostics) {
+	fullName, err := dataAccessType.FromDataObjectURI(dataObject.FullName)
+	if err != nil {
+		diagnostics.AddError("Failed to parse data object full name", err.Error())
+
+		return basetypes.ObjectValue{}, diagnostics
+	}
+
+	pathItems := make([]attr.Value, 0, len(fullName.Path))
+	for _, pathItem := range fullName.Path {
+		pathItems = append(pathItems, types.StringValue(pathItem))
+	}
+
+	pathValue, diag := types.ListValue(types.StringType, pathItems)
+	if diag.HasError() {
+		diagnostics = append(diagnostics, diag...)
+
+		return basetypes.ObjectValue{}, diagnostics
+	}
+
+	return types.ObjectValueMust(dataObjectReferenceTypeAttributeTypes, map[string]attr.Value{
+		"type":        types.StringValue(fullName.Type),
+		"path":        pathValue,
+		"data_source": types.StringValue(dataObject.DataSource.Id),
+	}), nil
+}
+
+// abacWhatScopeToAccessControlInput converts the scope of an ABAC rule from the Terraform model to a list of data object IDs by querying Collibra.
+func abacWhatScopeToAccessControlInput(ctx context.Context, client *sdk.CollibraClient, scopeSet types.Set, diagnostics diag.Diagnostics, scope []string) ([]string, diag.Diagnostics, bool) {
+	for _, scopeItem := range scopeSet.Elements() {
+		scopeObject := scopeItem.(types.Object)
+		scopeAttributes := scopeObject.Attributes()
+
+		id, err := dataObjectReferenceToId(ctx, client, scopeAttributes)
+		if err != nil {
+			diagnostics.AddError("Failed to get data object id", err.Error())
+
+			return nil, diagnostics, true
+		}
+
+		scope = append(scope, id)
+	}
+
+	return scope, nil, false
 }

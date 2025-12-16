@@ -1023,7 +1023,7 @@ func (a *AccessControlResourceModel) ToAccessControlInput(ctx context.Context, c
 	return diagnostics
 }
 
-// whoElementsToAccessControlInput converts the WHO-items from the TerraForm model to the Collibra AccessControlInput model
+// whoElementsToAccessControlInput converts the WHO-items from the Terraform model to the Collibra AccessControlInput model
 func (a *AccessControlResourceModel) whoElementsToAccessControlInput(ctx context.Context, client *sdk.CollibraClient, result *dataAccessType.AccessControlInput) (diagnostics diag.Diagnostics) {
 	whoItems := a.Who.Elements()
 
@@ -1068,7 +1068,7 @@ func (a *AccessControlResourceModel) whoElementsToAccessControlInput(ctx context
 	return diagnostics
 }
 
-// whoAbacRulesToAccessControlInput converts the WHO ABAC rules from the TerraForm model to the Collibra AccessControlInput model
+// whoAbacRulesToAccessControlInput converts the WHO ABAC rules from the Terraform model to the Collibra AccessControlInput model
 func (a *AccessControlResourceModel) whoAbacRulesToAccessControlInput(result *dataAccessType.AccessControlInput) (diagnostics diag.Diagnostics) {
 	whoAbacRuleItems := a.WhoAbacRules.Elements()
 
@@ -1116,7 +1116,7 @@ func (a *AccessControlResourceModel) FromAccessControl(ac *dataAccessType.Access
 	return diagnostics
 }
 
-// dataSourcesToAccessControlInput converts the data sources from the TerraForm model to the Collibra AccessControlInput model
+// dataSourcesToAccessControlInput converts the data sources from the Terraform model to the Collibra AccessControlInput model
 func dataSourcesToAccessControlInput(dataSources types.Set, result *dataAccessType.AccessControlInput) {
 	if !dataSources.IsNull() && !dataSources.IsUnknown() {
 		dataSourceElements := dataSources.Elements()
@@ -1140,7 +1140,7 @@ func dataSourcesToAccessControlInput(dataSources types.Set, result *dataAccessTy
 	}
 }
 
-// abacRuleToGqlInput converts a JSON ABAC rule from TerraForm to a Collibra GraphQL input object
+// abacRuleToGqlInput converts a JSON ABAC rule from Terraform to a Collibra GraphQL input object
 func abacRuleToGqlInput(attributes map[string]attr.Value, field string) (_ *dataAccessType.AbacComparisonExpressionInput, diagnostics diag.Diagnostics) {
 	jsonRule := attributes[field].(jsontypes.Normalized)
 

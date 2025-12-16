@@ -23,6 +23,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
+//
+// Model
+//
+
 var _ resource.Resource = (*GrantCategoryResource)(nil)
 
 type GrantCategoryResourceModel struct {
@@ -40,51 +44,6 @@ type GrantCategoryResourceModel struct {
 	AllowedWhatItems         types.Object `tfsdk:"allowed_what_items"`
 }
 
-func (m *GrantCategoryResourceModel) ToGrantCategoryInput() dataAccessType.GrantCategoryInput {
-	defaultTypePerDataSourceValues := m.DefaultTypePerDataSource.Elements()
-	defaultTypePerDS := make([]dataAccessType.GrantCategoryTypeForDataSourceInput, 0, len(defaultTypePerDataSourceValues))
-
-	for _, v := range defaultTypePerDataSourceValues {
-		vObject := v.(types.Object)
-		attributes := vObject.Attributes()
-
-		typeForDataSource := dataAccessType.GrantCategoryTypeForDataSourceInput{
-			DataSource: attributes["data_source"].(types.String).ValueString(),
-			Type:       attributes["type"].(types.String).ValueString(),
-		}
-
-		defaultTypePerDS = append(defaultTypePerDS, typeForDataSource)
-	}
-
-	allowedWhoCategoriesValues := m.AllowedWhoItems.Attributes()["categories"].(types.Set).Elements()
-	allowedWhoCategories := make([]string, 0, len(allowedWhoCategoriesValues))
-
-	for _, v := range allowedWhoCategoriesValues {
-		allowedWhoCategories = append(allowedWhoCategories, v.(types.String).ValueString())
-	}
-
-	input := dataAccessType.GrantCategoryInput{
-		Name:                     m.Name.ValueStringPointer(),
-		Description:              m.Description.ValueStringPointer(),
-		Icon:                     m.Icon.ValueStringPointer(),
-		CanCreate:                m.CanCreate.ValueBoolPointer(),
-		AllowDuplicateNames:      m.AllowDuplicateNames.ValueBoolPointer(),
-		MultiDataSource:          m.MultiDataSource.ValueBoolPointer(),
-		DefaultTypePerDataSource: defaultTypePerDS,
-		AllowedWhoItems: &dataAccessType.GrantCategoryAllowedWhoItemsInput{
-			User:        m.AllowedWhoItems.Attributes()["user"].(types.Bool).ValueBool(),
-			Inheritance: m.AllowedWhoItems.Attributes()["inheritance"].(types.Bool).ValueBool(),
-			Self:        m.AllowedWhoItems.Attributes()["self"].(types.Bool).ValueBool(),
-			Categories:  allowedWhoCategories,
-		},
-		AllowedWhatItems: &dataAccessType.GrantCategoryAllowedWhatItemsInput{
-			DataObject: m.AllowedWhatItems.Attributes()["data_object"].(types.Bool).ValueBool(),
-		},
-	}
-
-	return input
-}
-
 type GrantCategoryResource struct {
 	client *sdk.CollibraClient
 }
@@ -92,6 +51,10 @@ type GrantCategoryResource struct {
 func NewGrantCategoryResource() resource.Resource {
 	return &GrantCategoryResource{}
 }
+
+//
+// Schema
+//
 
 func (g *GrantCategoryResource) Metadata(ctx context.Context, request resource.MetadataRequest, response *resource.MetadataResponse) {
 	response.TypeName = request.ProviderTypeName + "_grant_category"
@@ -298,6 +261,55 @@ func (g *GrantCategoryResource) Schema(ctx context.Context, request resource.Sch
 		MarkdownDescription: "The grant category resource allows you to manage grant categories in Collibra Data Access.",
 		Version:             1,
 	}
+}
+
+//
+// Actions
+//
+
+func (m *GrantCategoryResourceModel) ToGrantCategoryInput() dataAccessType.GrantCategoryInput {
+	defaultTypePerDataSourceValues := m.DefaultTypePerDataSource.Elements()
+	defaultTypePerDS := make([]dataAccessType.GrantCategoryTypeForDataSourceInput, 0, len(defaultTypePerDataSourceValues))
+
+	for _, v := range defaultTypePerDataSourceValues {
+		vObject := v.(types.Object)
+		attributes := vObject.Attributes()
+
+		typeForDataSource := dataAccessType.GrantCategoryTypeForDataSourceInput{
+			DataSource: attributes["data_source"].(types.String).ValueString(),
+			Type:       attributes["type"].(types.String).ValueString(),
+		}
+
+		defaultTypePerDS = append(defaultTypePerDS, typeForDataSource)
+	}
+
+	allowedWhoCategoriesValues := m.AllowedWhoItems.Attributes()["categories"].(types.Set).Elements()
+	allowedWhoCategories := make([]string, 0, len(allowedWhoCategoriesValues))
+
+	for _, v := range allowedWhoCategoriesValues {
+		allowedWhoCategories = append(allowedWhoCategories, v.(types.String).ValueString())
+	}
+
+	input := dataAccessType.GrantCategoryInput{
+		Name:                     m.Name.ValueStringPointer(),
+		Description:              m.Description.ValueStringPointer(),
+		Icon:                     m.Icon.ValueStringPointer(),
+		CanCreate:                m.CanCreate.ValueBoolPointer(),
+		AllowDuplicateNames:      m.AllowDuplicateNames.ValueBoolPointer(),
+		MultiDataSource:          m.MultiDataSource.ValueBoolPointer(),
+		DefaultTypePerDataSource: defaultTypePerDS,
+		AllowedWhoItems: &dataAccessType.GrantCategoryAllowedWhoItemsInput{
+			User:        m.AllowedWhoItems.Attributes()["user"].(types.Bool).ValueBool(),
+			Inheritance: m.AllowedWhoItems.Attributes()["inheritance"].(types.Bool).ValueBool(),
+			Self:        m.AllowedWhoItems.Attributes()["self"].(types.Bool).ValueBool(),
+			Categories:  allowedWhoCategories,
+		},
+		AllowedWhatItems: &dataAccessType.GrantCategoryAllowedWhatItemsInput{
+			DataObject: m.AllowedWhatItems.Attributes()["data_object"].(types.Bool).ValueBool(),
+		},
+	}
+
+	return input
 }
 
 func (g *GrantCategoryResource) Create(ctx context.Context, request resource.CreateRequest, response *resource.CreateResponse) {

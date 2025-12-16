@@ -16,6 +16,10 @@ import (
 
 var _ resource.Resource = (*FilterResource)(nil)
 
+//
+// Model
+//
+
 type FilterResourceModel struct {
 	// AccessControlResourceModel properties. This has to be duplicated because of https://github.com/hashicorp/terraform-plugin-framework/issues/242
 	Id                types.String `tfsdk:"id"`
@@ -60,6 +64,79 @@ func (f *FilterResourceModel) SetAccessControlResourceModel(ap *AccessControlRes
 	f.InheritanceLocked = ap.InheritanceLocked
 }
 
+func (f *FilterResourceModel) UpdateOwners(owners types.Set) {
+	f.Owners = owners
+}
+
+type FilterResource struct {
+	AccessControlResource[FilterResourceModel, *FilterResourceModel]
+}
+
+func NewFilterResource() resource.Resource {
+	return &FilterResource{
+		AccessControlResource: AccessControlResource[FilterResourceModel, *FilterResourceModel]{
+			readHooks: []ReadHook[FilterResourceModel, *FilterResourceModel]{
+				filterTableToTerraform,
+			},
+			validationHooks: []ValidationHook[FilterResourceModel, *FilterResourceModel]{
+				validateFilterWhatLock,
+			},
+			planModifierHooks: []PlanModifierHook[FilterResourceModel, *FilterResourceModel]{
+				filterModifyPlan,
+			},
+		},
+	}
+}
+
+//
+// Schema
+//
+
+func (f *FilterResource) Metadata(_ context.Context, request resource.MetadataRequest, response *resource.MetadataResponse) {
+	response.TypeName = request.ProviderTypeName + "_filter"
+}
+
+func (f *FilterResource) Schema(ctx context.Context, request resource.SchemaRequest, response *resource.SchemaResponse) {
+	attributes := f.schema("filter")
+	attributes["table"] = schema.ObjectAttribute{
+		AttributeTypes:      dataObjectReferenceTypeAttributeTypes,
+		Required:            false,
+		Optional:            true,
+		Computed:            false,
+		Sensitive:           false,
+		Description:         "The table that should be filtered",
+		MarkdownDescription: "The table that should be filtered",
+	}
+	attributes["what_locked"] = schema.BoolAttribute{
+		Required:            false,
+		Optional:            true,
+		Computed:            true,
+		Sensitive:           false,
+		Description:         "Indicates whether it should lock the what. Should be set to true if table is set.",
+		MarkdownDescription: "Indicates whether it should lock the what. Should be set to true if table is set.",
+	}
+	attributes["filter_policy"] = schema.StringAttribute{
+		Required:            true,
+		Optional:            false,
+		Computed:            false,
+		Sensitive:           false,
+		Description:         "The filter policy that defines how the data is filtered. The policy syntax is defined by the data source.",
+		MarkdownDescription: "The filter policy that defines how the data is filtered. The policy syntax is defined by the data source.",
+	}
+
+	response.Schema = schema.Schema{
+		Attributes:          attributes,
+		Description:         "The filter access control resource",
+		MarkdownDescription: "The resource for representing a Row-level Filter access control.",
+		Version:             1,
+	}
+}
+
+//
+// Actions
+//
+
+// ToAccessControlInput converts the Terraform model for a filter to the Collibra model for AccessControlInput.
 func (f *FilterResourceModel) ToAccessControlInput(ctx context.Context, client *sdk.CollibraClient, result *dataAccessType.AccessControlInput) diag.Diagnostics {
 	diagnostics := f.GetAccessControlResourceModel().ToAccessControlInput(ctx, client, result)
 
@@ -113,6 +190,7 @@ func (f *FilterResourceModel) ToAccessControlInput(ctx context.Context, client *
 	return diagnostics
 }
 
+// FromAccessControl converts the Collibra model for AccessControl to the Terraform model for a filter.
 func (f *FilterResourceModel) FromAccessControl(_ context.Context, _ *sdk.CollibraClient, input *dataAccessType.AccessControl) diag.Diagnostics {
 	apResourceModel := f.GetAccessControlResourceModel()
 	diagnostics := apResourceModel.FromAccessControl(input)
@@ -137,71 +215,8 @@ func (f *FilterResourceModel) FromAccessControl(_ context.Context, _ *sdk.Collib
 	return diagnostics
 }
 
-func (f *FilterResourceModel) UpdateOwners(owners types.Set) {
-	f.Owners = owners
-}
-
-type FilterResource struct {
-	AccessControlResource[FilterResourceModel, *FilterResourceModel]
-}
-
-func NewFilterResource() resource.Resource {
-	return &FilterResource{
-		AccessControlResource: AccessControlResource[FilterResourceModel, *FilterResourceModel]{
-			readHooks: []ReadHook[FilterResourceModel, *FilterResourceModel]{
-				readFilterResourceTable,
-			},
-			validationHooks: []ValidationHook[FilterResourceModel, *FilterResourceModel]{
-				validateFilterWhatLock,
-			},
-			planModifierHooks: []PlanModifierHook[FilterResourceModel, *FilterResourceModel]{
-				filterModifyPlan,
-			},
-		},
-	}
-}
-
-func (f *FilterResource) Metadata(_ context.Context, request resource.MetadataRequest, response *resource.MetadataResponse) {
-	response.TypeName = request.ProviderTypeName + "_filter"
-}
-
-func (f *FilterResource) Schema(ctx context.Context, request resource.SchemaRequest, response *resource.SchemaResponse) {
-	attributes := f.schema("filter")
-	attributes["table"] = schema.ObjectAttribute{
-		AttributeTypes:      dataObjectReferenceTypeAttributeTypes,
-		Required:            false,
-		Optional:            true,
-		Computed:            false,
-		Sensitive:           false,
-		Description:         "The table that should be filtered",
-		MarkdownDescription: "The table that should be filtered",
-	}
-	attributes["what_locked"] = schema.BoolAttribute{
-		Required:            false,
-		Optional:            true,
-		Computed:            true,
-		Sensitive:           false,
-		Description:         "Indicates whether it should lock the what. Should be set to true if table is set.",
-		MarkdownDescription: "Indicates whether it should lock the what. Should be set to true if table is set.",
-	}
-	attributes["filter_policy"] = schema.StringAttribute{
-		Required:            true,
-		Optional:            false,
-		Computed:            false,
-		Sensitive:           false,
-		Description:         "The filter policy that defines how the data is filtered. The policy syntax is defined by the data source.",
-		MarkdownDescription: "The filter policy that defines how the data is filtered. The policy syntax is defined by the data source.",
-	}
-
-	response.Schema = schema.Schema{
-		Attributes:          attributes,
-		Description:         "The filter access control resource",
-		MarkdownDescription: "The resource for representing a Row-level Filter access control.",
-		Version:             1,
-	}
-}
-
-func readFilterResourceTable(ctx context.Context, client *sdk.CollibraClient, data *FilterResourceModel) (diagnostics diag.Diagnostics) {
+// filterTableToTerraform reads the table DataObject from Collibra and converts it to the Terraform model
+func filterTableToTerraform(ctx context.Context, client *sdk.CollibraClient, data *FilterResourceModel) (diagnostics diag.Diagnostics) {
 	if !data.Table.IsNull() {
 		whatItems := client.AccessControl().GetAccessControlWhatDataObjectList(ctx, data.Id.ValueString())
 

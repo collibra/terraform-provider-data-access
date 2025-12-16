@@ -145,7 +145,7 @@ func (m *MaskResourceModel) FromAccessControl(ctx context.Context, client *sdk.C
 		return diagnostics
 	}
 
-	dataSources, d, done := dataSourceFromAccessControl(input, diagnostics, defaultMaskType.DefaultMaskExternalName)
+	dataSources, d, done := dataSourcesFromAccessControl(input, diagnostics, defaultMaskType.DefaultMaskExternalName)
 	if done {
 		return d
 	}
