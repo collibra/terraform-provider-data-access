@@ -35,6 +35,10 @@ const (
 	lockMsg = "Locked by terraform"
 )
 
+//
+// Model
+//
+
 type AccessControlResourceModel struct {
 	Id                types.String
 	Name              types.String
@@ -52,6 +56,31 @@ type DataObjectReferenceModel struct {
 	Type types.String `tfsdk:"type"`
 	Path types.List   `tfsdk:"path"`
 }
+
+type AccessControlModel[T any] interface {
+	*T
+	GetAccessControlResourceModel() *AccessControlResourceModel
+	SetAccessControlResourceModel(model *AccessControlResourceModel)
+	ToAccessControlInput(ctx context.Context, client *sdk.CollibraClient, result *dataAccessType.AccessControlInput) diag.Diagnostics
+	FromAccessControl(ctx context.Context, client *sdk.CollibraClient, input *dataAccessType.AccessControl) diag.Diagnostics
+	UpdateOwners(owners types.Set)
+}
+
+type ReadHook[T any, ApModel AccessControlModel[T]] func(ctx context.Context, client *sdk.CollibraClient, data ApModel) diag.Diagnostics
+type ValidationHook[T any, ApModel AccessControlModel[T]] func(ctx context.Context, data ApModel) diag.Diagnostics
+type PlanModifierHook[T any, ApModel AccessControlModel[T]] func(ctx context.Context, data ApModel) (ApModel, diag.Diagnostics)
+
+type AccessControlResource[T any, ApModel AccessControlModel[T]] struct {
+	client *sdk.CollibraClient
+
+	readHooks         []ReadHook[T, ApModel]
+	validationHooks   []ValidationHook[T, ApModel]
+	planModifierHooks []PlanModifierHook[T, ApModel]
+}
+
+//
+// Schema
+//
 
 var dataObjectReferenceTypeAttributes = map[string]schema.Attribute{
 	"type": schema.StringAttribute{
@@ -101,31 +130,6 @@ var dataObjectReferenceType = schema.ObjectAttribute{
 	Description:         "The reference to the data object",
 	MarkdownDescription: "The reference to the data object",
 }
-
-type AccessControlModel[T any] interface {
-	*T
-	GetAccessControlResourceModel() *AccessControlResourceModel
-	SetAccessControlResourceModel(model *AccessControlResourceModel)
-	ToAccessControlInput(ctx context.Context, client *sdk.CollibraClient, result *dataAccessType.AccessControlInput) diag.Diagnostics
-	FromAccessControl(ctx context.Context, client *sdk.CollibraClient, input *dataAccessType.AccessControl) diag.Diagnostics
-	UpdateOwners(owners types.Set)
-}
-
-type ReadHook[T any, ApModel AccessControlModel[T]] func(ctx context.Context, client *sdk.CollibraClient, data ApModel) diag.Diagnostics
-type ValidationHook[T any, ApModel AccessControlModel[T]] func(ctx context.Context, data ApModel) diag.Diagnostics
-type PlanModifierHook[T any, ApModel AccessControlModel[T]] func(ctx context.Context, data ApModel) (ApModel, diag.Diagnostics)
-
-type AccessControlResource[T any, ApModel AccessControlModel[T]] struct {
-	client *sdk.CollibraClient
-
-	readHooks         []ReadHook[T, ApModel]
-	validationHooks   []ValidationHook[T, ApModel]
-	planModifierHooks []PlanModifierHook[T, ApModel]
-}
-
-//
-//  Schema Definition
-//
 
 func (a *AccessControlResource[T, ApModel]) schema(typeName string) map[string]schema.Attribute {
 	defaultSchema := map[string]schema.Attribute{
@@ -290,6 +294,11 @@ func (a *AccessControlResource[T, ApModel]) schema(typeName string) map[string]s
 	return defaultSchema
 }
 
+//
+// Actions
+//
+
+// Create creates an AccessControl in Collibra from the given terraform model
 func (a *AccessControlResource[T, ApModel]) Create(ctx context.Context, request resource.CreateRequest, response *resource.CreateResponse) {
 	var data T
 
@@ -302,6 +311,7 @@ func (a *AccessControlResource[T, ApModel]) Create(ctx context.Context, request 
 	a.create(ctx, &data, response)
 }
 
+// create creates an AccessControl in Collibra from the given terraform model
 func (a *AccessControlResource[T, ApModel]) create(ctx context.Context, data ApModel, response *resource.CreateResponse) {
 	input := dataAccessType.AccessControlInput{}
 
@@ -349,6 +359,7 @@ func (a *AccessControlResource[T, ApModel]) create(ctx context.Context, data ApM
 	response.Diagnostics.Append(a.createUpdateOwners(ctx, data, owners, ac, &response.State)...)
 }
 
+// createUpdateOwners updates the owners of an AccessControl in Collibra
 func (a *AccessControlResource[T, ApModel]) createUpdateOwners(ctx context.Context, data ApModel, owners types.Set, ac *dataAccessType.AccessControl, state *tfsdk.State) (diagnostics diag.Diagnostics) {
 	if !owners.IsNull() && !owners.IsUnknown() {
 		ownerElements := owners.Elements()
@@ -379,6 +390,7 @@ func (a *AccessControlResource[T, ApModel]) createUpdateOwners(ctx context.Conte
 	return diagnostics
 }
 
+// updateState updates the state of an AccessControl in Collibra
 func (a *AccessControlResource[T, ApModel]) updateState(ctx context.Context, data ApModel, state types.String, ac *dataAccessType.AccessControl) (_ *dataAccessType.AccessControl, diagnostics diag.Diagnostics) {
 	if state.Equal(data.GetAccessControlResourceModel().State) {
 		return ac, diagnostics
@@ -409,6 +421,7 @@ func (a *AccessControlResource[T, ApModel]) updateState(ctx context.Context, dat
 	return ac, diagnostics
 }
 
+// Read reads the AccessControl from Collibra and created the terraform model
 func (a *AccessControlResource[T, ApModel]) Read(ctx context.Context, request resource.ReadRequest, response *resource.ReadResponse) {
 	var data T
 
@@ -421,6 +434,7 @@ func (a *AccessControlResource[T, ApModel]) Read(ctx context.Context, request re
 	a.read(ctx, &data, response, a.readHooks...)
 }
 
+// read reads the AccessControl from Collibra and created the terraform model
 func (a *AccessControlResource[T, ApModel]) read(ctx context.Context, data ApModel, response *resource.ReadResponse, hooks ...ReadHook[T, ApModel]) {
 	apModel := data.GetAccessControlResourceModel()
 
@@ -473,7 +487,7 @@ func (a *AccessControlResource[T, ApModel]) read(ctx context.Context, data ApMod
 
 		stateWhoItems := make([]attr.Value, 0)
 
-		stateWhoItems, done := a.readWhoItems(ctx, apModel, response, definedPromises, stateWhoItems)
+		stateWhoItems, done := a.whoItemsToTerraform(ctx, apModel, response, definedPromises, stateWhoItems)
 		if done {
 			return
 		}
@@ -496,7 +510,7 @@ func (a *AccessControlResource[T, ApModel]) read(ctx context.Context, data ApMod
 	}
 
 	if len(ac.WhoAbacRules) > 0 {
-		object, objectDiagnostics := a.abacWhoFromAccessControl(ac)
+		object, objectDiagnostics := a.abacWhoToTerraform(ac)
 		response.Diagnostics.Append(objectDiagnostics...)
 
 		if response.Diagnostics.HasError() {
@@ -532,7 +546,8 @@ func (a *AccessControlResource[T, ApModel]) read(ctx context.Context, data ApMod
 	response.Diagnostics.Append(response.State.Set(ctx, data)...)
 }
 
-func (a *AccessControlResource[T, ApModel]) abacWhoFromAccessControl(ac *dataAccessType.AccessControl) (_ types.Set, diagnostics diag.Diagnostics) {
+// abacWhoToTerraform convert the WHO ABAC rules from the AccessControl to terraform types
+func (a *AccessControlResource[T, ApModel]) abacWhoToTerraform(ac *dataAccessType.AccessControl) (_ types.Set, diagnostics diag.Diagnostics) {
 	whoAbacRuleList := make([]attr.Value, 0, len(ac.WhoAbacRules))
 
 	whoAbacRuleType := map[string]attr.Type{
@@ -561,7 +576,8 @@ func (a *AccessControlResource[T, ApModel]) abacWhoFromAccessControl(ac *dataAcc
 	return whoAbacRules, diagnostics
 }
 
-func (a *AccessControlResource[T, ApModel]) readWhoItems(ctx context.Context, apModel *AccessControlResourceModel, response *resource.ReadResponse, definedPromises set.Set[string], stateWhoItems []attr.Value) ([]attr.Value, bool) {
+// whoItemsToTerraform converts the who-items from the access control to terraform types
+func (a *AccessControlResource[T, ApModel]) whoItemsToTerraform(ctx context.Context, apModel *AccessControlResourceModel, response *resource.ReadResponse, definedPromises set.Set[string], stateWhoItems []attr.Value) ([]attr.Value, bool) {
 	whoItems := a.client.AccessControl().GetAccessControlWhoList(ctx, apModel.Id.ValueString())
 	for whoItem, err := range whoItems {
 		if err != nil {
@@ -606,6 +622,7 @@ func (a *AccessControlResource[T, ApModel]) readWhoItems(ctx context.Context, ap
 	return stateWhoItems, false
 }
 
+// Update updates the AccessControl in Collibra from the given terraform model
 func (a *AccessControlResource[T, ApModel]) Update(ctx context.Context, request resource.UpdateRequest, response *resource.UpdateResponse) {
 	var data T
 
@@ -618,6 +635,7 @@ func (a *AccessControlResource[T, ApModel]) Update(ctx context.Context, request 
 	a.update(ctx, &data, response)
 }
 
+// update updates the AccessControl in Collibra from the given terraform model and updates the terraform accordingly after
 func (a *AccessControlResource[T, ApModel]) update(ctx context.Context, data ApModel, response *resource.UpdateResponse) {
 	input := dataAccessType.AccessControlInput{}
 
@@ -646,11 +664,11 @@ func (a *AccessControlResource[T, ApModel]) update(ctx context.Context, data ApM
 		}
 	}
 
-	if a.updateGetWhoItems(ctx, id, response, definedPromises, input) {
+	if a.retainExistingWhoGrantsForPromises(ctx, id, response, definedPromises, input) {
 		return
 	}
 
-	// Update access provider
+	// Update access control
 	ac, err := a.client.AccessControl().UpdateAccessControl(ctx, id, input, services.WithAccessControlOverrideLocks())
 	if err != nil {
 		response.Diagnostics.AddError("Failed to update access provider", err.Error())
@@ -684,7 +702,8 @@ func (a *AccessControlResource[T, ApModel]) update(ctx context.Context, data ApM
 	response.Diagnostics.Append(a.createUpdateOwners(ctx, data, owners, ac, &response.State)...)
 }
 
-func (a *AccessControlResource[T, ApModel]) updateGetWhoItems(ctx context.Context, id string, response *resource.UpdateResponse, definedPromises set.Set[string], input dataAccessType.AccessControlInput) bool {
+// retainExistingWhoGrantsForPromises gets the existing WHO-items from the AccessControl and only keeps the grants that correspond to a defined promise
+func (a *AccessControlResource[T, ApModel]) retainExistingWhoGrantsForPromises(ctx context.Context, id string, response *resource.UpdateResponse, definedPromises set.Set[string], input dataAccessType.AccessControlInput) bool {
 	whoItems := a.client.AccessControl().GetAccessControlWhoList(ctx, id)
 	for whoItem, err := range whoItems {
 		if err != nil {
@@ -726,6 +745,7 @@ func (a *AccessControlResource[T, ApModel]) updateGetWhoItems(ctx context.Contex
 	return false
 }
 
+// Delete deletes the AccessControl in Collibra
 func (a *AccessControlResource[T, ApModel]) Delete(ctx context.Context, request resource.DeleteRequest, response *resource.DeleteResponse) {
 	var data T
 
@@ -747,6 +767,7 @@ func (a *AccessControlResource[T, ApModel]) Delete(ctx context.Context, request 
 	response.State.RemoveResource(ctx)
 }
 
+// Configure configures the client to connect to Collibra
 func (a *AccessControlResource[T, ApModel]) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	// Prevent panic if the provider has not been configured.
 	if req.ProviderData == nil {
@@ -845,6 +866,7 @@ func (a *AccessControlResource[T, ApModel]) ValidateConfig(ctx context.Context, 
 	}
 }
 
+// readOwners fetches the owners of an AccessControl from Collibra and puts them in the Terraform model
 func (a *AccessControlResource[T, ApModel]) readOwners(ctx context.Context, apId string) (_ types.Set, diagnostics diag.Diagnostics) {
 	roleAssignments := a.client.Role().ListRoleAssignmentsOnAccessControl(ctx, apId, services.WithRoleAssignmentListFilter(&dataAccessType.RoleAssignmentFilterInput{
 		Role: utils.Ptr(ownerRole),
@@ -945,6 +967,7 @@ func (a *AccessControlResource[T, ApModel]) ModifyPlan(ctx context.Context, req 
 	resp.Diagnostics.Append(resp.Plan.Set(ctx, apModel)...)
 }
 
+// ToAccessControlInput converts the Terraform model to the Collibra AccessControlInput model
 func (a *AccessControlResourceModel) ToAccessControlInput(ctx context.Context, client *sdk.CollibraClient, result *dataAccessType.AccessControlInput) (diagnostics diag.Diagnostics) {
 	result.Name = a.Name.ValueStringPointer()
 	result.Description = a.Description.ValueStringPointer()
@@ -957,9 +980,12 @@ func (a *AccessControlResourceModel) ToAccessControlInput(ctx context.Context, c
 		},
 	)
 
+	// Handling the WHO
 	if !a.Who.IsNull() && !a.Who.IsUnknown() {
 		diagnostics.Append(a.whoElementsToAccessControlInput(ctx, client, result)...)
-	} else if !a.WhoAbacRules.IsNull() && !a.WhoAbacRules.IsUnknown() {
+	}
+
+	if !a.WhoAbacRules.IsNull() && !a.WhoAbacRules.IsUnknown() {
 		diagnostics.Append(a.whoAbacRulesToAccessControlInput(result)...)
 	}
 
@@ -997,6 +1023,7 @@ func (a *AccessControlResourceModel) ToAccessControlInput(ctx context.Context, c
 	return diagnostics
 }
 
+// whoElementsToAccessControlInput converts the WHO-items from the TerraForm model to the Collibra AccessControlInput model
 func (a *AccessControlResourceModel) whoElementsToAccessControlInput(ctx context.Context, client *sdk.CollibraClient, result *dataAccessType.AccessControlInput) (diagnostics diag.Diagnostics) {
 	whoItems := a.Who.Elements()
 
@@ -1041,6 +1068,7 @@ func (a *AccessControlResourceModel) whoElementsToAccessControlInput(ctx context
 	return diagnostics
 }
 
+// whoAbacRulesToAccessControlInput converts the WHO ABAC rules from the TerraForm model to the Collibra AccessControlInput model
 func (a *AccessControlResourceModel) whoAbacRulesToAccessControlInput(result *dataAccessType.AccessControlInput) (diagnostics diag.Diagnostics) {
 	whoAbacRuleItems := a.WhoAbacRules.Elements()
 
@@ -1065,35 +1093,7 @@ func (a *AccessControlResourceModel) whoAbacRulesToAccessControlInput(result *da
 	return diagnostics
 }
 
-func getOptionalString(attributes map[string]attr.Value, field string) *string {
-	var val *string
-	if !attributes[field].IsNull() {
-		val = utils.Ptr(attributes[field].(types.String).ValueString())
-	}
-
-	return val
-}
-
-func abacRuleToGqlInput(attributes map[string]attr.Value, field string) (_ *dataAccessType.AbacComparisonExpressionInput, diagnostics diag.Diagnostics) {
-	jsonRule := attributes[field].(jsontypes.Normalized)
-
-	var abacRule abac_expression.BinaryExpression
-	diagnostics.Append(jsonRule.Unmarshal(&abacRule)...)
-
-	if diagnostics.HasError() {
-		return nil, diagnostics
-	}
-
-	abacInput, err := abacRule.ToGqlInput()
-	if err != nil {
-		diagnostics.AddError("Failed to convert abac rule to gql input", err.Error())
-
-		return nil, diagnostics
-	}
-
-	return abacInput, diagnostics
-}
-
+// FromAccessControl converts the Collibra AccessControl model to the Terraform model
 func (a *AccessControlResourceModel) FromAccessControl(ac *dataAccessType.AccessControl) (diagnostics diag.Diagnostics) {
 	a.Id = types.StringValue(ac.Id)
 	a.Name = types.StringValue(ac.Name)
@@ -1116,14 +1116,7 @@ func (a *AccessControlResourceModel) FromAccessControl(ac *dataAccessType.Access
 	return diagnostics
 }
 
-func _userPrefix(u string) string {
-	return "user:" + u
-}
-
-func _accessControlPrefix(a string) string {
-	return "access_control:" + a
-}
-
+// dataSourcesToAccessControlInput converts the data sources from the TerraForm model to the Collibra AccessControlInput model
 func dataSourcesToAccessControlInput(dataSources types.Set, result *dataAccessType.AccessControlInput) {
 	if !dataSources.IsNull() && !dataSources.IsUnknown() {
 		dataSourceElements := dataSources.Elements()
@@ -1145,4 +1138,42 @@ func dataSourcesToAccessControlInput(dataSources types.Set, result *dataAccessTy
 			})
 		}
 	}
+}
+
+// abacRuleToGqlInput converts a JSON ABAC rule from TerraForm to a Collibra GraphQL input object
+func abacRuleToGqlInput(attributes map[string]attr.Value, field string) (_ *dataAccessType.AbacComparisonExpressionInput, diagnostics diag.Diagnostics) {
+	jsonRule := attributes[field].(jsontypes.Normalized)
+
+	var abacRule abac_expression.BinaryExpression
+	diagnostics.Append(jsonRule.Unmarshal(&abacRule)...)
+
+	if diagnostics.HasError() {
+		return nil, diagnostics
+	}
+
+	abacInput, err := abacRule.ToGqlInput()
+	if err != nil {
+		diagnostics.AddError("Failed to convert abac rule to gql input", err.Error())
+
+		return nil, diagnostics
+	}
+
+	return abacInput, diagnostics
+}
+
+func getOptionalString(attributes map[string]attr.Value, field string) *string {
+	var val *string
+	if !attributes[field].IsNull() {
+		val = utils.Ptr(attributes[field].(types.String).ValueString())
+	}
+
+	return val
+}
+
+func _userPrefix(u string) string {
+	return "user:" + u
+}
+
+func _accessControlPrefix(a string) string {
+	return "access_control:" + a
 }
