@@ -363,8 +363,7 @@ resource "collibra-data-access_grant" "abac_grant" {
 		}
 	]
 	what_abac_rules = [{
-		id = "rule1"
-        rule = local.abac_rule
+		rule = local.abac_rule
 		do_types = ["table"]
 		scope = [
 			{
@@ -426,8 +425,7 @@ resource "collibra-data-access_grant" "abac_grant" {
 		}
 	]
 	what_abac_rules = [{
-		id = "rule1"
-        rule = local.abac_rule
+		rule = local.abac_rule
 		scope = [
 			{
 				type: "schema"
@@ -537,7 +535,6 @@ resource "collibra-data-access_grant" "who_abac_grant" {
 	]
 	who_abac_rules = [
 		{
-			id = "rule1"
 			rule = local.abac_rule
 		}
 	]
@@ -614,7 +611,6 @@ resource "collibra-data-access_grant" "who_abac_grant" {
 	]
 	who_abac_rules = [
 		{
-			id = "rule1"
 			rule = local.abac_rule
 		}
 	]

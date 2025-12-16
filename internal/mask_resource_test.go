@@ -134,7 +134,6 @@ resource "collibra-data-access_mask" "test" {
 	}]
 	who_abac_rules = [
 		{
-			id = "rule1"
 			rule = local.abac_rule
 		}
 	]
@@ -193,7 +192,6 @@ resource "collibra-data-access_mask" "test" {
 	}]
 	who_abac_rules = [
 		{
-			id = "rule1"
 			rule = local.abac_rule
 		}
 	]
@@ -254,7 +252,6 @@ resource "collibra-data-access_mask" "abac_mask" {
 	     }
     ]
 	what_abac_rules = [{
-		id = "rule1"
 		rule = local.abac_rule
 		scope = [
 			{
