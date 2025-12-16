@@ -197,16 +197,13 @@ func (g *GrantResource) Schema(_ context.Context, _ resource.SchemaRequest, resp
 		NestedObject: schema.NestedAttributeObject{
 			Attributes: map[string]schema.Attribute{
 				"id": schema.StringAttribute{
-					Required:            false,
+					Required:            true,
 					Optional:            false,
-					Computed:            true,
+					Computed:            false,
 					Sensitive:           false,
-					Description:         "The ID of the abac rule",
-					MarkdownDescription: "The ID of the abac rule",
+					Description:         "A unique ID of the abac rule within this access control",
+					MarkdownDescription: "A unique ID of the abac rule within this access control",
 					Default:             nil,
-					PlanModifiers: []planmodifier.String{
-						stringplanmodifier.UseStateForUnknown(),
-					},
 				},
 				"scope": schema.SetNestedAttribute{
 					NestedObject: schema.NestedAttributeObject{

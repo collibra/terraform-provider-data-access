@@ -229,16 +229,13 @@ func (a *AccessControlResource[T, ApModel]) schema(typeName string) map[string]s
 				Attributes: map[string]schema.Attribute{
 					// TODO we currently don't support the other attributes in a who abac rule.
 					"id": schema.StringAttribute{
-						Required:            false,
+						Required:            true,
 						Optional:            false,
-						Computed:            true,
+						Computed:            false,
 						Sensitive:           false,
-						Description:         "The ID of the abac rule",
-						MarkdownDescription: "The ID of the abac rule",
+						Description:         "A unique ID of the abac rule within this access control",
+						MarkdownDescription: "A unique ID of the abac rule within this access control",
 						Default:             nil,
-						PlanModifiers: []planmodifier.String{
-							stringplanmodifier.UseStateForUnknown(),
-						},
 					},
 					"rule": schema.StringAttribute{
 						CustomType:          jsontypes.NormalizedType{},
