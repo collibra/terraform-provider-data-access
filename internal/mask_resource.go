@@ -331,10 +331,9 @@ func (m *MaskResourceModel) abacWhatToAccessControlInput(ctx context.Context, cl
 		abacRuleObject := abacRuleItem.(types.Object)
 		attributes := abacRuleObject.Attributes()
 
-		scope := make([]string, 0)
 		scopeSet := attributes["scope"].(types.Set)
 
-		scope, d, done := abacWhatScopeToAccessControlInput(ctx, client, scopeSet, diagnostics, scope)
+		scope, d, done := abacWhatScopeToAccessControlInput(ctx, client, scopeSet)
 		if done {
 			return d
 		}
@@ -379,7 +378,7 @@ func (m *MaskResourceModel) abacWhatFromAccessControl(ctx context.Context, clien
 				return types.SetNull(whatAbacRulesType), diagnostics
 			}
 
-			scopeItemValue, diags := dataObjectToReference(scopeItem, diagnostics)
+			scopeItemValue, diags := dataObjectToReference(scopeItem)
 			diagnostics.Append(diags...)
 
 			if diagnostics.HasError() {
@@ -427,7 +426,7 @@ func readMaskResourceColumns(ctx context.Context, client *sdk.CollibraClient, da
 			}
 
 			if whatItem.DataObject != nil {
-				whatItemValue, diags := dataObjectToReference(&whatItem.DataObject.DataObject, diagnostics)
+				whatItemValue, diags := dataObjectToReference(&whatItem.DataObject.DataObject)
 				diagnostics.Append(diags...)
 
 				stateWhatItems = append(stateWhatItems, whatItemValue)

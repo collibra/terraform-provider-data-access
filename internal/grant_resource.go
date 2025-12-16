@@ -498,10 +498,9 @@ func (m *GrantResourceModel) abacWhatToAccessControlInput(ctx context.Context, c
 			return diagnostics
 		}
 
-		scope := make([]string, 0)
 		scopeSet := attributes["scope"].(types.Set)
 
-		scope, d, done := abacWhatScopeToAccessControlInput(ctx, client, scopeSet, diagnostics, scope)
+		scope, d, done := abacWhatScopeToAccessControlInput(ctx, client, scopeSet)
 		if done {
 			return d
 		}
@@ -574,7 +573,7 @@ func (m *GrantResourceModel) abacWhatFromAccessControl(ctx context.Context, clie
 				return types.SetNull(whatAbacRulesType), diagnostics
 			}
 
-			scopeItemValue, diags := dataObjectToReference(scopeItem, diagnostics)
+			scopeItemValue, diags := dataObjectToReference(scopeItem)
 			diagnostics.Append(diags...)
 
 			if diagnostics.HasError() {
@@ -626,7 +625,7 @@ func readGrantWhatItems(ctx context.Context, client *sdk.CollibraClient, data *G
 				return diagnostics
 			}
 
-			whatItemDataObject, diags := dataObjectToReference(&whatItem.DataObject.DataObject, diagnostics)
+			whatItemDataObject, diags := dataObjectToReference(&whatItem.DataObject.DataObject)
 			diagnostics.Append(diags...)
 
 			if diagnostics.HasError() {
@@ -736,7 +735,7 @@ func dataObjectReferenceToComponents(dataObjectAttributes map[string]attr.Value)
 }
 
 // dataObjectToReference converts a DataObject from Collibra to a data object reference object in the Terraform model.
-func dataObjectToReference(dataObject *dataAccessType.DataObject, diagnostics diag.Diagnostics) (basetypes.ObjectValue, diag.Diagnostics) {
+func dataObjectToReference(dataObject *dataAccessType.DataObject) (obj basetypes.ObjectValue, diagnostics diag.Diagnostics) {
 	fullName, err := dataAccessType.FromDataObjectURI(dataObject.FullName)
 	if err != nil {
 		diagnostics.AddError("Failed to parse data object full name", err.Error())
@@ -764,7 +763,9 @@ func dataObjectToReference(dataObject *dataAccessType.DataObject, diagnostics di
 }
 
 // abacWhatScopeToAccessControlInput converts the scope of an ABAC rule from the Terraform model to a list of data object IDs by querying Collibra.
-func abacWhatScopeToAccessControlInput(ctx context.Context, client *sdk.CollibraClient, scopeSet types.Set, diagnostics diag.Diagnostics, scope []string) ([]string, diag.Diagnostics, bool) {
+func abacWhatScopeToAccessControlInput(ctx context.Context, client *sdk.CollibraClient, scopeSet types.Set) (scope []string, diagnostics diag.Diagnostics, done bool) {
+	scope = make([]string, 0, len(scopeSet.Elements()))
+
 	for _, scopeItem := range scopeSet.Elements() {
 		scopeObject := scopeItem.(types.Object)
 		scopeAttributes := scopeObject.Attributes()

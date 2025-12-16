@@ -237,7 +237,7 @@ func filterTableToTerraform(ctx context.Context, client *sdk.CollibraClient, dat
 				return diagnostics
 			}
 
-			table, diags := dataObjectToReference(&whatItem.DataObject.DataObject, diagnostics)
+			table, diags := dataObjectToReference(&whatItem.DataObject.DataObject)
 			diagnostics.Append(diags...)
 
 			if diagnostics.HasError() {
