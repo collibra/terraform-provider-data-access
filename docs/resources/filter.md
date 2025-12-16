@@ -102,11 +102,8 @@ Optional:
 
 Required:
 
+- `id` (String) A unique ID of the abac rule within this access control
 - `rule` (String) The JSON representation of the abac rule
-
-Read-Only:
-
-- `id` (String) The ID of the abac rule
 
 ## Import
 
