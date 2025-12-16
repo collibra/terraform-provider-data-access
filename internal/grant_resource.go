@@ -204,6 +204,9 @@ func (g *GrantResource) Schema(_ context.Context, _ resource.SchemaRequest, resp
 					Description:         "The ID of the abac rule",
 					MarkdownDescription: "The ID of the abac rule",
 					Default:             nil,
+					PlanModifiers: []planmodifier.String{
+						stringplanmodifier.UseStateForUnknown(),
+					},
 				},
 				"scope": schema.SetNestedAttribute{
 					NestedObject: schema.NestedAttributeObject{

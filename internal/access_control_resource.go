@@ -236,6 +236,9 @@ func (a *AccessControlResource[T, ApModel]) schema(typeName string) map[string]s
 						Description:         "The ID of the abac rule",
 						MarkdownDescription: "The ID of the abac rule",
 						Default:             nil,
+						PlanModifiers: []planmodifier.String{
+							stringplanmodifier.UseStateForUnknown(),
+						},
 					},
 					"rule": schema.StringAttribute{
 						CustomType:          jsontypes.NormalizedType{},
