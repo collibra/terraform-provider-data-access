@@ -5,41 +5,46 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/collibra/data-access-go-sdk"
+	sdk "github.com/collibra/data-access-go-sdk"
 	dataAccessType "github.com/collibra/data-access-go-sdk/types"
 	"github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
+	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
-	"github.com/collibra/data-access-terraform-provider/internal/types/abac_expression"
 	"github.com/collibra/data-access-terraform-provider/internal/utils"
 )
 
 var _ resource.Resource = (*MaskResource)(nil)
 
+//
+// Model
+//
+
 type MaskResourceModel struct {
 	// AccessControlResourceModel properties. This has to be duplicated because of https://github.com/hashicorp/terraform-plugin-framework/issues/242
-	Id                types.String         `tfsdk:"id"`
-	Name              types.String         `tfsdk:"name"`
-	Description       types.String         `tfsdk:"description"`
-	State             types.String         `tfsdk:"state"`
-	Who               types.Set            `tfsdk:"who"`
-	Owners            types.Set            `tfsdk:"owners"`
-	WhoAbacRule       jsontypes.Normalized `tfsdk:"who_abac_rule"`
-	WhoLocked         types.Bool           `tfsdk:"who_locked"`
-	InheritanceLocked types.Bool           `tfsdk:"inheritance_locked"`
+	Id                types.String `tfsdk:"id"`
+	Name              types.String `tfsdk:"name"`
+	Description       types.String `tfsdk:"description"`
+	State             types.String `tfsdk:"state"`
+	Who               types.Set    `tfsdk:"who"`
+	Owners            types.Set    `tfsdk:"owners"`
+	WhoAbacRules      types.Set    `tfsdk:"who_abac_rules"`
+	WhoLocked         types.Bool   `tfsdk:"who_locked"`
+	InheritanceLocked types.Bool   `tfsdk:"inheritance_locked"`
 
 	// MaskResourceModel properties.
-	Type         types.String `tfsdk:"type"`
-	DataSource   types.String `tfsdk:"data_source"`
-	Columns      types.Set    `tfsdk:"columns"`
-	WhatAbacRule types.Object `tfsdk:"what_abac_rule"`
-	WhatLocked   types.Bool   `tfsdk:"what_locked"`
+	DataSources   types.Set  `tfsdk:"data_sources"`
+	Columns       types.Set  `tfsdk:"columns"`
+	WhatAbacRules types.Set  `tfsdk:"what_abac_rules"`
+	WhatLocked    types.Bool `tfsdk:"what_locked"`
 }
 
 func (m *MaskResourceModel) GetAccessControlResourceModel() *AccessControlResourceModel {
@@ -50,7 +55,7 @@ func (m *MaskResourceModel) GetAccessControlResourceModel() *AccessControlResour
 		State:             m.State,
 		Who:               m.Who,
 		Owners:            m.Owners,
-		WhoAbacRule:       m.WhoAbacRule,
+		WhoAbacRules:      m.WhoAbacRules,
 		WhoLocked:         m.WhoLocked,
 		InheritanceLocked: m.InheritanceLocked,
 	}
@@ -63,219 +68,13 @@ func (m *MaskResourceModel) SetAccessControlResourceModel(ap *AccessControlResou
 	m.State = ap.State
 	m.Who = ap.Who
 	m.Owners = ap.Owners
-	m.WhoAbacRule = ap.WhoAbacRule
+	m.WhoAbacRules = ap.WhoAbacRules
 	m.WhoLocked = ap.WhoLocked
 	m.InheritanceLocked = ap.InheritanceLocked
 }
 
-func (m *MaskResourceModel) ToAccessControlInput(ctx context.Context, client *sdk.CollibraClient, result *dataAccessType.AccessControlInput) diag.Diagnostics {
-	diagnostics := m.GetAccessControlResourceModel().ToAccessControlInput(ctx, client, result)
-
-	if diagnostics.HasError() {
-		return diagnostics
-	}
-
-	if !m.DataSource.IsNull() && !m.DataSource.IsUnknown() {
-		var apType *string
-		if !m.Type.IsUnknown() {
-			apType = m.Type.ValueStringPointer()
-		}
-
-		result.DataSources = []dataAccessType.AccessControlDataSourceInput{
-			{
-				DataSource: m.DataSource.ValueString(),
-				Type:       apType,
-			},
-		}
-	}
-
-	result.Action = utils.Ptr(dataAccessType.AccessControlActionMask)
-
-	if !m.Columns.IsNull() && !m.Columns.IsUnknown() {
-		elements := m.Columns.Elements()
-
-		result.WhatDataObjects = make([]dataAccessType.AccessControlWhatInputDO, 0, len(elements))
-
-		// Assume that currently only 1 dataSource is provided
-		dataSource := result.DataSources[0].DataSource
-
-		for _, whatDataObject := range elements {
-			columnName := whatDataObject.(types.String).ValueString()
-
-			result.WhatDataObjects = append(result.WhatDataObjects, dataAccessType.AccessControlWhatInputDO{
-				DataObjectByName: []dataAccessType.AccessControlWhatDoByNameInput{{
-					FullName:   columnName,
-					DataSource: dataSource,
-				}},
-			})
-		}
-	} else if !m.WhatAbacRule.IsNull() {
-		diagnostics.Append(m.abacWhatToAccessControlInput(ctx, client, result)...)
-
-		if diagnostics.HasError() {
-			return diagnostics
-		}
-	}
-
-	if m.WhatLocked.ValueBool() {
-		result.Locks = append(result.Locks, dataAccessType.AccessControlLockDataInput{
-			LockKey: dataAccessType.AccessControlLockWhatlock,
-			Details: &dataAccessType.AccessControlLockDetailsInput{
-				Reason: utils.Ptr(lockMsg),
-			},
-		})
-	}
-
-	return diagnostics
-}
-
-func (m *MaskResourceModel) FromAccessControl(ctx context.Context, client *sdk.CollibraClient, input *dataAccessType.AccessControl) diag.Diagnostics {
-	apResourceModel := m.GetAccessControlResourceModel()
-	diagnostics := apResourceModel.FromAccessControl(input)
-
-	if diagnostics.HasError() {
-		return diagnostics
-	}
-
-	m.SetAccessControlResourceModel(apResourceModel)
-
-	if len(input.SyncData) != 1 {
-		diagnostics.AddError("Failed to get data source", fmt.Sprintf("Expected exactly one data source, got: %d.", len(input.SyncData)))
-
-		return diagnostics
-	}
-
-	m.DataSource = types.StringValue(input.SyncData[0].DataSource.Id)
-	m.WhatLocked = types.BoolValue(slices.ContainsFunc(input.Locks, func(data dataAccessType.AccessControlLocksAccessControlLockData) bool {
-		return data.LockKey == dataAccessType.AccessControlLockWhatlock
-	}))
-
-	if input.SyncData[0].AccessControlType == nil || input.SyncData[0].AccessControlType.Type == nil {
-		maskType, err := client.DataSource().GetMaskingMetadata(ctx, input.SyncData[0].DataSource.Id)
-		if err != nil {
-			diagnostics.AddError("Failed to get default mask type", err.Error())
-
-			return diagnostics
-		}
-
-		m.Type = types.StringPointerValue(maskType.DefaultMaskExternalName)
-	} else {
-		m.Type = types.StringPointerValue(input.SyncData[0].AccessControlType.Type)
-	}
-
-	if input.WhatType == dataAccessType.WhoAndWhatTypeDynamic && input.WhatAbacRule != nil {
-		object, objectDiagnostics := m.abacWhatFromAccessControl(ctx, client, input)
-		diagnostics.Append(objectDiagnostics...)
-
-		if diagnostics.HasError() {
-			return diagnostics
-		}
-
-		m.WhatAbacRule = object
-	}
-
-	return diagnostics
-}
-
 func (m *MaskResourceModel) UpdateOwners(owners types.Set) {
 	m.Owners = owners
-}
-
-func (m *MaskResourceModel) abacWhatToAccessControlInput(ctx context.Context, client *sdk.CollibraClient, result *dataAccessType.AccessControlInput) (diagnostics diag.Diagnostics) {
-	attributes := m.WhatAbacRule.Attributes()
-
-	scopeAttr := attributes["scope"]
-
-	scope := make([]string, 0)
-
-	if !scopeAttr.IsNull() && !scopeAttr.IsUnknown() {
-		scopeFullnameItems, scopeDiagnostics := utils.StringSetToSlice(ctx, attributes["scope"].(types.Set))
-		diagnostics.Append(scopeDiagnostics...)
-
-		if diagnostics.HasError() {
-			return diagnostics
-		}
-
-		// Assume that currently only 1 dataSource is provided
-		dataSource := result.DataSources[0].DataSource
-
-		for _, scopeFullnameItem := range scopeFullnameItems {
-			id, err := client.DataObject().GetDataObjectIdByName(ctx, scopeFullnameItem, dataSource)
-			if err != nil {
-				diagnostics.AddError("Failed to get data object id", err.Error())
-
-				return diagnostics
-			}
-
-			scope = append(scope, id)
-		}
-	}
-
-	jsonRule := attributes["rule"].(jsontypes.Normalized)
-
-	var abacRule abac_expression.BinaryExpression
-	diagnostics.Append(jsonRule.Unmarshal(&abacRule)...)
-
-	if diagnostics.HasError() {
-		return diagnostics
-	}
-
-	abacInput, err := abacRule.ToGqlInput()
-	if err != nil {
-		diagnostics.AddError("Failed to convert abac rule to gql input", err.Error())
-
-		return diagnostics
-	}
-
-	result.WhatType = utils.Ptr(dataAccessType.WhoAndWhatTypeDynamic)
-	result.WhatAbacRule = &dataAccessType.WhatAbacRuleInput{
-		DoTypes: []string{"column"},
-		Scope:   scope,
-		Rule:    *abacInput,
-	}
-
-	return diagnostics
-}
-
-func (m *MaskResourceModel) abacWhatFromAccessControl(ctx context.Context, client *sdk.CollibraClient, ap *dataAccessType.AccessControl) (_ types.Object, diagnostics diag.Diagnostics) {
-	objectTypes := map[string]attr.Type{
-		"scope": types.SetType{ElemType: types.StringType},
-		"rule":  jsontypes.NormalizedType{},
-	}
-
-	abacRule := jsontypes.NewNormalizedPointerValue(ap.WhatAbacRule.RuleJson)
-
-	var scopeItems []attr.Value //nolint:prealloc
-
-	for scopeItem, err := range client.AccessControl().GetAccessControlAbacWhatScope(ctx, ap.Id) {
-		if err != nil {
-			diagnostics.AddError("Failed to load access provider abac scope", err.Error())
-
-			return types.ObjectNull(objectTypes), diagnostics
-		}
-
-		scopeItems = append(scopeItems, types.StringValue(scopeItem.FullName))
-	}
-
-	scope, scopeDiagnostics := types.SetValue(types.StringType, scopeItems)
-	diagnostics.Append(scopeDiagnostics...)
-
-	if diagnostics.HasError() {
-		return types.ObjectNull(objectTypes), diagnostics
-	}
-
-	object, whatAbacDiagnostics := types.ObjectValue(objectTypes, map[string]attr.Value{
-		"rule":  abacRule,
-		"scope": scope,
-	})
-
-	diagnostics.Append(whatAbacDiagnostics...)
-
-	if diagnostics.HasError() {
-		return types.ObjectNull(objectTypes), diagnostics
-	}
-
-	return object, diagnostics
 }
 
 type MaskResource struct {
@@ -298,69 +97,107 @@ func NewMaskResource() resource.Resource {
 	}
 }
 
+//
+// Schema
+//
+
 func (m *MaskResource) Metadata(_ context.Context, request resource.MetadataRequest, response *resource.MetadataResponse) {
 	response.TypeName = request.ProviderTypeName + "_mask"
 }
 
 func (m *MaskResource) Schema(_ context.Context, _ resource.SchemaRequest, response *resource.SchemaResponse) {
 	attributes := m.schema("mask")
-	attributes["type"] = schema.StringAttribute{
-		Required:            true,
-		Optional:            false,
-		Computed:            false,
-		Sensitive:           false,
-		Description:         "The masking method",
-		MarkdownDescription: "The masking method, which defines how the data is masked. Available types are defined by the data source.",
-	}
-	attributes["data_source"] = schema.StringAttribute{
-		Required:            true,
-		Optional:            false,
-		Computed:            false,
-		Sensitive:           false,
-		Description:         "The ID of the data source of the mask",
-		MarkdownDescription: "The ID of the data source of the mask",
-		Validators: []validator.String{
-			stringvalidator.LengthAtLeast(3),
+	attributes["data_sources"] = schema.SetNestedAttribute{
+		NestedObject: schema.NestedAttributeObject{
+			Attributes: map[string]schema.Attribute{
+				"data_source": schema.StringAttribute{
+					Required:            true,
+					Optional:            false,
+					Computed:            false,
+					Sensitive:           false,
+					Description:         "The ID of the data source that this mask is applicable to",
+					MarkdownDescription: "The ID of the data source that this mask is applicable to",
+					Validators: []validator.String{
+						stringvalidator.LengthAtLeast(3),
+					},
+				},
+				"type": schema.StringAttribute{
+					Required:            true,
+					Optional:            false,
+					Computed:            false,
+					Sensitive:           false,
+					Description:         "The masking type to use for the mask in this data source",
+					MarkdownDescription: "The masking type to use for the mask in this data source. Available types are defined by the data source.",
+					PlanModifiers: []planmodifier.String{
+						stringplanmodifier.UseStateForUnknown(),
+					},
+				},
+			},
 		},
+		Required:            true,
+		Optional:            false,
+		Computed:            false,
+		Sensitive:           false,
+		Description:         "The list of data sources that this mask is applicable to",
+		MarkdownDescription: "The list of data sources that this mask is applicable to",
+		Validators:          []validator.Set{setvalidator.SizeAtLeast(1)},
 	}
-	attributes["columns"] = schema.SetAttribute{
-		ElementType:         types.StringType,
+	attributes["columns"] = schema.SetNestedAttribute{
+		NestedObject: schema.NestedAttributeObject{
+			Attributes: dataObjectReferenceTypeAttributes,
+		},
 		Required:            false,
 		Optional:            true,
 		Computed:            false,
 		Sensitive:           false,
-		Description:         "The full name of columns that should be included in the mask",
-		MarkdownDescription: "The full name of columns that should be included in the mask. Items are managed by Collibra Data Access if columns is not set (nil).",
+		Description:         "The list of columns that should be included in the mask",
+		MarkdownDescription: "The list of columns that should be included in the mask.",
 	}
 
-	attributes["what_abac_rule"] = schema.SingleNestedAttribute{
-		Attributes: map[string]schema.Attribute{
-			"scope": schema.SetAttribute{
-				ElementType:         types.StringType,
-				Required:            false,
-				Optional:            true,
-				Computed:            true,
-				Sensitive:           false,
-				Description:         "Scope of the defined abac rule",
-				MarkdownDescription: "Scope of the defined abac rule",
-			},
-			"rule": schema.StringAttribute{
-				CustomType:          jsontypes.NormalizedType{},
-				Required:            true,
-				Optional:            false,
-				Computed:            false,
-				Sensitive:           false,
-				Description:         "json representation of the abac rule",
-				MarkdownDescription: "json representation of the abac rule",
-				Default:             nil,
+	attributes["what_abac_rules"] = schema.SetNestedAttribute{
+		NestedObject: schema.NestedAttributeObject{
+			Attributes: map[string]schema.Attribute{
+				"id": schema.StringAttribute{
+					Required:            true,
+					Optional:            false,
+					Computed:            false,
+					Sensitive:           false,
+					Description:         "A unique ID of the abac rule within this access control",
+					MarkdownDescription: "A unique ID of the abac rule within this access control",
+					Default:             nil,
+				},
+				"scope": schema.SetNestedAttribute{
+					NestedObject: schema.NestedAttributeObject{
+						Attributes: dataObjectReferenceTypeAttributes,
+					},
+					Required:            true,
+					Optional:            false,
+					Computed:            false,
+					Sensitive:           false,
+					Description:         "Scope of the defined abac rule as a list of data objects",
+					MarkdownDescription: "Scope of the defined abac rule as a list of data objects",
+					Validators: []validator.Set{
+						setvalidator.SizeAtLeast(1),
+					},
+				},
+				"rule": schema.StringAttribute{
+					CustomType:          jsontypes.NormalizedType{},
+					Required:            true,
+					Optional:            false,
+					Computed:            false,
+					Sensitive:           false,
+					Description:         "json representation of the abac rule",
+					MarkdownDescription: "json representation of the abac rule",
+					Default:             nil,
+				},
 			},
 		},
 		Required:            false,
 		Optional:            true,
 		Computed:            false,
 		Sensitive:           false,
-		Description:         "What data object defined by abac rule. Cannot be set when what_data_objects is set.",
-		MarkdownDescription: "What data object defined by abac rule. Cannot be set when what_data_objects is set.",
+		Description:         "The abac rules for defining the what of a make.",
+		MarkdownDescription: "The abac rules for defining the what of a make.",
 	}
 	attributes["what_locked"] = schema.BoolAttribute{
 		Required:            false,
@@ -379,25 +216,227 @@ func (m *MaskResource) Schema(_ context.Context, _ resource.SchemaRequest, respo
 	}
 }
 
+//
+// Actions
+//
+
+// ToAccessControlInput converts the MaskResourceModel to an AccessControlInput
+func (m *MaskResourceModel) ToAccessControlInput(ctx context.Context, client *sdk.CollibraClient, result *dataAccessType.AccessControlInput) diag.Diagnostics {
+	diagnostics := m.GetAccessControlResourceModel().ToAccessControlInput(ctx, client, result)
+
+	if diagnostics.HasError() {
+		return diagnostics
+	}
+
+	dataSourcesToAccessControlInput(m.DataSources, result)
+
+	result.Action = utils.Ptr(dataAccessType.AccessControlActionMask)
+
+	if !m.Columns.IsNull() && !m.Columns.IsUnknown() {
+		elements := m.Columns.Elements()
+
+		result.WhatDataObjects = make([]dataAccessType.AccessControlWhatInputDO, 0, len(elements))
+
+		for _, whatDataObject := range elements {
+			dataObject := whatDataObject.(types.Object)
+			doType, doPath, dsId := dataObjectReferenceToComponents(dataObject.Attributes())
+			fullName := dataAccessType.FullName{
+				Type: doType,
+				Path: doPath,
+			}
+
+			result.WhatDataObjects = append(result.WhatDataObjects, dataAccessType.AccessControlWhatInputDO{
+				DataObjectByName: []dataAccessType.AccessControlWhatDoByNameInput{{
+					FullName:   fullName.ToDataObjectURI(),
+					DataSource: dsId,
+				}},
+			})
+		}
+	}
+
+	if !m.WhatAbacRules.IsNull() {
+		diagnostics.Append(m.abacWhatToAccessControlInput(ctx, client, result)...)
+
+		if diagnostics.HasError() {
+			return diagnostics
+		}
+	}
+
+	if m.WhatLocked.ValueBool() {
+		result.Locks = append(result.Locks, dataAccessType.AccessControlLockDataInput{
+			LockKey: dataAccessType.AccessControlLockWhatlock,
+			Details: &dataAccessType.AccessControlLockDetailsInput{
+				Reason: utils.Ptr(lockMsg),
+			},
+		})
+	}
+
+	return diagnostics
+}
+
+// FromAccessControl populates the MaskResourceModel from an AccessControl
+func (m *MaskResourceModel) FromAccessControl(ctx context.Context, client *sdk.CollibraClient, input *dataAccessType.AccessControl) diag.Diagnostics {
+	apResourceModel := m.GetAccessControlResourceModel()
+	diagnostics := apResourceModel.FromAccessControl(input)
+
+	if diagnostics.HasError() {
+		return diagnostics
+	}
+
+	m.SetAccessControlResourceModel(apResourceModel)
+
+	if len(input.SyncData) != 1 {
+		diagnostics.AddError("Failed to get data source", fmt.Sprintf("Expected exactly one data source, got: %d.", len(input.SyncData)))
+
+		return diagnostics
+	}
+
+	defaultMaskType, err := client.DataSource().GetMaskingMetadata(ctx, input.SyncData[0].DataSource.Id)
+	if err != nil {
+		diagnostics.AddError("Failed to get default mask type", err.Error())
+
+		return diagnostics
+	}
+
+	dataSources, d, done := dataSourcesFromAccessControl(input, diagnostics, defaultMaskType.DefaultMaskExternalName)
+	if done {
+		return d
+	}
+
+	m.DataSources = dataSources
+
+	m.WhatLocked = types.BoolValue(slices.ContainsFunc(input.Locks, func(data dataAccessType.AccessControlLocksAccessControlLockData) bool {
+		return data.LockKey == dataAccessType.AccessControlLockWhatlock
+	}))
+
+	if input.WhatAbacRules != nil {
+		object, objectDiagnostics := m.abacWhatFromAccessControl(ctx, client, input)
+		diagnostics.Append(objectDiagnostics...)
+
+		if diagnostics.HasError() {
+			return diagnostics
+		}
+
+		m.WhatAbacRules = object
+	}
+
+	return diagnostics
+}
+
+// abacWhatToAccessControlInput converts the WHAT ABAC rules from the Terraform model to the AccessControlInput
+func (m *MaskResourceModel) abacWhatToAccessControlInput(ctx context.Context, client *sdk.CollibraClient, result *dataAccessType.AccessControlInput) (diagnostics diag.Diagnostics) {
+	result.WhatAbacRules = make([]*dataAccessType.WhatAbacRuleInput, 0, len(m.WhatAbacRules.Elements()))
+
+	for _, abacRuleItem := range m.WhatAbacRules.Elements() {
+		abacRuleObject := abacRuleItem.(types.Object)
+		attributes := abacRuleObject.Attributes()
+
+		scopeSet := attributes["scope"].(types.Set)
+
+		scope, d, done := abacWhatScopeToAccessControlInput(ctx, client, scopeSet)
+		if done {
+			return d
+		}
+
+		abacInput, ruleDiag := abacRuleToGqlInput(attributes, "rule")
+		if ruleDiag.HasError() {
+			return ruleDiag
+		}
+
+		result.WhatAbacRules = append(result.WhatAbacRules, &dataAccessType.WhatAbacRuleInput{
+			Scope:   scope,
+			Rule:    *abacInput,
+			Id:      getOptionalString(attributes, "id"),
+			DoTypes: []string{"column"},
+		})
+	}
+
+	return diagnostics
+}
+
+// abacWhatFromAccessControl converts the WHAT ABAC rules from the AccessControl Collibra model to the Terraform model
+func (m *MaskResourceModel) abacWhatFromAccessControl(ctx context.Context, client *sdk.CollibraClient, ac *dataAccessType.AccessControl) (_ types.Set, diagnostics diag.Diagnostics) {
+	whatAbacRuleList := make([]attr.Value, 0, len(ac.WhatAbacRules))
+
+	scopeType := types.ObjectType{AttrTypes: dataObjectReferenceTypeAttributeTypes}
+	whatAbacRuleType := map[string]attr.Type{
+		"scope": types.SetType{ElemType: scopeType},
+		"rule":  jsontypes.NormalizedType{},
+		"id":    types.StringType,
+	}
+	whatAbacRulesType := types.ObjectType{AttrTypes: whatAbacRuleType}
+
+	for _, rule := range ac.WhatAbacRules {
+		abacRule := jsontypes.NewNormalizedPointerValue(rule.RuleJson)
+
+		var scopeItems []attr.Value //nolint:prealloc
+
+		for scopeItem, err := range client.AccessControl().GetAccessControlAbacWhatScope(ctx, ac.Id, rule.Id) {
+			if err != nil {
+				diagnostics.AddError("Failed to load access provider abac scope", err.Error())
+
+				return types.SetNull(whatAbacRulesType), diagnostics
+			}
+
+			scopeItemValue, diags := dataObjectToReference(scopeItem)
+			diagnostics.Append(diags...)
+
+			if diagnostics.HasError() {
+				return types.SetNull(whatAbacRulesType), diagnostics
+			}
+
+			scopeItems = append(scopeItems, scopeItemValue)
+		}
+
+		scope, scopeDiagnostics := types.SetValue(scopeType, scopeItems)
+		diagnostics.Append(scopeDiagnostics...)
+
+		if diagnostics.HasError() {
+			return types.SetNull(whatAbacRulesType), diagnostics
+		}
+
+		whatAbacRuleList = append(whatAbacRuleList, types.ObjectValueMust(whatAbacRuleType, map[string]attr.Value{
+			"rule":  abacRule,
+			"scope": scope,
+			"id":    types.StringValue(rule.Id),
+		}))
+	}
+
+	whatAbacRules, whatAbacRulesDiag := types.SetValue(whatAbacRulesType, whatAbacRuleList)
+
+	diagnostics.Append(whatAbacRulesDiag...)
+
+	if diagnostics.HasError() {
+		return types.SetNull(whatAbacRulesType), diagnostics
+	}
+
+	return whatAbacRules, diagnostics
+}
+
+// readMaskResourceColumns reads the columns of the mask from Collibra and converts it to the Terraform model
 func readMaskResourceColumns(ctx context.Context, client *sdk.CollibraClient, data *MaskResourceModel) (diagnostics diag.Diagnostics) {
 	if !data.Columns.IsNull() {
 		stateWhatItems := make([]attr.Value, 0)
 
 		for whatItem, err := range client.AccessControl().GetAccessControlWhatDataObjectList(ctx, data.Id.ValueString()) {
 			if err != nil {
-				diagnostics.AddError("Fauled to get what data objects", err.Error())
+				diagnostics.AddError("Failed to get what data objects", err.Error())
 
 				return diagnostics
 			}
 
 			if whatItem.DataObject != nil {
-				stateWhatItems = append(stateWhatItems, types.StringValue(whatItem.DataObject.FullName))
+				whatItemValue, diags := dataObjectToReference(&whatItem.DataObject.DataObject)
+				diagnostics.Append(diags...)
+
+				stateWhatItems = append(stateWhatItems, whatItemValue)
 			} else {
 				diagnostics.AddError("Invalid what data object", "Received data object is nil")
 			}
 		}
 
-		columnsObject, columnsDiag := types.SetValue(types.StringType, stateWhatItems)
+		scopeType := types.ObjectType{AttrTypes: dataObjectReferenceTypeAttributeTypes}
+		columnsObject, columnsDiag := types.SetValue(scopeType, stateWhatItems)
 
 		diagnostics.Append(columnsDiag...)
 
@@ -412,7 +451,7 @@ func readMaskResourceColumns(ctx context.Context, client *sdk.CollibraClient, da
 }
 
 func validateMaskWhatLock(_ context.Context, data *MaskResourceModel) (diagnostics diag.Diagnostics) {
-	if (!data.Columns.IsNull() || !data.WhatAbacRule.IsNull()) && (!data.WhatLocked.IsNull() && !data.WhatLocked.ValueBool()) {
+	if (!data.Columns.IsNull() || !data.WhatAbacRules.IsNull()) && (!data.WhatLocked.IsNull() && !data.WhatLocked.ValueBool()) {
 		diagnostics.AddError("What lock should be true", "Columns or what abac rule should be set, so what lock should be true")
 	}
 
@@ -420,7 +459,7 @@ func validateMaskWhatLock(_ context.Context, data *MaskResourceModel) (diagnosti
 }
 
 func maskModifyPlan(_ context.Context, data *MaskResourceModel) (_ *MaskResourceModel, diagnostics diag.Diagnostics) {
-	if !data.Columns.IsNull() || !data.WhatAbacRule.IsNull() {
+	if !data.Columns.IsNull() || (!data.WhatAbacRules.IsNull() && len(data.WhatAbacRules.Elements()) > 0) {
 		data.WhatLocked = types.BoolValue(true)
 	} else if data.WhatLocked.IsUnknown() {
 		data.WhatLocked = types.BoolValue(false)

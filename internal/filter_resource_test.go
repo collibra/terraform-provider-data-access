@@ -28,9 +28,12 @@ func TestAccFilterResource(t *testing.T) {
 				
 				resource "collibra-data-access_filter" "test" {
 					name        = "tfTestFilter"
-				   description = "filter description"
-					data_source = data.collibra-data-access_datasource.ds.id
-					table = "MASTER_DATA.SALES.SPECIALOFFER"
+				    description = "filter description"
+					table = {
+						type: "table"
+						path: ["MASTER_DATA","SALES","SPECIALOFFER"]
+						data_source: data.collibra-data-access_datasource.ds.id
+					}
 					who = [
 						{
 							"user": "terraform-acc-test-1@collibra.com"
@@ -42,8 +45,8 @@ func TestAccFilterResource(t *testing.T) {
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("collibra-data-access_filter.test", "name", "tfTestFilter"),
 						resource.TestCheckResourceAttr("collibra-data-access_filter.test", "description", "filter description"),
-						resource.TestCheckResourceAttrPair("collibra-data-access_filter.test", "data_source", "data.collibra-data-access_datasource.ds", "id"),
-						resource.TestCheckResourceAttr("collibra-data-access_filter.test", "table", "MASTER_DATA.SALES.SPECIALOFFER"),
+						resource.TestCheckResourceAttr("collibra-data-access_filter.test", "table.type", "table"),
+						resource.TestCheckResourceAttrPair("collibra-data-access_filter.test", "table.data_source", "data.collibra-data-access_datasource.ds", "id"),
 						resource.TestCheckResourceAttr("collibra-data-access_filter.test", "filter_policy", "{Category} = 'Reseller'"),
 						resource.TestCheckResourceAttr("collibra-data-access_filter.test", "who_locked", "true"),
 						resource.TestCheckResourceAttr("collibra-data-access_filter.test", "inheritance_locked", "false"),
@@ -65,20 +68,23 @@ func TestAccFilterResource(t *testing.T) {
 				
 				resource "collibra-data-access_filter" "test" {
 					name        = "tfTestFilter"
-				   description = "filter description"
-					data_source = data.collibra-data-access_datasource.ds.id
+				    description = "filter description"
+					table = {
+						type: "table"
+						path: ["MASTER_DATA","SALES","SPECIALOFFER"]
+						data_source: data.collibra-data-access_datasource.ds.id
+					}
 					filter_policy = "{Category} = 'Reseller'"
 				}
 				`,
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("collibra-data-access_filter.test", "name", "tfTestFilter"),
 						resource.TestCheckResourceAttr("collibra-data-access_filter.test", "description", "filter description"),
-						resource.TestCheckResourceAttrPair("collibra-data-access_filter.test", "data_source", "data.collibra-data-access_datasource.ds", "id"),
-						resource.TestCheckNoResourceAttr("collibra-data-access_filter.test", "table"),
+						resource.TestCheckResourceAttrPair("collibra-data-access_filter.test", "table.data_source", "data.collibra-data-access_datasource.ds", "id"),
 						resource.TestCheckResourceAttr("collibra-data-access_filter.test", "filter_policy", "{Category} = 'Reseller'"),
 						resource.TestCheckResourceAttr("collibra-data-access_filter.test", "who_locked", "false"),
 						resource.TestCheckResourceAttr("collibra-data-access_filter.test", "inheritance_locked", "false"),
-						resource.TestCheckResourceAttr("collibra-data-access_filter.test", "what_locked", "false"),
+						resource.TestCheckResourceAttr("collibra-data-access_filter.test", "what_locked", "true"),
 					),
 				},
 				{
@@ -90,10 +96,13 @@ data "collibra-data-access_datasource" "ds" {
 
 resource "collibra-data-access_filter" "test" {
 	name        = "tfTestFilter"
-    description = "filter description"
-	data_source = data.collibra-data-access_datasource.ds.id
+    description = "filter another description"
+	table = {
+						type: "table"
+						path: ["MASTER_DATA","SALES","SPECIALOFFER"]
+						data_source: data.collibra-data-access_datasource.ds.id
+					}
 	filter_policy = "{Category} = 'Reseller'"
-	what_locked = false
 	who = [
 		{
 			"user": "terraform-acc-test-1@collibra.com"
@@ -103,13 +112,12 @@ resource "collibra-data-access_filter" "test" {
 `,
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("collibra-data-access_filter.test", "name", "tfTestFilter"),
-						resource.TestCheckResourceAttr("collibra-data-access_filter.test", "description", "filter description"),
-						resource.TestCheckResourceAttrPair("collibra-data-access_filter.test", "data_source", "data.collibra-data-access_datasource.ds", "id"),
-						resource.TestCheckNoResourceAttr("collibra-data-access_filter.test", "table"),
+						resource.TestCheckResourceAttr("collibra-data-access_filter.test", "description", "filter another description"),
+						resource.TestCheckResourceAttrPair("collibra-data-access_filter.test", "table.data_source", "data.collibra-data-access_datasource.ds", "id"),
 						resource.TestCheckResourceAttr("collibra-data-access_filter.test", "filter_policy", "{Category} = 'Reseller'"),
 						resource.TestCheckResourceAttr("collibra-data-access_filter.test", "who_locked", "true"),
 						resource.TestCheckResourceAttr("collibra-data-access_filter.test", "inheritance_locked", "false"),
-						resource.TestCheckResourceAttr("collibra-data-access_filter.test", "what_locked", "false"),
+						resource.TestCheckResourceAttr("collibra-data-access_filter.test", "what_locked", "true"),
 					),
 				},
 			},

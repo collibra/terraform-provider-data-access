@@ -26,10 +26,18 @@ resource "collibra-data-access_mask" "example" {
       user : "user1@company.com"
     },
   ]
-  type        = "SHA256"
-  data_source = collibra-data-access_datasource.ds.id
+  data_sources = [
+    {
+      data_source = data.collibra-data-access_datasource.ds.id
+      type        = "SHA256"
+    }
+  ]
   columns = [
-    "SOME_DB.SOME_SCHEMA.SOME_TABLE.SOME_COLUMN"
+    {
+      type        = "column"
+      path        = ["SOME_DB", "SOME_SCHEMA", "SOME_TABLE", "SOME_COLUMN"]
+      data_source = data.collibra-data-access_datasource.ds.id
+    }
   ]
 }
 ```
@@ -39,37 +47,63 @@ resource "collibra-data-access_mask" "example" {
 
 ### Required
 
-- `data_source` (String) The ID of the data source of the mask
+- `data_sources` (Attributes Set) The list of data sources that this mask is applicable to (see [below for nested schema](#nestedatt--data_sources))
 - `name` (String) The name of the mask
-- `type` (String) The masking method, which defines how the data is masked. Available types are defined by the data source.
 
 ### Optional
 
-- `columns` (Set of String) The full name of columns that should be included in the mask. Items are managed by Collibra Data Access if columns is not set (nil).
+- `columns` (Attributes Set) The list of columns that should be included in the mask. (see [below for nested schema](#nestedatt--columns))
 - `description` (String) The description of the mask
 - `inheritance_locked` (Boolean) Indicates if who should be locked. This should be true if who access providers are set.
 - `owners` (Set of String) User id of the owners of this mask
 - `state` (String) The state of the mask Possible values are: ["Active", "Inactive"]
-- `what_abac_rule` (Attributes) What data object defined by abac rule. Cannot be set when what_data_objects is set. (see [below for nested schema](#nestedatt--what_abac_rule))
+- `what_abac_rules` (Attributes Set) The abac rules for defining the what of a make. (see [below for nested schema](#nestedatt--what_abac_rules))
 - `what_locked` (Boolean) Indicates whether it should lock the what. Should be set to true if columns or what_abac_rule is set.
 - `who` (Attributes Set) The who-items associated with the mask. When this is not set (nil), the who-list will not be overridden. This is typically used when this should be managed from Collibra Data Access. (see [below for nested schema](#nestedatt--who))
-- `who_abac_rule` (String) json representation of the abac rule for who-items associated with the mask
+- `who_abac_rules` (Attributes Set) The abac rules for defining the dynamic who-items associated with the mask (see [below for nested schema](#nestedatt--who_abac_rules))
 - `who_locked` (Boolean) Indicates if who should be locked. This should be true if who users or who_abac_rule is set.
 
 ### Read-Only
 
 - `id` (String) The ID of the mask
 
-<a id="nestedatt--what_abac_rule"></a>
-### Nested Schema for `what_abac_rule`
+<a id="nestedatt--data_sources"></a>
+### Nested Schema for `data_sources`
 
 Required:
 
+- `data_source` (String) The ID of the data source that this mask is applicable to
+- `type` (String) The masking type to use for the mask in this data source. Available types are defined by the data source.
+
+
+<a id="nestedatt--columns"></a>
+### Nested Schema for `columns`
+
+Required:
+
+- `data_source` (String) The ID of the data source the data object belongs to
+- `path` (List of String) The path of the data object
+- `type` (String) The type of the data object
+
+
+<a id="nestedatt--what_abac_rules"></a>
+### Nested Schema for `what_abac_rules`
+
+Required:
+
+- `id` (String) A unique ID of the abac rule within this access control
 - `rule` (String) json representation of the abac rule
+- `scope` (Attributes Set) Scope of the defined abac rule as a list of data objects (see [below for nested schema](#nestedatt--what_abac_rules--scope))
 
-Optional:
+<a id="nestedatt--what_abac_rules--scope"></a>
+### Nested Schema for `what_abac_rules.scope`
 
-- `scope` (Set of String) Scope of the defined abac rule
+Required:
+
+- `data_source` (String) The ID of the data source the data object belongs to
+- `path` (List of String) The path of the data object
+- `type` (String) The type of the data object
+
 
 
 <a id="nestedatt--who"></a>
@@ -80,6 +114,15 @@ Optional:
 - `access_control` (String) The ID of the access control in Collibra Data Access. Cannot be set if `user` is set.
 - `promise_duration` (Number) Specify this to indicate that this who-item is a promise instead of a direct grant. This is specified as the number of seconds that access should be granted when requested.
 - `user` (String) The email address of the user. This cannot be set if `access_control` is set.
+
+
+<a id="nestedatt--who_abac_rules"></a>
+### Nested Schema for `who_abac_rules`
+
+Required:
+
+- `id` (String) A unique ID of the abac rule within this access control
+- `rule` (String) The JSON representation of the abac rule
 
 ## Import
 

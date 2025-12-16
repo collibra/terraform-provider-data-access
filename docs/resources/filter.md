@@ -44,8 +44,11 @@ resource "collibra-data-access_filter" "filter1" {
       access_control : collibra-data-access_purpose.purpose1.id
     }
   ]
-  data_source   = collibra-data-access_datasource.ds.id
-  table         = "database.schema.table"
+  table = {
+    type        = "table"
+    path        = ["DB1", "SCHEMA1", "TABLE1"]
+    data_source = data.collibra-data-access_datasource.ds.id
+  }
   filter_policy = "{state} = 'NJ'"
 }
 ```
@@ -55,7 +58,6 @@ resource "collibra-data-access_filter" "filter1" {
 
 ### Required
 
-- `data_source` (String) The ID of the data source of the filter
 - `filter_policy` (String) The filter policy that defines how the data is filtered. The policy syntax is defined by the data source.
 - `name` (String) The name of the filter
 
@@ -65,15 +67,25 @@ resource "collibra-data-access_filter" "filter1" {
 - `inheritance_locked` (Boolean) Indicates if who should be locked. This should be true if who access providers are set.
 - `owners` (Set of String) User id of the owners of this filter
 - `state` (String) The state of the filter Possible values are: ["Active", "Inactive"]
-- `table` (String) The full name of the table that should be filtered
+- `table` (Object) The table that should be filtered (see [below for nested schema](#nestedatt--table))
 - `what_locked` (Boolean) Indicates whether it should lock the what. Should be set to true if table is set.
 - `who` (Attributes Set) The who-items associated with the filter. When this is not set (nil), the who-list will not be overridden. This is typically used when this should be managed from Collibra Data Access. (see [below for nested schema](#nestedatt--who))
-- `who_abac_rule` (String) json representation of the abac rule for who-items associated with the filter
+- `who_abac_rules` (Attributes Set) The abac rules for defining the dynamic who-items associated with the filter (see [below for nested schema](#nestedatt--who_abac_rules))
 - `who_locked` (Boolean) Indicates if who should be locked. This should be true if who users or who_abac_rule is set.
 
 ### Read-Only
 
 - `id` (String) The ID of the filter
+
+<a id="nestedatt--table"></a>
+### Nested Schema for `table`
+
+Optional:
+
+- `data_source` (String)
+- `path` (List of String)
+- `type` (String)
+
 
 <a id="nestedatt--who"></a>
 ### Nested Schema for `who`
@@ -83,6 +95,15 @@ Optional:
 - `access_control` (String) The ID of the access control in Collibra Data Access. Cannot be set if `user` is set.
 - `promise_duration` (Number) Specify this to indicate that this who-item is a promise instead of a direct grant. This is specified as the number of seconds that access should be granted when requested.
 - `user` (String) The email address of the user. This cannot be set if `access_control` is set.
+
+
+<a id="nestedatt--who_abac_rules"></a>
+### Nested Schema for `who_abac_rules`
+
+Required:
+
+- `id` (String) A unique ID of the abac rule within this access control
+- `rule` (String) The JSON representation of the abac rule
 
 ## Import
 

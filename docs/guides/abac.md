@@ -143,9 +143,26 @@ resource "collibra-data-access_grant" "example_grant" {
   name        = "Grant with abac"
   description = "Grant with what abac rule"
   state       = "Active"
-  what_abac_rule = {
-    rule = local.example_grant_abac_rule
-  }
-  data_source = collibra-data-access_datasource.ds.id
+  what_abac_rules = [
+    {
+      rule : local.example_grant_abac_rule
+      id : "my_rule"
+      do_types : ["table", "view"]
+      permissions : ["SELECT"]
+      scope : [
+        {
+          type : "database"
+          path : ["my_database"]
+          data_source : collibra-data-access_datasource.ds.id
+        }
+      ]
+    }
+  ]
+  data_sources = [
+    {
+      data_source : collibra-data-access_datasource.ds.id
+      type : "role"
+    }
+  ]
 }
 ```
