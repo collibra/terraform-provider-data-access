@@ -470,6 +470,108 @@ resource "collibra-data-access_grant" "abac_grant" {
 						resource.TestCheckResourceAttr("collibra-data-access_grant.abac_grant", "what_locked", "true"),
 					),
 				},
+
+				{
+					Config: providerConfig + `
+data "collibra-data-access_datasource" "ds" {
+    name = "Snowflake"
+}
+
+locals {
+	abac_rule1 = jsonencode({
+		literal = true
+	})
+
+	abac_rule2 = jsonencode({
+		literal = false
+	})
+}
+
+resource "collibra-data-access_grant" "abac_grant" {
+	name        = "tfTestGrant"
+    description = "test description"
+	data_sources = [
+		{  
+			data_source = data.collibra-data-access_datasource.ds.id
+			type = "role"
+		}
+	]
+	what_abac_rules = [{
+		id = "rule1"	
+		rule = local.abac_rule1
+		scope = [
+			{
+				type: "schema"
+				path: ["MASTER_DATA", "PERSON"]
+				data_source: data.collibra-data-access_datasource.ds.id
+			},
+			{
+				type: "schema"
+				path: ["MASTER_DATA", "SALES"]
+				data_source: data.collibra-data-access_datasource.ds.id
+			}
+		]
+		global_permissions = ["WRITE"]
+		permissions = ["SELECT"]
+		do_types = ["table", "view"]
+    },
+	{
+		id = "rule2"	
+		rule = local.abac_rule2
+		scope = [
+			{
+				type: "schema"
+				path: ["MASTER_DATA", "PERSON"]
+				data_source: data.collibra-data-access_datasource.ds.id
+			},
+		]
+		permissions = ["SELECT"]
+		do_types = ["table"]
+    }]
+	what_data_objects = [
+		{
+			data_object = {
+				type = "schema"
+				path = ["MASTER_DATA", "SALES"]
+				data_source = data.collibra-data-access_datasource.ds.id
+			}
+		}
+	]
+	who = [
+		{
+			"user": "terraform-acc-test-1@collibra.com"
+		}
+	]
+}
+`,
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("collibra-data-access_grant.abac_grant", "name", "tfTestGrant"),
+						resource.TestCheckResourceAttr("collibra-data-access_grant.abac_grant", "description", "test description"),
+						resource.TestCheckResourceAttrPair("collibra-data-access_grant.abac_grant", "data_sources.0.data_source", "data.collibra-data-access_datasource.ds", "id"),
+						resource.TestCheckResourceAttr("collibra-data-access_grant.abac_grant", "what_abac_rules.0.rule", "{\"literal\":true}"),
+						resource.TestCheckResourceAttr("collibra-data-access_grant.abac_grant", "what_abac_rules.0.scope.#", "2"),
+						resource.TestCheckResourceAttr("collibra-data-access_grant.abac_grant", "what_abac_rules.0.global_permissions.#", "1"),
+						resource.TestCheckResourceAttr("collibra-data-access_grant.abac_grant", "what_abac_rules.0.global_permissions.0", "WRITE"),
+						resource.TestCheckResourceAttr("collibra-data-access_grant.abac_grant", "what_abac_rules.0.permissions.#", "1"),
+						resource.TestCheckResourceAttr("collibra-data-access_grant.abac_grant", "what_abac_rules.0.permissions.0", "SELECT"),
+						resource.TestCheckResourceAttr("collibra-data-access_grant.abac_grant", "what_abac_rules.0.do_types.#", "2"),
+
+						resource.TestCheckResourceAttr("collibra-data-access_grant.abac_grant", "what_abac_rules.1.rule", "{\"literal\":false}"),
+						resource.TestCheckResourceAttr("collibra-data-access_grant.abac_grant", "what_abac_rules.1.scope.#", "1"),
+						resource.TestCheckResourceAttr("collibra-data-access_grant.abac_grant", "what_abac_rules.1.permissions.#", "1"),
+						resource.TestCheckResourceAttr("collibra-data-access_grant.abac_grant", "what_abac_rules.1.permissions.0", "SELECT"),
+						resource.TestCheckResourceAttr("collibra-data-access_grant.abac_grant", "what_abac_rules.1.do_types.#", "1"),
+
+						resource.TestCheckResourceAttr("collibra-data-access_grant.abac_grant", "what_data_objects.#", "1"),
+						resource.TestCheckResourceAttr("collibra-data-access_grant.abac_grant", "what_data_objects.0.data_object.type", "schema"),
+
+						resource.TestCheckResourceAttr("collibra-data-access_grant.abac_grant", "who.#", "1"),
+						resource.TestCheckResourceAttr("collibra-data-access_grant.abac_grant", "who.0.user", "terraform-acc-test-1@collibra.com"),
+						resource.TestCheckResourceAttr("collibra-data-access_grant.abac_grant", "who_locked", "true"),
+						resource.TestCheckResourceAttr("collibra-data-access_grant.abac_grant", "inheritance_locked", "false"),
+						resource.TestCheckResourceAttr("collibra-data-access_grant.abac_grant", "what_locked", "true"),
+					),
+				},
 			},
 		})
 	})
@@ -632,6 +734,116 @@ resource "collibra-data-access_grant" "who_abac_grant" {
 						resource.TestCheckResourceAttr("collibra-data-access_grant.who_abac_grant", "who_locked", "true"),
 						resource.TestCheckResourceAttr("collibra-data-access_grant.who_abac_grant", "inheritance_locked", "true"),
 						resource.TestCheckResourceAttr("collibra-data-access_grant.who_abac_grant", "what_locked", "true"),
+					),
+				},
+				{
+					Config: providerConfig + `
+data "collibra-data-access_datasource" "ds" {
+    name = "Snowflake"
+}
+
+locals {
+	abac_rule1 = jsonencode({
+		aggregator: {
+			operator: "Or",
+			operands: [
+				{
+					aggregator: {
+						operator: "And",
+						operands: [
+							{
+								comparison: {
+									operator: "HasTag"
+									leftOperand: "Test"
+									rightOperand: {
+										literal: { string: "test" }
+									}
+								}
+							}
+						]
+					}
+				}
+			]
+		}
+	})
+
+	abac_rule2 = jsonencode({
+		aggregator: {
+			operator: "Or",
+			operands: [
+				{
+					aggregator: {
+						operator: "And",
+						operands: [
+							{
+								comparison: {
+									operator: "HasTag"
+									leftOperand: "Test2"
+									rightOperand: {
+										literal: { string: "test2" }
+									}
+								}
+							}
+						]
+					}
+				}
+			]
+		}
+	})
+}
+
+resource "collibra-data-access_grant" "who_abac_grant" {
+	name        = "tfTestGrant"
+    description = "test description"
+	data_sources = [
+		{  
+			data_source = data.collibra-data-access_datasource.ds.id
+			type = "role"
+		}
+	]
+	what_data_objects = [
+		{
+			data_object = {
+				type = "schema"
+				path = ["MASTER_DATA", "SALES"]
+				data_source = data.collibra-data-access_datasource.ds.id
+			}
+		}
+	]
+	who_abac_rules = [
+		{
+			id = "rule1"
+			rule = local.abac_rule1
+		},
+		{
+			id = "rule2"
+			rule = local.abac_rule2
+		}
+	]
+	who = [
+		{
+			"user": "terraform-acc-test-1@collibra.com"
+		}
+	]
+	inheritance_locked = true
+}
+`,
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("collibra-data-access_grant.who_abac_grant", "name", "tfTestGrant"),
+						resource.TestCheckResourceAttr("collibra-data-access_grant.who_abac_grant", "description", "test description"),
+						resource.TestCheckResourceAttrPair("collibra-data-access_grant.who_abac_grant", "data_sources.0.data_source", "data.collibra-data-access_datasource.ds", "id"),
+						resource.TestCheckResourceAttr("collibra-data-access_grant.who_abac_grant", "what_data_objects.#", "1"),
+						resource.TestCheckResourceAttr("collibra-data-access_grant.who_abac_grant", "what_data_objects.0.data_object.path.0", "MASTER_DATA"),
+						resource.TestCheckResourceAttr("collibra-data-access_grant.who_abac_grant", "who_abac_rules.#", "2"),
+						resource.TestCheckResourceAttr("collibra-data-access_grant.who_abac_grant", "who_abac_rules.0.rule", "{\"aggregator\":{\"operands\":[{\"aggregator\":{\"operands\":[{\"comparison\":{\"leftOperand\":\"Test\",\"operator\":\"HasTag\",\"rightOperand\":{\"literal\":{\"string\":\"test\"}}}}],\"operator\":\"And\"}}],\"operator\":\"Or\"}}"),
+						resource.TestCheckResourceAttr("collibra-data-access_grant.who_abac_grant", "who_abac_rules.0.id", "rule1"),
+						resource.TestCheckResourceAttr("collibra-data-access_grant.who_abac_grant", "who_abac_rules.1.rule", "{\"aggregator\":{\"operands\":[{\"aggregator\":{\"operands\":[{\"comparison\":{\"leftOperand\":\"Test2\",\"operator\":\"HasTag\",\"rightOperand\":{\"literal\":{\"string\":\"test2\"}}}}],\"operator\":\"And\"}}],\"operator\":\"Or\"}}"),
+						resource.TestCheckResourceAttr("collibra-data-access_grant.who_abac_grant", "who_abac_rules.1.id", "rule2"),
+						resource.TestCheckResourceAttr("collibra-data-access_grant.who_abac_grant", "who_locked", "true"),
+						resource.TestCheckResourceAttr("collibra-data-access_grant.who_abac_grant", "inheritance_locked", "true"),
+						resource.TestCheckResourceAttr("collibra-data-access_grant.who_abac_grant", "what_locked", "true"),
+						resource.TestCheckResourceAttr("collibra-data-access_grant.who_abac_grant", "who.#", "1"),
+						resource.TestCheckResourceAttr("collibra-data-access_grant.who_abac_grant", "who.0.user", "terraform-acc-test-1@collibra.com"),
 					),
 				},
 			},
