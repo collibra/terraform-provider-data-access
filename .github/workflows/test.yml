@@ -56,6 +56,11 @@ jobs:
           version: latest
           skip-cache: false
 
+      - name: FOSSA Scan
+        uses: fossas/fossa-action@v1
+        with:
+          api-key: ${{ secrets.FOSSA_API_KEY }}
+
   generate:
     runs-on: ubuntu-latest
     steps:
