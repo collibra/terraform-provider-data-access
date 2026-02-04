@@ -18,6 +18,7 @@ var _ datasource.DataSource = (*GrantCategoryDataSource)(nil)
 type GrantCategoryDataSourceModel struct {
 	Id                       types.String `tfsdk:"id"`
 	Name                     types.String `tfsdk:"name"`
+	NamePlural               types.String `tfsdk:"name_plural"`
 	Description              types.String `tfsdk:"description"`
 	IsSystem                 types.Bool   `tfsdk:"is_system"`
 	IsDefault                types.Bool   `tfsdk:"is_default"`
@@ -59,6 +60,14 @@ func (g *GrantCategoryDataSource) Schema(_ context.Context, _ datasource.SchemaR
 				Sensitive:           false,
 				Description:         "The name of the requested grant category",
 				MarkdownDescription: "The name of the requested grant category",
+			},
+			"name_plural": schema.StringAttribute{
+				Required:            true,
+				Optional:            false,
+				Computed:            false,
+				Sensitive:           false,
+				Description:         "The plural form of the display name for the grant category",
+				MarkdownDescription: "The plural form of the display name for the grant category",
 			},
 			"description": schema.StringAttribute{
 				Required:            false,
@@ -267,6 +276,7 @@ func (g *GrantCategoryDataSource) Configure(_ context.Context, req datasource.Co
 
 func setGrantCategoryData(data *types2.GrantCategoryDetails, resp *GrantCategoryDataSourceModel, diagnostic diag.Diagnostics) {
 	resp.Id = types.StringValue(data.Id)
+	resp.NamePlural = types.StringValue(data.NamePlural)
 	resp.Description = types.StringValue(data.Description)
 	resp.IsSystem = types.BoolValue(data.IsSystem)
 	resp.IsDefault = types.BoolValue(data.IsDefault)

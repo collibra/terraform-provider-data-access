@@ -33,6 +33,7 @@ resource "collibra-data-access_grant_category" "test" {
 `, testId),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("collibra-data-access_grant_category.test", "name", "tfTestGrantCategory-"+testId),
+						resource.TestCheckResourceAttr("collibra-data-access_grant_category.test", "name_plural", "tfTestGrantCategories-"+testId),
 						resource.TestCheckResourceAttr("collibra-data-access_grant_category.test", "description", "test description"),
 						resource.TestCheckResourceAttr("collibra-data-access_grant_category.test", "is_system", "false"),
 						resource.TestCheckResourceAttr("collibra-data-access_grant_category.test", "is_default", "false"),
@@ -68,6 +69,7 @@ resource "collibra-data-access_grant_category" "test" {
 `, testId),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("collibra-data-access_grant_category.test", "name", "tfTestGrantCategory-"+testId),
+						resource.TestCheckResourceAttr("collibra-data-access_grant_category.test", "name_plural", "tfTestGrantCategories-"+testId),
 						resource.TestCheckResourceAttr("collibra-data-access_grant_category.test", "description", "test description update"),
 						resource.TestCheckResourceAttr("collibra-data-access_grant_category.test", "is_system", "false"),
 						resource.TestCheckResourceAttr("collibra-data-access_grant_category.test", "is_default", "false"),
