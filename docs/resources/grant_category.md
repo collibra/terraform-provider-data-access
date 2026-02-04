@@ -19,7 +19,6 @@ resource "collibra-data-access_datasource" "ds" {
 
 resource "collibra-data-access_grant_category" "example_category" {
   name                   = "exampleCategory"
-  name_plural            = "exampleCategories"
   description            = "A simple category"
   icon                   = "testIcon"
   can_create             = true
@@ -51,7 +50,7 @@ resource "collibra-data-access_grant_category" "example_category" {
 
 - `icon` (String) The icon of the grant category
 - `name` (String) The name of the grant category
-- `name_plural` (String) The plural name of the grant category
+- `name_plural` (String) The plural form of the display name for the grant category
 
 ### Optional
 
