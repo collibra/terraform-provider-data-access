@@ -83,6 +83,15 @@ func (g *GrantCategoryResource) Schema(ctx context.Context, request resource.Sch
 				MarkdownDescription: "The name of the grant category",
 				Validators:          []validator.String{stringvalidator.LengthAtLeast(3)},
 			},
+			"name_plural": schema.StringAttribute{
+				Required:            true,
+				Optional:            false,
+				Computed:            false,
+				Sensitive:           false,
+				Description:         "The plural form of the display name for the grant category",
+				MarkdownDescription: "The plural form of the display name for the grant category",
+				Validators:          []validator.String{stringvalidator.LengthAtLeast(3)},
+			},
 			"description": schema.StringAttribute{
 				Required:            false,
 				Optional:            true,
