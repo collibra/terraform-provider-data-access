@@ -208,7 +208,7 @@ data "collibra-data-access_datasource" "ds" {
 
 resource "collibra-data-access_grant_category" "purpose-cat" {
 	name        = "Purpose"
-    pluralName =  "Purposes"
+    plural_name = "Purposes"
 	description = "purpose"
 	icon		= "test"
 }
@@ -277,7 +277,7 @@ data "collibra-data-access_datasource" "ds" {
 
 resource "collibra-data-access_grant_category" "purpose-cat" {
 	name        = "Purpose"
-    pluralName =  "Purposes"
+    plural_name = "Purposes"
 	description = "purpose"
 	icon		= "test"
 }
