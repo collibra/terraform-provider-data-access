@@ -228,7 +228,7 @@ resource "collibra-data-access_grant" "purpose1" {
 			"user": "terraform-acc-test-1@collibra.com"
 		}
 	]
-	category = "purpose"
+	category = collibra-data-access_grant_category.purpose-cat.id
 }
 
 resource "collibra-data-access_grant" "test" {
@@ -297,7 +297,7 @@ resource "collibra-data-access_grant" "purpose1" {
 			"user": "terraform-acc-test-1@collibra.com"
 		}
 	]
-	category = "purpose"
+	category = collibra-data-access_grant_category.purpose-cat.id
 }
 
 resource "collibra-data-access_grant" "test" {
