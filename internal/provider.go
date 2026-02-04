@@ -81,7 +81,7 @@ func (p *CollibraDataAccessProvider) Configure(ctx context.Context, req provider
 		sdk.WithPassword(data.Secret.ValueString()),
 	}
 
-	client := sdk.NewClient(data.User.ValueString(), clientOptions...)
+	client := sdk.NewClient(data.Url.ValueString(), clientOptions...)
 
 	resp.DataSourceData = client
 	resp.ResourceData = client
