@@ -25,8 +25,8 @@ func TestAccGrantCategoryResource(t *testing.T) {
 				{
 					Config: providerConfig + fmt.Sprintf(`
 resource "collibra-data-access_grant_category" "test" {
-	name        = "tfTestGrantCategory-%s"
-    name_plural = "tfTestGrantCategories-%s"
+	name        = "tfTestGrantCategory-%[1]s"
+    name_plural = "tfTestGrantCategories-%[1]s"
 	description = "test description"
 	icon		= "test"
 }
@@ -55,8 +55,8 @@ resource "collibra-data-access_grant_category" "test" {
 				{
 					Config: providerConfig + fmt.Sprintf(`
 resource "collibra-data-access_grant_category" "test" {
-	name        = "tfTestGrantCategory-%s"
-    name_plural = "tfTestGrantCategories-%s"
+	name        = "tfTestGrantCategory-%[1]s"
+    name_plural = "tfTestGrantCategories-%[1]s"
 	description = "test description update"
 	icon		= "test"
 	allow_duplicate_names = false
