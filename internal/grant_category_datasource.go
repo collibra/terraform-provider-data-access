@@ -62,9 +62,9 @@ func (g *GrantCategoryDataSource) Schema(_ context.Context, _ datasource.SchemaR
 				MarkdownDescription: "The name of the requested grant category",
 			},
 			"name_plural": schema.StringAttribute{
-				Required:            true,
+				Required:            false,
 				Optional:            false,
-				Computed:            false,
+				Computed:            true,
 				Sensitive:           false,
 				Description:         "The plural form of the display name for the grant category",
 				MarkdownDescription: "The plural form of the display name for the grant category",
