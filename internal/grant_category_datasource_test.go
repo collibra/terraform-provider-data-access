@@ -28,7 +28,7 @@ data "collibra-data-access_grant_category" "test" {
 					resource.TestCheckResourceAttr("data.collibra-data-access_grant_category.test", "id", "default"),
 					resource.TestCheckResourceAttr("data.collibra-data-access_grant_category.test", "name", "Role"),
 					resource.TestCheckResourceAttr("data.collibra-data-access_grant_category.test", "name_plural", "Roles"),
-					resource.TestCheckResourceAttr("data.collibra-data-access_grant_category.test", "is_system", "true"),
+					resource.TestCheckResourceAttr("data.collibra-data-access_grant_category.test", "is_system", "false"),
 					resource.TestCheckResourceAttr("data.collibra-data-access_grant_category.test", "is_default", "true"),
 					resource.TestCheckResourceAttr("data.collibra-data-access_grant_category.test", "can_create", "true"),
 					resource.TestCheckResourceAttr("data.collibra-data-access_grant_category.test", "allow_duplicate_names", "true"),
