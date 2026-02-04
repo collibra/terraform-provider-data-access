@@ -24,6 +24,7 @@ data "collibra-data-access_grant_category" "example" {
 ### Required
 
 - `name` (String) The name of the requested grant category
+- `name_plural` (String) The plural form of the display name for the grant category
 
 ### Read-Only
 
