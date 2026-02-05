@@ -24,7 +24,6 @@ data "collibra-data-access_grant_category" "example" {
 ### Required
 
 - `name` (String) The name of the requested grant category
-- `name_plural` (String) The plural form of the display name for the grant category
 
 ### Read-Only
 
@@ -38,6 +37,7 @@ data "collibra-data-access_grant_category" "example" {
 - `is_default` (Boolean) Indicates if the grant category is the default category
 - `is_system` (Boolean) Indicates if the grant category is a system category
 - `multi_data_source` (Boolean) Indicates if APs of this category can have multiple data sources
+- `name_plural` (String) The plural form of the display name for the grant category
 
 <a id="nestedatt--allowed_what_items"></a>
 ### Nested Schema for `allowed_what_items`
