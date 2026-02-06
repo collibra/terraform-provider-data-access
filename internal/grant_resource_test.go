@@ -206,6 +206,13 @@ data "collibra-data-access_datasource" "ds" {
     name = "Snowflake"
 }
 
+resource "collibra-data-access_grant_category" "purpose-cat" {
+	name        = "Purpose"
+    name_plural = "Purposes"
+	description = "purpose"
+	icon		= "test"
+}
+
 resource "collibra-data-access_grant" "purpose1" {
 	name = "tfPurpose1-update"
 	description = "updated terraform purpose"
@@ -221,7 +228,7 @@ resource "collibra-data-access_grant" "purpose1" {
 			"user": "terraform-acc-test-1@collibra.com"
 		}
 	]
-	category = "purpose"
+	category = collibra-data-access_grant_category.purpose-cat.id
 }
 
 resource "collibra-data-access_grant" "test" {
@@ -268,6 +275,13 @@ data "collibra-data-access_datasource" "ds" {
     name = "Snowflake"
 }
 
+resource "collibra-data-access_grant_category" "purpose-cat" {
+	name        = "Purpose"
+    name_plural = "Purposes"
+	description = "purpose"
+	icon		= "test"
+}
+
 resource "collibra-data-access_grant" "purpose1" {
 	name = "tfPurpose1-update"
 	description = "updated terraform purpose"
@@ -283,7 +297,7 @@ resource "collibra-data-access_grant" "purpose1" {
 			"user": "terraform-acc-test-1@collibra.com"
 		}
 	]
-	category = "purpose"
+	category = collibra-data-access_grant_category.purpose-cat.id
 }
 
 resource "collibra-data-access_grant" "test" {

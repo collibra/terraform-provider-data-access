@@ -2,6 +2,7 @@ package internal
 
 import (
 	"context"
+	"time"
 
 	"github.com/collibra/data-access-go-sdk"
 
@@ -72,7 +73,15 @@ func (p *CollibraDataAccessProvider) Configure(ctx context.Context, req provider
 		return
 	}
 
-	client := sdk.NewClient(data.User.ValueString(), data.Secret.ValueString(), data.Url.ValueString())
+	clientOptions := []sdk.ClientOptions{
+		sdk.WithRetryWaitMin(200 * time.Microsecond),
+		sdk.WithRetryWaitMax(15 * time.Second),
+		sdk.WithRetryMax(5),
+		sdk.WithUsername(data.User.ValueString()),
+		sdk.WithPassword(data.Secret.ValueString()),
+	}
+
+	client := sdk.NewClient(data.Url.ValueString(), clientOptions...)
 
 	resp.DataSourceData = client
 	resp.ResourceData = client

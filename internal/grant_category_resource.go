@@ -32,6 +32,7 @@ var _ resource.Resource = (*GrantCategoryResource)(nil)
 type GrantCategoryResourceModel struct {
 	Id                       types.String `tfsdk:"id"`
 	Name                     types.String `tfsdk:"name"`
+	NamePlural               types.String `tfsdk:"name_plural"`
 	Description              types.String `tfsdk:"description"`
 	Icon                     types.String `tfsdk:"icon"`
 	IsSystem                 types.Bool   `tfsdk:"is_system"`
@@ -81,6 +82,15 @@ func (g *GrantCategoryResource) Schema(ctx context.Context, request resource.Sch
 				Sensitive:           false,
 				Description:         "The name of the grant category",
 				MarkdownDescription: "The name of the grant category",
+				Validators:          []validator.String{stringvalidator.LengthAtLeast(3)},
+			},
+			"name_plural": schema.StringAttribute{
+				Required:            true,
+				Optional:            false,
+				Computed:            false,
+				Sensitive:           false,
+				Description:         "The plural form of the display name for the grant category",
+				MarkdownDescription: "The plural form of the display name for the grant category",
 				Validators:          []validator.String{stringvalidator.LengthAtLeast(3)},
 			},
 			"description": schema.StringAttribute{
@@ -292,6 +302,7 @@ func (m *GrantCategoryResourceModel) ToGrantCategoryInput() dataAccessType.Grant
 
 	input := dataAccessType.GrantCategoryInput{
 		Name:                     m.Name.ValueStringPointer(),
+		NamePlural:               m.NamePlural.ValueStringPointer(),
 		Description:              m.Description.ValueStringPointer(),
 		Icon:                     m.Icon.ValueStringPointer(),
 		CanCreate:                m.CanCreate.ValueBoolPointer(),
@@ -452,6 +463,7 @@ func (g *GrantCategoryResource) ImportState(ctx context.Context, req resource.Im
 func setGrantCategoryResourceData(data *dataAccessType.GrantCategoryDetails, resp *GrantCategoryResourceModel) (diags terraformDiag.Diagnostics) {
 	resp.Id = types.StringValue(data.Id)
 	resp.Name = types.StringValue(data.Name)
+	resp.NamePlural = types.StringValue(data.NamePlural)
 	resp.Description = types.StringValue(data.Description)
 	resp.Icon = types.StringValue(data.Icon)
 	resp.IsSystem = types.BoolValue(data.IsSystem)

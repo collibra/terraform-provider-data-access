@@ -4,6 +4,7 @@ resource "collibra-data-access_datasource" "ds" {
 
 resource "collibra-data-access_grant_category" "example_category" {
   name                   = "exampleCategory"
+  name_plural            = "exampleCategories"
   description            = "A simple category"
   icon                   = "testIcon"
   can_create             = true
