@@ -32,15 +32,14 @@ resource "collibra-data-access_filter_rule" "filter1rule1" {
   data_source   = data.collibra-data-access_datasource.ds.id
 }
 
-resource "collibra-data-access_filter" "filter1" {
-  name        = "First filter"
-  description = "A simple filter"
-  state       = "Active"
-
-  table = {
-    type        = "table"
-    path        = ["DB1", "SCHEMA1", "TABLE1"]
-    data_source = data.collibra-data-access_datasource.ds.id
-  }
-  filter_rules = [collibra-data-access_filter_rule.filter1rule1.id]
+resource "collibra-data-access_filter_rule" "filter1rule1" {
+  name        = "table1 - CA"
+  description = "State = CA for TABLE1"
+  who = [
+    {
+      user : "user3@company.com"
+    },
+  ]
+  filter_policy = "{state} = 'CA'"
+  data_source   = data.collibra-data-access_datasource.ds.id
 }

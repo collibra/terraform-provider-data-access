@@ -93,6 +93,7 @@ func (p *CollibraDataAccessProvider) Resources(_ context.Context) []func() resou
 		NewGrantCategoryResource,
 		NewGrantResource,
 		NewFilterResource,
+		NewFilterRuleResource,
 		NewMaskResource,
 	}
 }

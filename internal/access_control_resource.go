@@ -131,7 +131,23 @@ var dataObjectReferenceType = schema.ObjectAttribute{
 	MarkdownDescription: "The reference to the data object",
 }
 
-func (a *AccessControlResource[T, ApModel]) schema(typeName string) map[string]schema.Attribute {
+type accessControlSchemaOptions struct {
+	excludeWho bool
+}
+
+func withAccessControlSchemaExcludeWho() func(options *accessControlSchemaOptions) {
+	return func(options *accessControlSchemaOptions) {
+		options.excludeWho = true
+	}
+}
+
+func (a *AccessControlResource[T, ApModel]) schema(typeName string, ops ...func(options *accessControlSchemaOptions)) map[string]schema.Attribute {
+	options := accessControlSchemaOptions{}
+
+	for _, op := range ops {
+		op(&options)
+	}
+
 	defaultSchema := map[string]schema.Attribute{
 		"id": schema.StringAttribute{
 			Required:            false,
@@ -176,7 +192,25 @@ func (a *AccessControlResource[T, ApModel]) schema(typeName string) map[string]s
 			},
 			Default: stringdefault.StaticString(string(dataAccessType.AccessControlStateActive)),
 		},
-		"who": schema.SetNestedAttribute{
+		"owners": schema.SetAttribute{
+			ElementType:         types.StringType,
+			Required:            false,
+			Optional:            true,
+			Computed:            true,
+			Sensitive:           false,
+			Description:         fmt.Sprintf("User id of the owners of this %s", typeName),
+			MarkdownDescription: fmt.Sprintf("User id of the owners of this %s", typeName),
+			Validators: []validator.Set{
+				setvalidator.ValueStringsAre(
+					stringvalidator.LengthAtLeast(3),
+				),
+			},
+			Default: nil,
+		},
+	}
+
+	if !options.excludeWho {
+		defaultSchema["who"] = schema.SetNestedAttribute{
 			NestedObject: schema.NestedAttributeObject{
 				Attributes: map[string]schema.Attribute{
 					"user": schema.StringAttribute{
@@ -223,8 +257,9 @@ func (a *AccessControlResource[T, ApModel]) schema(typeName string) map[string]s
 			Sensitive:           false,
 			Description:         fmt.Sprintf("The who-items associated with the %s", typeName),
 			MarkdownDescription: fmt.Sprintf("The who-items associated with the %s. When this is not set (nil), the who-list will not be overridden. This is typically used when this should be managed from Collibra Data Access.", typeName),
-		},
-		"who_abac_rules": schema.SetNestedAttribute{
+		}
+
+		defaultSchema["who_abac_rules"] = schema.SetNestedAttribute{
 			NestedObject: schema.NestedAttributeObject{
 				Attributes: map[string]schema.Attribute{
 					// TODO we currently don't support the other attributes in a who abac rule.
@@ -255,8 +290,9 @@ func (a *AccessControlResource[T, ApModel]) schema(typeName string) map[string]s
 			Sensitive:           false,
 			Description:         fmt.Sprintf("The abac rules for defining the dynamic who-items associated with the %s", typeName),
 			MarkdownDescription: fmt.Sprintf("The abac rules for defining the dynamic who-items associated with the %s", typeName),
-		},
-		"who_locked": schema.BoolAttribute{
+		}
+
+		defaultSchema["who_locked"] = schema.BoolAttribute{
 			Required:            false,
 			Optional:            true,
 			Computed:            true,
@@ -264,8 +300,9 @@ func (a *AccessControlResource[T, ApModel]) schema(typeName string) map[string]s
 			Description:         "Indicates if who should be locked. This should be true if who users or who_abac_rule is set.",
 			MarkdownDescription: "Indicates if who should be locked. This should be true if who users or who_abac_rule is set.",
 			Validators:          nil,
-		},
-		"inheritance_locked": schema.BoolAttribute{
+		}
+
+		defaultSchema["inheritance_locked"] = schema.BoolAttribute{
 			Required:            false,
 			Optional:            true,
 			Computed:            true,
@@ -273,22 +310,7 @@ func (a *AccessControlResource[T, ApModel]) schema(typeName string) map[string]s
 			Description:         "Indicates if who should be locked. This should be true if who access providers are set.",
 			MarkdownDescription: "Indicates if who should be locked. This should be true if who access providers are set.",
 			Validators:          nil,
-		},
-		"owners": schema.SetAttribute{
-			ElementType:         types.StringType,
-			Required:            false,
-			Optional:            true,
-			Computed:            true,
-			Sensitive:           false,
-			Description:         fmt.Sprintf("User id of the owners of this %s", typeName),
-			MarkdownDescription: fmt.Sprintf("User id of the owners of this %s", typeName),
-			Validators: []validator.Set{
-				setvalidator.ValueStringsAre(
-					stringvalidator.LengthAtLeast(3),
-				),
-			},
-			Default: nil,
-		},
+		}
 	}
 
 	return defaultSchema
