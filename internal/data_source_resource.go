@@ -22,18 +22,22 @@ import (
 var _ resource.Resource = (*DataSourceResource)(nil)
 
 type DataSourceResourceModel struct {
-	Id          types.String `tfsdk:"id"`
-	Name        types.String `tfsdk:"name"`
-	Description types.String `tfsdk:"description"`
-	Parent      types.String `tfsdk:"parent"`
-	Owners      types.Set    `tfsdk:"owners"`
+	Id               types.String `tfsdk:"id"`
+	Name             types.String `tfsdk:"name"`
+	Description      types.String `tfsdk:"description"`
+	Parent           types.String `tfsdk:"parent"`
+	Owners           types.Set    `tfsdk:"owners"`
+	EdgeSiteId       types.String `tfsdk:"edge_site_id"`
+	EdgeConnectionId types.String `tfsdk:"edge_connection_id"`
 }
 
 func (m *DataSourceResourceModel) ToDataSourceInput() dataAccessType.DataSourceInput {
 	return dataAccessType.DataSourceInput{
-		Name:        m.Name.ValueStringPointer(),
-		Description: m.Description.ValueStringPointer(),
-		Parent:      m.Parent.ValueStringPointer(),
+		Name:             m.Name.ValueStringPointer(),
+		Description:      m.Description.ValueStringPointer(),
+		Parent:           m.Parent.ValueStringPointer(),
+		EdgeSiteId:       m.EdgeSiteId.ValueStringPointer(),
+		EdgeConnectionId: m.EdgeConnectionId.ValueStringPointer(),
 	}
 }
 
@@ -97,6 +101,22 @@ func (d *DataSourceResource) Schema(_ context.Context, _ resource.SchemaRequest,
 				Sensitive:           false,
 				Description:         "The IDs of the owners of the data source",
 				MarkdownDescription: "The IDs of the owners of the data source",
+			},
+			"edge_site_id": schema.StringAttribute{
+				Required:            false,
+				Optional:            true,
+				Computed:            true,
+				Sensitive:           false,
+				Description:         "The ID of the Edge Site associated with this data source",
+				MarkdownDescription: "The ID of the Edge Site associated with this data source",
+			},
+			"edge_connection_id": schema.StringAttribute{
+				Required:            false,
+				Optional:            true,
+				Computed:            true,
+				Sensitive:           false,
+				Description:         "The ID of the Edge Connection associated with this data source",
+				MarkdownDescription: "The ID of the Edge Connection associated with this data source",
 			},
 		},
 		Description:         "The data source resource",
@@ -178,11 +198,25 @@ func (d *DataSourceResource) Read(ctx context.Context, request resource.ReadRequ
 		return
 	}
 
+	var edgeSiteId, edgeConnectionId *string
+	if ds.EdgeSiteInfo != nil {
+		type edgeSiteInfoGetter interface {
+			GetEdgeSiteId() *string
+			GetEdgeConnectionId() *string
+		}
+		if info, ok := (*ds.EdgeSiteInfo).(edgeSiteInfoGetter); ok {
+			edgeSiteId = info.GetEdgeSiteId()
+			edgeConnectionId = info.GetEdgeConnectionId()
+		}
+	}
+
 	actualData := DataSourceResourceModel{
-		Id:          types.StringValue(ds.Id),
-		Name:        types.StringValue(ds.Name),
-		Description: types.StringValue(ds.Description),
-		Parent:      types.StringPointerValue(parentId),
+		Id:               types.StringValue(ds.Id),
+		Name:             types.StringValue(ds.Name),
+		Description:      types.StringValue(ds.Description),
+		Parent:           types.StringPointerValue(parentId),
+		EdgeSiteId:       types.StringPointerValue(edgeSiteId),
+		EdgeConnectionId: types.StringPointerValue(edgeConnectionId),
 	}
 
 	owners, diagn := getOwners(ctx, stateData.Id.ValueString(), d.client)
