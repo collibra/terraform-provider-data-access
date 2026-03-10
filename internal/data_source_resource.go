@@ -199,6 +199,7 @@ func (d *DataSourceResource) Read(ctx context.Context, request resource.ReadRequ
 	}
 
 	var edgeSiteId, edgeConnectionId *string
+
 	if ds.EdgeSiteInfo != nil {
 		type edgeSiteInfoGetter interface {
 			GetEdgeSiteId() *string
