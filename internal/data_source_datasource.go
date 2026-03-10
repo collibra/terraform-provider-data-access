@@ -14,11 +14,13 @@ import (
 var _ datasource.DataSource = (*DataSourceDataSource)(nil)
 
 type DataSourceDataSourceModel struct {
-	Id          types.String `tfsdk:"id"`
-	Name        types.String `tfsdk:"name"`
-	Description types.String `tfsdk:"description"`
-	Parent      types.String `tfsdk:"parent"`
-	Owners      types.Set    `tfsdk:"owners"`
+	Id               types.String `tfsdk:"id"`
+	Name             types.String `tfsdk:"name"`
+	Description      types.String `tfsdk:"description"`
+	Parent           types.String `tfsdk:"parent"`
+	Owners           types.Set    `tfsdk:"owners"`
+	EdgeSiteId       types.String `tfsdk:"edge_site_id"`
+	EdgeConnectionId types.String `tfsdk:"edge_connection_id"`
 }
 
 type DataSourceDataSource struct {
@@ -78,6 +80,22 @@ func (d *DataSourceDataSource) Schema(_ context.Context, _ datasource.SchemaRequ
 				Description:         "The IDs of the owners of the data source",
 				MarkdownDescription: "The IDs of the owners of the data source",
 			},
+			"edge_site_id": schema.StringAttribute{
+				Required:            false,
+				Optional:            false,
+				Computed:            true,
+				Sensitive:           false,
+				Description:         "The ID of the Edge Site associated with this data source",
+				MarkdownDescription: "The ID of the Edge Site associated with this data source",
+			},
+			"edge_connection_id": schema.StringAttribute{
+				Required:            false,
+				Optional:            false,
+				Computed:            true,
+				Sensitive:           false,
+				Description:         "The ID of the Edge Connection associated with this data source",
+				MarkdownDescription: "The ID of the Edge Connection associated with this data source",
+			},
 		},
 		Description:         "Find a data source based on the name",
 		MarkdownDescription: "Find a Data Source based on the name",
@@ -110,9 +128,24 @@ func (d *DataSourceDataSource) Read(ctx context.Context, request datasource.Read
 				parentId = &dsItem.Parent.Id
 			}
 
+			var edgeSiteId, edgeConnectionId *string
+
+			if dsItem.EdgeSiteInfo != nil {
+				type edgeSiteInfoGetter interface {
+					GetEdgeSiteId() *string
+					GetEdgeConnectionId() *string
+				}
+				if info, ok := (*dsItem.EdgeSiteInfo).(edgeSiteInfoGetter); ok {
+					edgeSiteId = info.GetEdgeSiteId()
+					edgeConnectionId = info.GetEdgeConnectionId()
+				}
+			}
+
 			data.Id = types.StringValue(dsItem.Id)
 			data.Description = types.StringValue(dsItem.Description)
 			data.Parent = types.StringPointerValue(parentId)
+			data.EdgeSiteId = types.StringPointerValue(edgeSiteId)
+			data.EdgeConnectionId = types.StringPointerValue(edgeConnectionId)
 
 			owners, diagn := getOwners(ctx, dsItem.Id, d.client)
 			response.Diagnostics.Append(diagn...)
