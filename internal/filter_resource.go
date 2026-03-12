@@ -8,10 +8,13 @@ import (
 	"github.com/collibra/data-access-go-sdk"
 	dataAccessType "github.com/collibra/data-access-go-sdk/types"
 	"github.com/collibra/data-access-terraform-provider/internal/utils"
+	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -27,12 +30,12 @@ type FilterResourceModel struct {
 	Name        types.String `tfsdk:"name"`
 	Description types.String `tfsdk:"description"`
 	State       types.String `tfsdk:"state"`
-	Owners      types.Set    `tfsdk:"owners"`
 
 	// FilterResourceModel properties
 	Table       types.Object `tfsdk:"table"`
 	WhatLocked  types.Bool   `tfsdk:"what_locked"`
 	FilterRules types.Set    `tfsdk:"filter_rules"`
+	Owners      types.Set    `tfsdk:"owners"`
 }
 
 func (f *FilterResourceModel) GetAccessControlResourceModel() *AccessControlResourceModel {
@@ -41,7 +44,6 @@ func (f *FilterResourceModel) GetAccessControlResourceModel() *AccessControlReso
 		Name:        f.Name,
 		Description: f.Description,
 		State:       f.State,
-		Owners:      f.Owners,
 	}
 }
 
@@ -50,7 +52,6 @@ func (f *FilterResourceModel) SetAccessControlResourceModel(ap *AccessControlRes
 	f.Name = ap.Name
 	f.Description = ap.Description
 	f.State = ap.State
-	f.Owners = ap.Owners
 
 	if !ap.Who.IsUnknown() && !ap.Who.IsNull() {
 		filterRules := make([]attr.Value, 0, len(ap.Who.Elements()))
@@ -70,6 +71,10 @@ func (f *FilterResourceModel) SetAccessControlResourceModel(ap *AccessControlRes
 
 func (f *FilterResourceModel) UpdateOwners(owners types.Set) {
 	f.Owners = owners
+}
+
+func (f *FilterResourceModel) GetOwners() (types.Set, bool) {
+	return f.Owners, true
 }
 
 type FilterResource struct {
@@ -102,6 +107,22 @@ func (f *FilterResource) Metadata(_ context.Context, request resource.MetadataRe
 
 func (f *FilterResource) Schema(ctx context.Context, request resource.SchemaRequest, response *resource.SchemaResponse) {
 	attributes := f.schema("filter", withAccessControlSchemaExcludeWho())
+	attributes["owners"] = schema.SetAttribute{
+		ElementType:         types.StringType,
+		Required:            false,
+		Optional:            true,
+		Computed:            true,
+		Sensitive:           false,
+		Description:         "User id of the owners of this filter",
+		MarkdownDescription: "User id of the owners of this filter",
+		Validators: []validator.Set{
+			setvalidator.ValueStringsAre(
+				stringvalidator.LengthAtLeast(3),
+			),
+		},
+		Default: nil,
+	}
+
 	attributes["table"] = schema.ObjectAttribute{
 		AttributeTypes:      dataObjectReferenceTypeAttributeTypes,
 		Required:            false,
@@ -146,7 +167,7 @@ func (f *FilterResource) Schema(ctx context.Context, request resource.SchemaRequ
 
 // ToAccessControlInput converts the Terraform model for a filter to the Collibra model for AccessControlInput.
 func (f *FilterResourceModel) ToAccessControlInput(ctx context.Context, client *sdk.CollibraClient, result *dataAccessType.AccessControlInput) diag.Diagnostics {
-	diagnostics := f.GetAccessControlResourceModel().ToAccessControlInput(ctx, client, result)
+	diagnostics := f.GetAccessControlResourceModel().ToAccessControlInput(ctx, client, result, WithToAccessControlLockOwners(!f.Owners.IsNull()))
 
 	if diagnostics.HasError() {
 		return diagnostics

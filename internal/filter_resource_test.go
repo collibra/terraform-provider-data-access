@@ -34,7 +34,6 @@ func TestAccFilterResource(t *testing.T) {
 							"user": "terraform-acc-test-1@collibra.com"
 						}
 					]
-					data_source = data.collibra-data-access_datasource.ds.id
 					filter_policy = "{Category} = 'Reseller'"
 				}
 				
@@ -80,14 +79,12 @@ func TestAccFilterResource(t *testing.T) {
 											"user": "terraform-acc-test-1@collibra.com"
 										}
 									]
-									data_source = data.collibra-data-access_datasource.ds.id
 									filter_policy = "{Category} = 'Reseller'"
 								}
 
 								resource "collibra-data-access_filter_rule" "test_rule_2" {
 									name = "tfTestFilterRule2"
 									description = "Filter rule for testing purposes"
-									data_source = data.collibra-data-access_datasource.ds.id
 									filter_policy = "{Category} = 'Sales'"
 								}
 				

@@ -39,7 +39,6 @@ type GrantResourceModel struct {
 	Description       types.String `tfsdk:"description"`
 	State             types.String `tfsdk:"state"`
 	Who               types.Set    `tfsdk:"who"`
-	Owners            types.Set    `tfsdk:"owners"`
 	WhoAbacRules      types.Set    `tfsdk:"who_abac_rules"`
 	WhoLocked         types.Bool   `tfsdk:"who_locked"`
 	InheritanceLocked types.Bool   `tfsdk:"inheritance_locked"`
@@ -50,6 +49,7 @@ type GrantResourceModel struct {
 	WhatDataObjects types.Set    `tfsdk:"what_data_objects"`
 	WhatAbacRules   types.Set    `tfsdk:"what_abac_rules"`
 	WhatLocked      types.Bool   `tfsdk:"what_locked"`
+	Owners          types.Set    `tfsdk:"owners"`
 }
 
 func (m *GrantResourceModel) GetAccessControlResourceModel() *AccessControlResourceModel {
@@ -59,7 +59,6 @@ func (m *GrantResourceModel) GetAccessControlResourceModel() *AccessControlResou
 		Description:       m.Description,
 		State:             m.State,
 		Who:               m.Who,
-		Owners:            m.Owners,
 		WhoAbacRules:      m.WhoAbacRules,
 		WhoLocked:         m.WhoLocked,
 		InheritanceLocked: m.InheritanceLocked,
@@ -72,7 +71,6 @@ func (m *GrantResourceModel) SetAccessControlResourceModel(ac *AccessControlReso
 	m.Description = ac.Description
 	m.State = ac.State
 	m.Who = ac.Who
-	m.Owners = ac.Owners
 	m.WhoAbacRules = ac.WhoAbacRules
 	m.WhoLocked = ac.WhoLocked
 	m.InheritanceLocked = ac.InheritanceLocked
@@ -80,6 +78,10 @@ func (m *GrantResourceModel) SetAccessControlResourceModel(ac *AccessControlReso
 
 func (m *GrantResourceModel) UpdateOwners(owners types.Set) {
 	m.Owners = owners
+}
+
+func (m *GrantResourceModel) GetOwners() (types.Set, bool) {
+	return m.Owners, true
 }
 
 type GrantResource struct {
@@ -106,6 +108,22 @@ func (g *GrantResource) Metadata(_ context.Context, request resource.MetadataReq
 
 func (g *GrantResource) Schema(_ context.Context, _ resource.SchemaRequest, response *resource.SchemaResponse) {
 	attributes := g.schema("grant")
+	attributes["owners"] = schema.SetAttribute{
+		ElementType:         types.StringType,
+		Required:            false,
+		Optional:            true,
+		Computed:            true,
+		Sensitive:           false,
+		Description:         "User id of the owners of this grant",
+		MarkdownDescription: "User id of the owners of this grant",
+		Validators: []validator.Set{
+			setvalidator.ValueStringsAre(
+				stringvalidator.LengthAtLeast(3),
+			),
+		},
+		Default: nil,
+	}
+
 	attributes["category"] = schema.StringAttribute{
 		Required:            false,
 		Optional:            true,

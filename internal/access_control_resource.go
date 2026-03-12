@@ -12,7 +12,6 @@ import (
 	"github.com/collibra/go-set/set"
 	"github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
-	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -48,8 +47,6 @@ type AccessControlResourceModel struct {
 	WhoAbacRules      types.Set
 	WhoLocked         types.Bool
 	InheritanceLocked types.Bool
-
-	Owners types.Set
 }
 
 type DataObjectReferenceModel struct {
@@ -64,6 +61,7 @@ type AccessControlModel[T any] interface {
 	ToAccessControlInput(ctx context.Context, client *sdk.CollibraClient, result *dataAccessType.AccessControlInput) diag.Diagnostics
 	FromAccessControl(ctx context.Context, client *sdk.CollibraClient, input *dataAccessType.AccessControl) diag.Diagnostics
 	UpdateOwners(owners types.Set)
+	GetOwners() (types.Set, bool)
 }
 
 type ReadHook[T any, ApModel AccessControlModel[T]] func(ctx context.Context, client *sdk.CollibraClient, data ApModel) diag.Diagnostics
@@ -191,21 +189,6 @@ func (a *AccessControlResource[T, ApModel]) schema(typeName string, ops ...func(
 				stringvalidator.OneOf(string(dataAccessType.AccessControlStateActive), string(dataAccessType.AccessControlStateInactive)),
 			},
 			Default: stringdefault.StaticString(string(dataAccessType.AccessControlStateActive)),
-		},
-		"owners": schema.SetAttribute{
-			ElementType:         types.StringType,
-			Required:            false,
-			Optional:            true,
-			Computed:            true,
-			Sensitive:           false,
-			Description:         fmt.Sprintf("User id of the owners of this %s", typeName),
-			MarkdownDescription: fmt.Sprintf("User id of the owners of this %s", typeName),
-			Validators: []validator.Set{
-				setvalidator.ValueStringsAre(
-					stringvalidator.LengthAtLeast(3),
-				),
-			},
-			Default: nil,
 		},
 	}
 
@@ -340,7 +323,6 @@ func (a *AccessControlResource[T, ApModel]) create(ctx context.Context, data ApM
 	apResourceModel := data.GetAccessControlResourceModel()
 
 	state := apResourceModel.State
-	owners := apResourceModel.Owners
 
 	response.Diagnostics.Append(data.ToAccessControlInput(ctx, a.client, &input)...)
 
@@ -378,7 +360,9 @@ func (a *AccessControlResource[T, ApModel]) create(ctx context.Context, data ApM
 		return
 	}
 
-	response.Diagnostics.Append(a.createUpdateOwners(ctx, data, owners, ac, &response.State)...)
+	if owners, ok := data.GetOwners(); ok {
+		response.Diagnostics.Append(a.createUpdateOwners(ctx, data, owners, ac, &response.State)...)
+	}
 }
 
 // createUpdateOwners updates the owners of an AccessControl in Collibra
@@ -665,7 +649,6 @@ func (a *AccessControlResource[T, ApModel]) update(ctx context.Context, data ApM
 
 	id := apResourceModel.Id.ValueString()
 	state := apResourceModel.State
-	owners := apResourceModel.Owners
 
 	response.Diagnostics.Append(data.ToAccessControlInput(ctx, a.client, &input)...)
 
@@ -721,7 +704,9 @@ func (a *AccessControlResource[T, ApModel]) update(ctx context.Context, data ApM
 	}
 
 	// Update owners
-	response.Diagnostics.Append(a.createUpdateOwners(ctx, data, owners, ac, &response.State)...)
+	if owners, ok := data.GetOwners(); ok {
+		response.Diagnostics.Append(a.createUpdateOwners(ctx, data, owners, ac, &response.State)...)
+	}
 }
 
 // retainExistingWhoGrantsForPromises gets the existing WHO-items from the AccessControl and only keeps the grants that correspond to a defined promise
@@ -989,8 +974,24 @@ func (a *AccessControlResource[T, ApModel]) ModifyPlan(ctx context.Context, req 
 	resp.Diagnostics.Append(resp.Plan.Set(ctx, apModel)...)
 }
 
+type ToAccessControlInputOptions struct {
+	LockOwners bool
+}
+
+func WithToAccessControlLockOwners(lock bool) func(options *ToAccessControlInputOptions) {
+	return func(options *ToAccessControlInputOptions) {
+		options.LockOwners = lock
+	}
+}
+
 // ToAccessControlInput converts the Terraform model to the Collibra AccessControlInput model
-func (a *AccessControlResourceModel) ToAccessControlInput(ctx context.Context, client *sdk.CollibraClient, result *dataAccessType.AccessControlInput) (diagnostics diag.Diagnostics) {
+func (a *AccessControlResourceModel) ToAccessControlInput(ctx context.Context, client *sdk.CollibraClient, result *dataAccessType.AccessControlInput, ops ...func(options *ToAccessControlInputOptions)) (diagnostics diag.Diagnostics) {
+	option := ToAccessControlInputOptions{}
+
+	for _, op := range ops {
+		op(&option)
+	}
+
 	result.Name = a.Name.ValueStringPointer()
 	result.Description = a.Description.ValueStringPointer()
 	result.Locks = append(result.Locks,
@@ -1033,7 +1034,7 @@ func (a *AccessControlResourceModel) ToAccessControlInput(ctx context.Context, c
 		)
 	}
 
-	if !a.Owners.IsNull() {
+	if option.LockOwners {
 		result.Locks = append(result.Locks, dataAccessType.AccessControlLockDataInput{
 			LockKey: dataAccessType.AccessControlLockOwnerlock,
 			Details: &dataAccessType.AccessControlLockDetailsInput{

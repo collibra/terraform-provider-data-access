@@ -35,7 +35,6 @@ type MaskResourceModel struct {
 	Description       types.String `tfsdk:"description"`
 	State             types.String `tfsdk:"state"`
 	Who               types.Set    `tfsdk:"who"`
-	Owners            types.Set    `tfsdk:"owners"`
 	WhoAbacRules      types.Set    `tfsdk:"who_abac_rules"`
 	WhoLocked         types.Bool   `tfsdk:"who_locked"`
 	InheritanceLocked types.Bool   `tfsdk:"inheritance_locked"`
@@ -45,6 +44,7 @@ type MaskResourceModel struct {
 	Columns       types.Set  `tfsdk:"columns"`
 	WhatAbacRules types.Set  `tfsdk:"what_abac_rules"`
 	WhatLocked    types.Bool `tfsdk:"what_locked"`
+	Owners            types.Set    `tfsdk:"owners"`
 }
 
 func (m *MaskResourceModel) GetAccessControlResourceModel() *AccessControlResourceModel {
@@ -54,7 +54,6 @@ func (m *MaskResourceModel) GetAccessControlResourceModel() *AccessControlResour
 		Description:       m.Description,
 		State:             m.State,
 		Who:               m.Who,
-		Owners:            m.Owners,
 		WhoAbacRules:      m.WhoAbacRules,
 		WhoLocked:         m.WhoLocked,
 		InheritanceLocked: m.InheritanceLocked,
@@ -67,7 +66,6 @@ func (m *MaskResourceModel) SetAccessControlResourceModel(ap *AccessControlResou
 	m.Description = ap.Description
 	m.State = ap.State
 	m.Who = ap.Who
-	m.Owners = ap.Owners
 	m.WhoAbacRules = ap.WhoAbacRules
 	m.WhoLocked = ap.WhoLocked
 	m.InheritanceLocked = ap.InheritanceLocked
@@ -75,6 +73,10 @@ func (m *MaskResourceModel) SetAccessControlResourceModel(ap *AccessControlResou
 
 func (m *MaskResourceModel) UpdateOwners(owners types.Set) {
 	m.Owners = owners
+}
+
+func (m *MaskResourceModel) GetOwners() (types.Set, bool) {
+	return m.Owners, true
 }
 
 type MaskResource struct {
@@ -107,6 +109,21 @@ func (m *MaskResource) Metadata(_ context.Context, request resource.MetadataRequ
 
 func (m *MaskResource) Schema(_ context.Context, _ resource.SchemaRequest, response *resource.SchemaResponse) {
 	attributes := m.schema("mask")
+	attributes["owners"] = schema.SetAttribute{
+		ElementType:         types.StringType,
+		Required:            false,
+		Optional:            true,
+		Computed:            true,
+		Sensitive:           false,
+		Description:         "User id of the owners of this mask",
+		MarkdownDescription: "User id of the owners of this mask",
+		Validators: []validator.Set{
+			setvalidator.ValueStringsAre(
+				stringvalidator.LengthAtLeast(3),
+			),
+		},
+		Default: nil,
+	}
 	attributes["data_sources"] = schema.SetNestedAttribute{
 		NestedObject: schema.NestedAttributeObject{
 			Attributes: map[string]schema.Attribute{

@@ -29,7 +29,6 @@ func TestAccFilterRuleResource(t *testing.T) {
 				resource "collibra-data-access_filter_rule" "test_rule" {
 					name = "tfTestFilterRule"
 					description = "Filter rule for testing purposes"
-					data_source = data.collibra-data-access_datasource.ds.id
 					filter_policy = "{Category} = 'Reseller'"
 				}
 				
@@ -47,7 +46,6 @@ func TestAccFilterRuleResource(t *testing.T) {
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("collibra-data-access_filter_rule.test_rule", "name", "tfTestFilterRule"),
 						resource.TestCheckResourceAttr("collibra-data-access_filter_rule.test_rule", "description", "Filter rule for testing purposes"),
-						resource.TestCheckResourceAttrPair("collibra-data-access_filter_rule.test_rule", "data_source", "data.collibra-data-access_datasource.ds", "id"),
 						resource.TestCheckResourceAttr("collibra-data-access_filter_rule.test_rule", "filter_policy", "{Category} = 'Reseller'"),
 
 						resource.TestCheckNoResourceAttr("collibra-data-access_filter_rule.test_rule", "who"),
@@ -69,7 +67,6 @@ func TestAccFilterRuleResource(t *testing.T) {
 							"user": "terraform-acc-test-1@collibra.com"
 						}
 					]
-					data_source = data.collibra-data-access_datasource.ds.id
 					filter_policy = "{Category} = 'Reseller'"
 				}
 				
@@ -87,7 +84,6 @@ func TestAccFilterRuleResource(t *testing.T) {
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("collibra-data-access_filter_rule.test_rule", "name", "tfTestFilterRule"),
 						resource.TestCheckResourceAttr("collibra-data-access_filter_rule.test_rule", "description", "Filter rule for testing purposes"),
-						resource.TestCheckResourceAttrPair("collibra-data-access_filter_rule.test_rule", "data_source", "data.collibra-data-access_datasource.ds", "id"),
 						resource.TestCheckResourceAttr("collibra-data-access_filter_rule.test_rule", "filter_policy", "{Category} = 'Reseller'"),
 
 						resource.TestCheckResourceAttr("collibra-data-access_filter_rule.test_rule", "who.#", "1"),
@@ -111,7 +107,6 @@ func TestAccFilterRuleResource(t *testing.T) {
 				resource "collibra-data-access_filter_rule" "test_rule" {
 					name = "tfTestFilterRule"
 					description = "Filter rule for testing purposes"
-					data_source = data.collibra-data-access_datasource.ds.id
 					filter_policy = "{Category} = 'Reseller'"
 					who_locked = true
 					inheritance_locked = true
@@ -131,7 +126,6 @@ func TestAccFilterRuleResource(t *testing.T) {
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("collibra-data-access_filter_rule.test_rule", "name", "tfTestFilterRule"),
 						resource.TestCheckResourceAttr("collibra-data-access_filter_rule.test_rule", "description", "Filter rule for testing purposes"),
-						resource.TestCheckResourceAttrPair("collibra-data-access_filter_rule.test_rule", "data_source", "data.collibra-data-access_datasource.ds", "id"),
 						resource.TestCheckResourceAttr("collibra-data-access_filter_rule.test_rule", "filter_policy", "{Category} = 'Reseller'"),
 
 						resource.TestCheckNoResourceAttr("collibra-data-access_filter_rule.test_rule", "who"),

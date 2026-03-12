@@ -2,16 +2,13 @@ package internal
 
 import (
 	"context"
-	"fmt"
 
 	sdk "github.com/collibra/data-access-go-sdk"
 	dataAccessType "github.com/collibra/data-access-go-sdk/types"
 	"github.com/collibra/data-access-terraform-provider/internal/utils"
-	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -32,7 +29,6 @@ type FilterRuleResourceModel struct {
 	InheritanceLocked types.Bool   `tfsdk:"inheritance_locked"`
 
 	// GrantResourceModel properties.
-	DataSource   types.String `tfsdk:"data_source"`
 	FilterPolicy types.String `tfsdk:"filter_policy"`
 }
 
@@ -46,7 +42,6 @@ func (f *FilterRuleResourceModel) GetAccessControlResourceModel() *AccessControl
 		WhoAbacRules:      f.WhoAbacRules,
 		WhoLocked:         f.WhoLocked,
 		InheritanceLocked: f.InheritanceLocked,
-		Owners:            f.Owners,
 	}
 }
 
@@ -59,11 +54,14 @@ func (f *FilterRuleResourceModel) SetAccessControlResourceModel(m *AccessControl
 	f.WhoAbacRules = m.WhoAbacRules
 	f.WhoLocked = m.WhoLocked
 	f.InheritanceLocked = m.InheritanceLocked
-	f.Owners = m.Owners
 }
 
-func (f *FilterRuleResourceModel) UpdateOwners(owners types.Set) {
-	f.Owners = owners
+func (f *FilterRuleResourceModel) UpdateOwners(_ types.Set) {
+	// Do nothing no owners
+}
+
+func (f *FilterRuleResourceModel) GetOwners() (types.Set, bool) {
+	return types.Set{}, false
 }
 
 type FilterRuleResource struct {
@@ -84,17 +82,6 @@ func (f *FilterRuleResource) Metadata(_ context.Context, request resource.Metada
 
 func (f *FilterRuleResource) Schema(_ context.Context, _ resource.SchemaRequest, response *resource.SchemaResponse) {
 	attributes := f.schema("filter_rule")
-	attributes["data_source"] = schema.StringAttribute{
-		Required:            true,
-		Optional:            false,
-		Computed:            false,
-		Sensitive:           false,
-		Description:         "The ID of the data source of the grant",
-		MarkdownDescription: "The ID of the data source of the grant",
-		Validators: []validator.String{
-			stringvalidator.LengthAtLeast(3),
-		},
-	}
 	attributes["filter_policy"] = schema.StringAttribute{
 		Required:            true,
 		Optional:            false,
@@ -123,13 +110,6 @@ func (f *FilterRuleResourceModel) ToAccessControlInput(ctx context.Context, clie
 		return diagnostics
 	}
 
-	result.DataSources = []dataAccessType.AccessControlDataSourceInput{
-		{
-			DataSource: f.DataSource.ValueString(),
-			Type:       nil,
-		},
-	}
-
 	result.Action = utils.Ptr(dataAccessType.AccessControlActionFilterrule)
 	result.PolicyRule = f.FilterPolicy.ValueStringPointer()
 
@@ -147,14 +127,6 @@ func (f *FilterRuleResourceModel) FromAccessControl(_ context.Context, _ *sdk.Co
 	f.SetAccessControlResourceModel(apResourceModel)
 
 	f.FilterPolicy = types.StringPointerValue(input.PolicyRule)
-
-	if len(input.SyncData) != 1 {
-		diagnostics.AddError("Error reading filter rule, no data source", fmt.Sprintf("Expecting exactly one data source defined for a filter rule. Got %d", len(input.SyncData)))
-
-		return diagnostics
-	}
-
-	f.DataSource = types.StringValue(input.SyncData[0].DataSource.Id)
 
 	return diagnostics
 }
