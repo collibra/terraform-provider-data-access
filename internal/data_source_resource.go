@@ -2,6 +2,7 @@ package internal
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -29,6 +30,7 @@ type DataSourceResourceModel struct {
 	Owners           types.Set    `tfsdk:"owners"`
 	EdgeSiteId       types.String `tfsdk:"edge_site_id"`
 	EdgeConnectionId types.String `tfsdk:"edge_connection_id"`
+	SyncParameters   types.Map    `tfsdk:"sync_parameters"`
 }
 
 func (m *DataSourceResourceModel) ToDataSourceInput() dataAccessType.DataSourceInput {
@@ -118,6 +120,13 @@ func (d *DataSourceResource) Schema(_ context.Context, _ resource.SchemaRequest,
 				Description:         "The ID of the Edge Connection associated with this data source",
 				MarkdownDescription: "The ID of the Edge Connection associated with this data source",
 			},
+			"sync_parameters": schema.MapAttribute{
+				ElementType:         types.StringType,
+				Optional:            true,
+				Computed:            false,
+				Description:         "Sync configuration parameters as a map of dot-notation paths to JSON-encoded values. E.g. {\"global.sf-tags\" = \"true\", \"global.page-size\" = \"42\", \"global.tag-name\" = \"\\\"myValue\\\"\"}. Set a key to null to remove it.",
+				MarkdownDescription: "Sync configuration parameters as a map of dot-notation paths to JSON-encoded values.",
+			},
 		},
 		Description:         "The data source resource",
 		MarkdownDescription: "The resource for representing a Data Source.",
@@ -145,6 +154,15 @@ func (d *DataSourceResource) Create(ctx context.Context, request resource.Create
 
 	data.Id = types.StringValue(dataSourceResult.Id)
 	response.Diagnostics.Append(response.State.Set(ctx, data)...) //Ensure to store id first
+
+	// Set sync parameters
+	response.Diagnostics.Append(
+		d.setSyncParameters(ctx, dataSourceResult.Id, types.MapNull(types.StringType), data.SyncParameters)...,
+	)
+
+	if response.Diagnostics.HasError() {
+		return
+	}
 
 	// Set Owners
 	if !data.Owners.IsNull() && len(data.Owners.Elements()) > 0 {
@@ -218,6 +236,7 @@ func (d *DataSourceResource) Read(ctx context.Context, request resource.ReadRequ
 		Parent:           types.StringPointerValue(parentId),
 		EdgeSiteId:       types.StringPointerValue(edgeSiteId),
 		EdgeConnectionId: types.StringPointerValue(edgeConnectionId),
+		SyncParameters:   stateData.SyncParameters, // preserve — API doesn't return these
 	}
 
 	owners, diagn := getOwners(ctx, stateData.Id.ValueString(), d.client)
@@ -242,11 +261,27 @@ func (d *DataSourceResource) Update(ctx context.Context, request resource.Update
 		return
 	}
 
+	var priorData DataSourceResourceModel
+	response.Diagnostics.Append(request.State.Get(ctx, &priorData)...)
+
+	if response.Diagnostics.HasError() {
+		return
+	}
+
 	// Update data source
 	_, err := d.client.DataSource().UpdateDataSource(ctx, data.Id.ValueString(), data.ToDataSourceInput())
 	if err != nil {
 		response.Diagnostics.AddError("Failed to update data source", err.Error())
 
+		return
+	}
+
+	// Set sync parameters
+	response.Diagnostics.Append(
+		d.setSyncParameters(ctx, data.Id.ValueString(), priorData.SyncParameters, data.SyncParameters)...,
+	)
+
+	if response.Diagnostics.HasError() {
 		return
 	}
 
@@ -303,6 +338,83 @@ func (d *DataSourceResource) Delete(ctx context.Context, request resource.Delete
 	}
 
 	response.State.RemoveResource(ctx)
+}
+
+func (d *DataSourceResource) setSyncParameters(
+	ctx context.Context,
+	dsId string,
+	priorParams, newParams types.Map,
+) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	if newParams.IsNull() && priorParams.IsNull() {
+		return diags
+	}
+
+	var values []dataAccessType.SyncParameterValueInput
+
+	// Build values to set/update
+	if !newParams.IsNull() {
+		newElements := map[string]types.String{}
+		diags.Append(newParams.ElementsAs(ctx, &newElements, false)...)
+
+		if diags.HasError() {
+			return diags
+		}
+
+		for path, jsonStr := range newElements {
+			var decoded interface{}
+			if err := json.Unmarshal([]byte(jsonStr.ValueString()), &decoded); err != nil {
+				diags.AddError(
+					"Invalid sync parameter value",
+					fmt.Sprintf("Value for path %q is not valid JSON: %s", path, err),
+				)
+				return diags
+			}
+
+			decodedVal := decoded
+			values = append(values, dataAccessType.SyncParameterValueInput{Path: path, Value: &decodedVal})
+		}
+	}
+
+	// Build removed keys (nil = delete from backend)
+	if !priorParams.IsNull() {
+		priorElements := map[string]types.String{}
+		diags.Append(priorParams.ElementsAs(ctx, &priorElements, false)...)
+
+		if diags.HasError() {
+			return diags
+		}
+
+		newElements := map[string]types.String{}
+		if !newParams.IsNull() {
+			diags.Append(newParams.ElementsAs(ctx, &newElements, false)...)
+
+			if diags.HasError() {
+				return diags
+			}
+		}
+
+		for path := range priorElements {
+			if _, exists := newElements[path]; !exists {
+				values = append(values, dataAccessType.SyncParameterValueInput{Path: path, Value: nil})
+			}
+		}
+	}
+
+	if len(values) == 0 {
+		return diags
+	}
+
+	_, err := d.client.DataSource().SetSyncConfigurationParameterValues(
+		ctx,
+		dataAccessType.SyncParameterValuesInput{DataSourceId: dsId, Values: values},
+	)
+	if err != nil {
+		diags.AddError("Failed to set sync configuration parameter values", err.Error())
+	}
+
+	return diags
 }
 
 func (d *DataSourceResource) setOwners(ctx context.Context, ownerSet *types.Set, dsId string) (diagnostics diag.Diagnostics) {
