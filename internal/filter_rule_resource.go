@@ -23,7 +23,6 @@ type FilterRuleResourceModel struct {
 	Description       types.String `tfsdk:"description"`
 	State             types.String `tfsdk:"state"`
 	Who               types.Set    `tfsdk:"who"`
-	Owners            types.Set    `tfsdk:"owners"`
 	WhoAbacRules      types.Set    `tfsdk:"who_abac_rules"`
 	WhoLocked         types.Bool   `tfsdk:"who_locked"`
 	InheritanceLocked types.Bool   `tfsdk:"inheritance_locked"`
