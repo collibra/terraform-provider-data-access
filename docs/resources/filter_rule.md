@@ -78,7 +78,6 @@ resource "collibra-data-access_filter" "filter1" {
 
 ### Required
 
-- `data_source` (String) The ID of the data source of the grant
 - `filter_policy` (String) The filter policy that defines how the data is filtered. The policy syntax is defined by the data source.
 - `name` (String) The name of the filter_rule
 
@@ -86,7 +85,6 @@ resource "collibra-data-access_filter" "filter1" {
 
 - `description` (String) The description of the filter_rule
 - `inheritance_locked` (Boolean) Indicates if who should be locked. This should be true if who access providers are set.
-- `owners` (Set of String) User id of the owners of this filter_rule
 - `state` (String) The state of the filter_rule Possible values are: ["Active", "Inactive"]
 - `who` (Attributes Set) The who-items associated with the filter_rule. When this is not set (nil), the who-list will not be overridden. This is typically used when this should be managed from Collibra Data Access. (see [below for nested schema](#nestedatt--who))
 - `who_abac_rules` (Attributes Set) The abac rules for defining the dynamic who-items associated with the filter_rule (see [below for nested schema](#nestedatt--who_abac_rules))

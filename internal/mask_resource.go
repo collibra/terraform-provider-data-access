@@ -44,7 +44,7 @@ type MaskResourceModel struct {
 	Columns       types.Set  `tfsdk:"columns"`
 	WhatAbacRules types.Set  `tfsdk:"what_abac_rules"`
 	WhatLocked    types.Bool `tfsdk:"what_locked"`
-	Owners            types.Set    `tfsdk:"owners"`
+	Owners        types.Set  `tfsdk:"owners"`
 }
 
 func (m *MaskResourceModel) GetAccessControlResourceModel() *AccessControlResourceModel {
