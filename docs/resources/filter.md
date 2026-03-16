@@ -3,12 +3,12 @@
 page_title: "collibra-data-access_filter Resource - collibra_data_access"
 subcategory: ""
 description: |-
-  The resource for representing a Row-level Filter access control.
+  The resource for representing a Row-level Filter access control. This should be used in combination with a Filter Rule.
 ---
 
 # collibra-data-access_filter (Resource)
 
-The resource for representing a Row-level Filter access control.
+The resource for representing a Row-level Filter access control. This should be used in combination with a Filter Rule.
 
 ## Example Usage
 
@@ -28,10 +28,9 @@ resource "collibra-data-access_purpose" "purpose1" {
   ]
 }
 
-resource "collibra-data-access_filter" "filter1" {
-  name        = "First filter"
-  description = "A simple filter"
-  state       = "Active"
+resource "collibra-data-access_filter_rule" "filter1rule1" {
+  name        = "table1 - NJ"
+  description = "State = NJ for TABLE1"
   who = [
     {
       user : "user1@company.com"
@@ -44,12 +43,21 @@ resource "collibra-data-access_filter" "filter1" {
       access_control : collibra-data-access_purpose.purpose1.id
     }
   ]
+  filter_policy = "{state} = 'NJ'"
+  data_source   = data.collibra-data-access_datasource.ds.id
+}
+
+resource "collibra-data-access_filter" "filter1" {
+  name        = "First filter"
+  description = "A simple filter"
+  state       = "Active"
+
   table = {
     type        = "table"
     path        = ["DB1", "SCHEMA1", "TABLE1"]
     data_source = data.collibra-data-access_datasource.ds.id
   }
-  filter_policy = "{state} = 'NJ'"
+  filter_rules = [collibra-data-access_filter_rule.filter1rule1.id]
 }
 ```
 
@@ -58,20 +66,16 @@ resource "collibra-data-access_filter" "filter1" {
 
 ### Required
 
-- `filter_policy` (String) The filter policy that defines how the data is filtered. The policy syntax is defined by the data source.
 - `name` (String) The name of the filter
 
 ### Optional
 
 - `description` (String) The description of the filter
-- `inheritance_locked` (Boolean) Indicates if who should be locked. This should be true if who access providers are set.
+- `filter_rules` (Set of String) Set of filter rules ids that are applicable for this filter
 - `owners` (Set of String) User id of the owners of this filter
 - `state` (String) The state of the filter Possible values are: ["Active", "Inactive"]
 - `table` (Object) The table that should be filtered (see [below for nested schema](#nestedatt--table))
 - `what_locked` (Boolean) Indicates whether it should lock the what. Should be set to true if table is set.
-- `who` (Attributes Set) The who-items associated with the filter. When this is not set (nil), the who-list will not be overridden. This is typically used when this should be managed from Collibra Data Access. (see [below for nested schema](#nestedatt--who))
-- `who_abac_rules` (Attributes Set) The abac rules for defining the dynamic who-items associated with the filter (see [below for nested schema](#nestedatt--who_abac_rules))
-- `who_locked` (Boolean) Indicates if who should be locked. This should be true if who users or who_abac_rule is set.
 
 ### Read-Only
 
@@ -85,33 +89,3 @@ Optional:
 - `data_source` (String)
 - `path` (List of String)
 - `type` (String)
-
-
-<a id="nestedatt--who"></a>
-### Nested Schema for `who`
-
-Optional:
-
-- `access_control` (String) The ID of the access control in Collibra Data Access. Cannot be set if `user` is set.
-- `promise_duration` (Number) Specify this to indicate that this who-item is a promise instead of a direct grant. This is specified as the number of seconds that access should be granted when requested.
-- `user` (String) The email address of the user. This cannot be set if `access_control` is set.
-
-
-<a id="nestedatt--who_abac_rules"></a>
-### Nested Schema for `who_abac_rules`
-
-Required:
-
-- `id` (String) A unique ID of the abac rule within this access control
-- `rule` (String) The JSON representation of the abac rule
-
-## Import
-
-Import is supported using the following syntax:
-
-The [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import) can be used, for example:
-
-```shell
-#Import grant. Not that who and what_data_objects will not be imported
-terraform import collibra-data-access_filter.example filterId
-```
