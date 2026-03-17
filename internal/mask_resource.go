@@ -19,7 +19,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
-	"github.com/collibra/data-access-terraform-provider/internal/utils"
+	"github.com/collibra/terraform-provider-data-access/internal/utils"
 )
 
 var _ resource.Resource = (*MaskResource)(nil)

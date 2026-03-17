@@ -22,8 +22,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 
-	types2 "github.com/collibra/data-access-terraform-provider/internal/types"
-	"github.com/collibra/data-access-terraform-provider/internal/utils"
+	types2 "github.com/collibra/terraform-provider-data-access/internal/types"
+	"github.com/collibra/terraform-provider-data-access/internal/utils"
 )
 
 //

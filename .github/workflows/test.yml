@@ -53,13 +53,12 @@ jobs:
       - name: Lint
         uses: golangci/golangci-lint-action@v8
         with:
-          version: latest
-          skip-cache: false
+          version: v2.11.3
 
       - name: FOSSA Scan
         uses: fossas/fossa-action@v1
         with:
-          api-key: ${{ secrets.FOSSA_API_KEY }}
+          api-key: ${{ secrets.FOSSA_PUBLIC_API_KEY }}
 
   generate:
     runs-on: ubuntu-latest

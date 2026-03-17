@@ -5,7 +5,7 @@ import (
 
 	dataAccessType "github.com/collibra/data-access-go-sdk/types"
 
-	"github.com/collibra/data-access-terraform-provider/internal/utils"
+	"github.com/collibra/terraform-provider-data-access/internal/utils"
 )
 
 type BinaryExpression struct {

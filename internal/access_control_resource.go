@@ -26,8 +26,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 
-	"github.com/collibra/data-access-terraform-provider/internal/types/abac_expression"
-	"github.com/collibra/data-access-terraform-provider/internal/utils"
+	"github.com/collibra/terraform-provider-data-access/internal/types/abac_expression"
+	"github.com/collibra/terraform-provider-data-access/internal/utils"
 )
 
 const (

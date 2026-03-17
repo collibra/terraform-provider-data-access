@@ -7,7 +7,7 @@ import (
 
 	"github.com/collibra/data-access-go-sdk"
 	dataAccessType "github.com/collibra/data-access-go-sdk/types"
-	"github.com/collibra/data-access-terraform-provider/internal/utils"
+	"github.com/collibra/terraform-provider-data-access/internal/utils"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
