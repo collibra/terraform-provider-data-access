@@ -11,7 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
-	"github.com/collibra/data-access-terraform-provider/internal/utils"
+	"github.com/collibra/terraform-provider-data-access/internal/utils"
 )
 
 func getOwners(ctx context.Context, id string, client *sdk.CollibraClient) (result types.Set, diagnostics diag.Diagnostics) {

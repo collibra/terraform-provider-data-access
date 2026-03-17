@@ -7,7 +7,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 
-	"github.com/collibra/data-access-terraform-provider/internal"
+	"github.com/collibra/terraform-provider-data-access/internal"
 )
 
 // Run "go generate" to format example terraform files and generate the docs for the registry/website
