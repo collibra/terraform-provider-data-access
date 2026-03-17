@@ -53,8 +53,7 @@ jobs:
       - name: Lint
         uses: golangci/golangci-lint-action@v8
         with:
-          version: 2.10.1
-          skip-cache: false
+          version: v2.11.3
 
       - name: FOSSA Scan
         uses: fossas/fossa-action@v1
