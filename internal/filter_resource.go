@@ -8,9 +8,13 @@ import (
 	"github.com/collibra/data-access-go-sdk"
 	dataAccessType "github.com/collibra/data-access-go-sdk/types"
 	"github.com/collibra/data-access-terraform-provider/internal/utils"
+	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -22,33 +26,24 @@ var _ resource.Resource = (*FilterResource)(nil)
 
 type FilterResourceModel struct {
 	// AccessControlResourceModel properties. This has to be duplicated because of https://github.com/hashicorp/terraform-plugin-framework/issues/242
-	Id                types.String `tfsdk:"id"`
-	Name              types.String `tfsdk:"name"`
-	Description       types.String `tfsdk:"description"`
-	State             types.String `tfsdk:"state"`
-	Who               types.Set    `tfsdk:"who"`
-	Owners            types.Set    `tfsdk:"owners"`
-	WhoAbacRules      types.Set    `tfsdk:"who_abac_rules"`
-	WhoLocked         types.Bool   `tfsdk:"who_locked"`
-	InheritanceLocked types.Bool   `tfsdk:"inheritance_locked"`
+	Id          types.String `tfsdk:"id"`
+	Name        types.String `tfsdk:"name"`
+	Description types.String `tfsdk:"description"`
+	State       types.String `tfsdk:"state"`
 
 	// FilterResourceModel properties
-	Table        types.Object `tfsdk:"table"`
-	FilterPolicy types.String `tfsdk:"filter_policy"`
-	WhatLocked   types.Bool   `tfsdk:"what_locked"`
+	Table       types.Object `tfsdk:"table"`
+	WhatLocked  types.Bool   `tfsdk:"what_locked"`
+	FilterRules types.Set    `tfsdk:"filter_rules"`
+	Owners      types.Set    `tfsdk:"owners"`
 }
 
 func (f *FilterResourceModel) GetAccessControlResourceModel() *AccessControlResourceModel {
 	return &AccessControlResourceModel{
-		Id:                f.Id,
-		Name:              f.Name,
-		Description:       f.Description,
-		State:             f.State,
-		Who:               f.Who,
-		Owners:            f.Owners,
-		WhoAbacRules:      f.WhoAbacRules,
-		WhoLocked:         f.WhoLocked,
-		InheritanceLocked: f.InheritanceLocked,
+		Id:          f.Id,
+		Name:        f.Name,
+		Description: f.Description,
+		State:       f.State,
 	}
 }
 
@@ -57,15 +52,29 @@ func (f *FilterResourceModel) SetAccessControlResourceModel(ap *AccessControlRes
 	f.Name = ap.Name
 	f.Description = ap.Description
 	f.State = ap.State
-	f.Who = ap.Who
-	f.Owners = ap.Owners
-	f.WhoAbacRules = ap.WhoAbacRules
-	f.WhoLocked = ap.WhoLocked
-	f.InheritanceLocked = ap.InheritanceLocked
+
+	if !ap.Who.IsUnknown() && !ap.Who.IsNull() {
+		filterRules := make([]attr.Value, 0, len(ap.Who.Elements()))
+
+		for _, elem := range ap.Who.Elements() {
+			whoObject := elem.(types.Object)
+
+			attributes := whoObject.Attributes()
+			if ac, found := attributes["access_control"]; found && !ac.IsNull() && !ac.IsUnknown() {
+				filterRules = append(filterRules, ac)
+			}
+		}
+
+		f.FilterRules = types.SetValueMust(types.StringType, filterRules)
+	}
 }
 
 func (f *FilterResourceModel) UpdateOwners(owners types.Set) {
 	f.Owners = owners
+}
+
+func (f *FilterResourceModel) GetOwners() (types.Set, bool) {
+	return f.Owners, true
 }
 
 type FilterResource struct {
@@ -97,7 +106,23 @@ func (f *FilterResource) Metadata(_ context.Context, request resource.MetadataRe
 }
 
 func (f *FilterResource) Schema(ctx context.Context, request resource.SchemaRequest, response *resource.SchemaResponse) {
-	attributes := f.schema("filter")
+	attributes := f.schema("filter", withAccessControlSchemaExcludeWho())
+	attributes["owners"] = schema.SetAttribute{
+		ElementType:         types.StringType,
+		Required:            false,
+		Optional:            true,
+		Computed:            true,
+		Sensitive:           false,
+		Description:         "User id of the owners of this filter",
+		MarkdownDescription: "User id of the owners of this filter",
+		Validators: []validator.Set{
+			setvalidator.ValueStringsAre(
+				stringvalidator.LengthAtLeast(3),
+			),
+		},
+		Default: nil,
+	}
+
 	attributes["table"] = schema.ObjectAttribute{
 		AttributeTypes:      dataObjectReferenceTypeAttributeTypes,
 		Required:            false,
@@ -115,19 +140,23 @@ func (f *FilterResource) Schema(ctx context.Context, request resource.SchemaRequ
 		Description:         "Indicates whether it should lock the what. Should be set to true if table is set.",
 		MarkdownDescription: "Indicates whether it should lock the what. Should be set to true if table is set.",
 	}
-	attributes["filter_policy"] = schema.StringAttribute{
-		Required:            true,
-		Optional:            false,
+	attributes["filter_rules"] = schema.SetAttribute{
+		ElementType:         types.StringType,
+		Required:            false,
+		Optional:            true,
 		Computed:            false,
 		Sensitive:           false,
-		Description:         "The filter policy that defines how the data is filtered. The policy syntax is defined by the data source.",
-		MarkdownDescription: "The filter policy that defines how the data is filtered. The policy syntax is defined by the data source.",
+		Description:         "Set of filter rules ids that are applicable for this filter.",
+		MarkdownDescription: "Set of filter rules ids that are applicable for this filter",
+		Validators:          nil,
+		PlanModifiers:       nil,
+		Default:             nil,
 	}
 
 	response.Schema = schema.Schema{
 		Attributes:          attributes,
 		Description:         "The filter access control resource",
-		MarkdownDescription: "The resource for representing a Row-level Filter access control.",
+		MarkdownDescription: "The resource for representing a Row-level Filter access control. This should be used in combination with a Filter Rule.",
 		Version:             1,
 	}
 }
@@ -138,7 +167,7 @@ func (f *FilterResource) Schema(ctx context.Context, request resource.SchemaRequ
 
 // ToAccessControlInput converts the Terraform model for a filter to the Collibra model for AccessControlInput.
 func (f *FilterResourceModel) ToAccessControlInput(ctx context.Context, client *sdk.CollibraClient, result *dataAccessType.AccessControlInput) diag.Diagnostics {
-	diagnostics := f.GetAccessControlResourceModel().ToAccessControlInput(ctx, client, result)
+	diagnostics := f.GetAccessControlResourceModel().ToAccessControlInput(ctx, client, result, WithToAccessControlLockOwners(!f.Owners.IsNull()))
 
 	if diagnostics.HasError() {
 		return diagnostics
@@ -146,7 +175,29 @@ func (f *FilterResourceModel) ToAccessControlInput(ctx context.Context, client *
 
 	result.Action = utils.Ptr(dataAccessType.AccessControlActionFilter)
 
-	result.PolicyRule = f.FilterPolicy.ValueStringPointer()
+	if !f.FilterRules.IsNull() && !f.FilterRules.IsUnknown() {
+		var ruleIds []string
+
+		fdDiag := f.FilterRules.ElementsAs(ctx, &ruleIds, false)
+		if fdDiag.HasError() {
+			diagnostics = append(diagnostics, fdDiag...)
+
+			return diagnostics
+		}
+
+		for _, ruleId := range ruleIds {
+			result.WhoItems = append(result.WhoItems, dataAccessType.WhoItemInput{
+				AccessControl: &ruleId,
+			})
+		}
+
+		result.Locks = append(result.Locks, dataAccessType.AccessControlLockDataInput{
+			LockKey: dataAccessType.AccessControlLockInheritancelock,
+			Details: &dataAccessType.AccessControlLockDetailsInput{
+				Reason: utils.Ptr(lockMsg),
+			},
+		})
+	}
 
 	if !f.Table.IsNull() && !f.Table.IsUnknown() {
 		result.Locks = append(result.Locks, dataAccessType.AccessControlLockDataInput{
@@ -207,7 +258,6 @@ func (f *FilterResourceModel) FromAccessControl(_ context.Context, _ *sdk.Collib
 		return diagnostics
 	}
 
-	f.FilterPolicy = types.StringPointerValue(input.PolicyRule)
 	f.WhatLocked = types.BoolValue(slices.ContainsFunc(input.Locks, func(data dataAccessType.AccessControlLocksAccessControlLockData) bool {
 		return data.LockKey == dataAccessType.AccessControlLockWhatlock
 	}))

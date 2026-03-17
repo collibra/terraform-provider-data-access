@@ -30,6 +30,8 @@ resource "collibra-data-access_datasource" "example" {
 ### Optional
 
 - `description` (String) The description of the data source
+- `edge_connection_id` (String) The ID of the Edge Connection associated with this data source
+- `edge_site_id` (String) The ID of the Edge Site associated with this data source
 - `owners` (Set of String) The IDs of the owners of the data source
 - `parent` (String) The ID of the parent data source, if applicable
 
