@@ -34,6 +34,7 @@ resource "collibra-data-access_datasource" "example" {
 - `edge_site_id` (String) The ID of the Edge Site associated with this data source
 - `owners` (Set of String) The IDs of the owners of the data source
 - `parent` (String) The ID of the parent data source, if applicable
+- `sync_parameters` (Map of String) Sync configuration parameters as a map of dot-notation paths to JSON-encoded values.
 
 ### Read-Only
 
