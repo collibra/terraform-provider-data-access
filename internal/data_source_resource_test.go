@@ -2,6 +2,7 @@ package internal
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -53,6 +54,98 @@ resource "collibra-data-access_datasource" "test" {
 					),
 				},
 				// Resource are automatically deleted
+			},
+			ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		})
+	})
+
+	t.Run("set sync parameters", func(t *testing.T) {
+		resource.Test(t, resource.TestCase{
+			IsUnitTest: false,
+			PreCheck: func() {
+				AccProviderPreCheck(t)
+			},
+			TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+				tfversion.SkipBelow(tfversion.Version1_0_0),
+			},
+			Steps: []resource.TestStep{
+				{
+					Config: providerConfig + fmt.Sprintf(`
+resource "collibra-data-access_datasource" "test" {
+	name = "tfTestDataSource-%s"
+	sync_parameters = {
+		"global.sf-tags"   = "true"
+		"global.page-size" = "42"
+	}
+}`, testId),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("collibra-data-access_datasource.test", "sync_parameters.%", "2"),
+						resource.TestCheckResourceAttr("collibra-data-access_datasource.test", "sync_parameters.global.sf-tags", "true"),
+						resource.TestCheckResourceAttr("collibra-data-access_datasource.test", "sync_parameters.global.page-size", "42"),
+					),
+				},
+				{
+					ResourceName:            "collibra-data-access_datasource.test",
+					ImportState:             true,
+					ImportStateVerify:       true,
+					ImportStateVerifyIgnore: []string{"sync_parameters"},
+				},
+				{
+					Config: providerConfig + fmt.Sprintf(`
+resource "collibra-data-access_datasource" "test" {
+	name = "tfTestDataSource-%s"
+	sync_parameters = {
+		"global.page-size" = "100"
+	}
+}`, testId),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("collibra-data-access_datasource.test", "sync_parameters.%", "1"),
+						resource.TestCheckResourceAttr("collibra-data-access_datasource.test", "sync_parameters.global.page-size", "100"),
+					),
+				},
+			},
+			ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		})
+	})
+
+	t.Run("edge fields validation", func(t *testing.T) {
+		resource.Test(t, resource.TestCase{
+			IsUnitTest: false,
+			PreCheck: func() {
+				AccProviderPreCheck(t)
+			},
+			TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+				tfversion.SkipBelow(tfversion.Version1_0_0),
+			},
+			Steps: []resource.TestStep{
+				{
+					Config: providerConfig + fmt.Sprintf(`
+resource "collibra-data-access_datasource" "test" {
+	name         = "tfTestDataSource-%s"
+	edge_site_id = "some-site-id"
+}
+`, testId),
+					ExpectError: regexp.MustCompile(`must be specified`),
+				},
+				{
+					Config: providerConfig + fmt.Sprintf(`
+resource "collibra-data-access_datasource" "test" {
+	name               = "tfTestDataSource-%s"
+	edge_connection_id = "some-connection-id"
+}
+`, testId),
+					ExpectError: regexp.MustCompile(`must be specified`),
+				},
+				{
+					Config: providerConfig + fmt.Sprintf(`
+resource "collibra-data-access_datasource" "test" {
+	name         = "tfTestDataSource-%s"
+	type         = "Snowflake"
+	edge_site_id = "some-site-id"
+}
+`, testId),
+					ExpectError: regexp.MustCompile(`must be specified`),
+				},
 			},
 			ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		})

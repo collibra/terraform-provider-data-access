@@ -30,10 +30,12 @@ resource "collibra-data-access_datasource" "example" {
 ### Optional
 
 - `description` (String) The description of the data source
-- `edge_connection_id` (String) The ID of the Edge Connection associated with this data source
-- `edge_site_id` (String) The ID of the Edge Site associated with this data source
+- `edge_connection_id` (String) The ID of the Edge Connection associated with this data source. Requires `edge_site_id` and `type` to also be set.
+- `edge_site_id` (String) The ID of the Edge Site associated with this data source. Requires `edge_connection_id` and `type` to also be set.
 - `owners` (Set of String) The IDs of the owners of the data source
 - `parent` (String) The ID of the parent data source, if applicable
+- `sync_parameters` (Map of String) Sync configuration parameters as a map of dot-notation paths to JSON-encoded values.
+- `type` (String) The type of the data source (e.g. Snowflake, BigQuery). Required when `edge_site_id` or `edge_connection_id` is set.
 
 ### Read-Only
 

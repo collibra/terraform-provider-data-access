@@ -29,7 +29,7 @@ data "collibra-data-access_user" "terraform-acc-test-2" {
 }
 `,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("data.collibra-data-access_user.terraform-acc-test-1", "name", "Terraform Acceptance test 1"),
+					resource.TestCheckResourceAttr("data.collibra-data-access_user.terraform-acc-test-1", "name", "Terraform Provider IT User 1"),
 					resource.TestCheckResourceAttr("data.collibra-data-access_user.terraform-acc-test-1", "type", "Human"),
 					resource.TestCheckResourceAttrWith("data.collibra-data-access_user.terraform-acc-test-1", "id", func(value string) error {
 						if value == "" {
@@ -39,7 +39,7 @@ data "collibra-data-access_user" "terraform-acc-test-2" {
 						return nil
 					}),
 
-					resource.TestCheckResourceAttr("data.collibra-data-access_user.terraform-acc-test-2", "name", "Terraform Acceptance test 2"),
+					resource.TestCheckResourceAttr("data.collibra-data-access_user.terraform-acc-test-2", "name", "Terraform Provider IT User 2"),
 					resource.TestCheckResourceAttr("data.collibra-data-access_user.terraform-acc-test-2", "type", "Human"),
 					resource.TestCheckResourceAttrWith("data.collibra-data-access_user.terraform-acc-test-2", "id", func(value string) error {
 						if value == "" {
