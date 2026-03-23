@@ -8,17 +8,17 @@ import (
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 )
 
-// Collibra user https://data-access-e2e-1.collibra.tech/profile/0199b8bd-c778-7b8b-b84f-dbc6a7801fab
+// Collibra user https://data-access-e2e-dev.collibra.tech/data-access/resources/identities/jaGCmJHvrM15aHJc2eCBb
 const TestUser1Email = "terraform-acc-test-1@collibra.com"
 
-// The data access user id for Collibra user https://data-access-e2e-1.collibra.tech/profile/0199b8bd-c778-7b8b-b84f-dbc6a7801fab
-const TestUser1Id = "HjgZ-zwJiMm5iMm36wlNU"
+// The data access user id for Collibra user https://data-access-e2e-dev.collibra.tech/data-access/resources/identities/jaGCmJHvrM15aHJc2eCBb
+const TestUser1Id = "jaGCmJHvrM15aHJc2eCBb"
 
-// Collibra user https://data-access-e2e-1.collibra.tech/profile/0199b8be-1f09-7e7a-93e6-86c5bab29c4c
+// Collibra user https://data-access-e2e-dev.collibra.tech/data-access/resources/identities/1wWONZ059RupQoW5bib1z
 const TestUser2Email = "terraform-acc-test-2@collibra.com"
 
-// The data access user id for Collibra user https://data-access-e2e-1.collibra.tech/profile/0199b8be-1f09-7e7a-93e6-86c5bab29c4c
-const TestUser2Id = "UTSgSk0xu7v9C9I9iTjBu"
+// The data access user id for Collibra user https://data-access-e2e-dev.collibra.tech/data-access/resources/identities/1wWONZ059RupQoW5bib1z
+const TestUser2Id = "1wWONZ059RupQoW5bib1z"
 
 var testAccProtoV6ProviderFactories = map[string]func() (tfprotov6.ProviderServer, error){
 	"collibra-data-access": providerserver.NewProtocol6WithError(New("test")()),
