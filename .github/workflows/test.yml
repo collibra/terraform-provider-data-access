@@ -62,7 +62,7 @@ jobs:
           SONAR_HOST_URL: https://sonarqube.collibra.dev
         with:
           args: >
-            -Dsonar.pullrequest.github.repository=collibra/go-set    
+            -Dsonar.pullrequest.github.repository=collibra/terraform-provider-data-access
 
       - name: FOSSA Scan
         uses: fossas/fossa-action@v1
