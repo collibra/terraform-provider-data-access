@@ -6,7 +6,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/collibra/data-access-go-sdk"
+	sdk "github.com/collibra/data-access-go-sdk"
 	dataAccessType "github.com/collibra/data-access-go-sdk/types"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -92,7 +92,7 @@ func (d *DataSourceResource) Schema(_ context.Context, _ resource.SchemaRequest,
 			"type": schema.StringAttribute{
 				Required:            false,
 				Optional:            true,
-				Computed:            true,
+				Computed:            false,
 				Sensitive:           false,
 				Description:         "The type of the data source (e.g. Snowflake, BigQuery). Required when edge_site_id or edge_connection_id is set.",
 				MarkdownDescription: "The type of the data source (e.g. Snowflake, BigQuery). Required when `edge_site_id` or `edge_connection_id` is set.",
@@ -194,7 +194,14 @@ func (d *DataSourceResource) Create(ctx context.Context, request resource.Create
 
 	data.Owners = owners
 
-	response.Diagnostics.Append(response.State.Set(ctx, data)...)
+	hydratedData, diagn := d.readDataSourceState(ctx, dataSourceResult.Id, data.SyncParameters)
+	response.Diagnostics.Append(diagn...)
+
+	if response.Diagnostics.HasError() {
+		return
+	}
+
+	response.Diagnostics.Append(response.State.Set(ctx, hydratedData)...)
 }
 
 func (d *DataSourceResource) Read(ctx context.Context, request resource.ReadRequest, response *resource.ReadResponse) {
@@ -219,47 +226,8 @@ func (d *DataSourceResource) Read(ctx context.Context, request resource.ReadRequ
 		return
 	}
 
-	var parentId *string
-	if ds.Parent != nil {
-		parentId = &ds.Parent.Id
-	}
-
-	if response.Diagnostics.HasError() {
-		return
-	}
-
-	var edgeSiteId, edgeConnectionId *string
-
-	if ds.EdgeSiteInfo != nil {
-		type edgeSiteInfoGetter interface {
-			GetEdgeSiteId() *string
-			GetEdgeConnectionId() *string
-		}
-		if info, ok := (*ds.EdgeSiteInfo).(edgeSiteInfoGetter); ok {
-			edgeSiteId = info.GetEdgeSiteId()
-			edgeConnectionId = info.GetEdgeConnectionId()
-		}
-	}
-
-	actualData := DataSourceResourceModel{
-		Id:               types.StringValue(ds.Id),
-		Name:             types.StringValue(ds.Name),
-		Description:      types.StringValue(ds.Description),
-		Type:             types.StringValue(ds.Type),
-		Parent:           types.StringPointerValue(parentId),
-		EdgeSiteId:       types.StringPointerValue(edgeSiteId),
-		EdgeConnectionId: types.StringPointerValue(edgeConnectionId),
-		SyncParameters:   stateData.SyncParameters, // preserve — API doesn't return these
-	}
-
-	owners, diagn := getOwners(ctx, stateData.Id.ValueString(), d.client)
+	actualData, diagn := d.readDataSourceState(ctx, ds.Id, stateData.SyncParameters)
 	response.Diagnostics.Append(diagn...)
-
-	if response.Diagnostics.HasError() {
-		return
-	}
-
-	actualData.Owners = owners
 
 	response.Diagnostics.Append(response.State.Set(ctx, actualData)...)
 }
@@ -316,7 +284,66 @@ func (d *DataSourceResource) Update(ctx context.Context, request resource.Update
 
 	data.Owners = owners
 
-	response.Diagnostics.Append(response.State.Set(ctx, data)...)
+	hydratedData, diagn := d.readDataSourceState(ctx, data.Id.ValueString(), data.SyncParameters)
+	response.Diagnostics.Append(diagn...)
+
+	if response.Diagnostics.HasError() {
+		return
+	}
+
+	response.Diagnostics.Append(response.State.Set(ctx, hydratedData)...)
+}
+
+func (d *DataSourceResource) readDataSourceState(
+	ctx context.Context,
+	id string,
+	syncParameters types.Map,
+) (DataSourceResourceModel, diag.Diagnostics) {
+	var diagnostics diag.Diagnostics
+
+	ds, err := d.client.DataSource().GetDataSource(ctx, id)
+	if err != nil {
+		diagnostics.AddError("Failed to get data source", err.Error())
+
+		return DataSourceResourceModel{}, diagnostics
+	}
+
+	var parentId *string
+	if ds.Parent != nil {
+		parentId = &ds.Parent.Id
+	}
+
+	var edgeSiteId, edgeConnectionId *string
+
+	if ds.EdgeSiteInfo != nil {
+		type edgeSiteInfoGetter interface {
+			GetEdgeSiteId() *string
+			GetEdgeConnectionId() *string
+		}
+		if info, ok := (*ds.EdgeSiteInfo).(edgeSiteInfoGetter); ok {
+			edgeSiteId = info.GetEdgeSiteId()
+			edgeConnectionId = info.GetEdgeConnectionId()
+		}
+	}
+
+	owners, ownerDiagnostics := getOwners(ctx, ds.Id, d.client)
+	diagnostics.Append(ownerDiagnostics...)
+
+	if diagnostics.HasError() {
+		return DataSourceResourceModel{}, diagnostics
+	}
+
+	return DataSourceResourceModel{
+		Id:               types.StringValue(ds.Id),
+		Name:             types.StringValue(ds.Name),
+		Description:      types.StringValue(ds.Description),
+		Type:             types.StringValue(ds.Type),
+		Parent:           types.StringPointerValue(parentId),
+		Owners:           owners,
+		EdgeSiteId:       types.StringPointerValue(edgeSiteId),
+		EdgeConnectionId: types.StringPointerValue(edgeConnectionId),
+		SyncParameters:   syncParameters,
+	}, diagnostics
 }
 
 func (d *DataSourceResource) Delete(ctx context.Context, request resource.DeleteRequest, response *resource.DeleteResponse) {
