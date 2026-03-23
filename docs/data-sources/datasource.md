@@ -33,3 +33,4 @@ data "collibra-data-access_datasource" "example" {
 - `id` (String) The ID of the requested data source
 - `owners` (Set of String) The IDs of the owners of the data source
 - `parent` (String) The ID of the parent data source, if applicable
+- `type` (String) The type of the data source (e.g. Snowflake, BigQuery)
