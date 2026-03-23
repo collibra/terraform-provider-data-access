@@ -6,7 +6,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/collibra/data-access-go-sdk"
+	sdk "github.com/collibra/data-access-go-sdk"
 	dataAccessType "github.com/collibra/data-access-go-sdk/types"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -26,6 +26,7 @@ type DataSourceResourceModel struct {
 	Id               types.String `tfsdk:"id"`
 	Name             types.String `tfsdk:"name"`
 	Description      types.String `tfsdk:"description"`
+	Type             types.String `tfsdk:"type"`
 	Parent           types.String `tfsdk:"parent"`
 	Owners           types.Set    `tfsdk:"owners"`
 	EdgeSiteId       types.String `tfsdk:"edge_site_id"`
@@ -37,6 +38,7 @@ func (m *DataSourceResourceModel) ToDataSourceInput() dataAccessType.DataSourceI
 	return dataAccessType.DataSourceInput{
 		Name:             m.Name.ValueStringPointer(),
 		Description:      m.Description.ValueStringPointer(),
+		Type:             m.Type.ValueStringPointer(),
 		Parent:           m.Parent.ValueStringPointer(),
 		EdgeSiteId:       m.EdgeSiteId.ValueStringPointer(),
 		EdgeConnectionId: m.EdgeConnectionId.ValueStringPointer(),
@@ -87,6 +89,14 @@ func (d *DataSourceResource) Schema(_ context.Context, _ resource.SchemaRequest,
 				MarkdownDescription: "The description of the data source",
 				Default:             stringdefault.StaticString(""),
 			},
+			"type": schema.StringAttribute{
+				Required:            false,
+				Optional:            true,
+				Computed:            false,
+				Sensitive:           false,
+				Description:         "The type of the data source (e.g. Snowflake, BigQuery). Required when edge_site_id or edge_connection_id is set.",
+				MarkdownDescription: "The type of the data source (e.g. Snowflake, BigQuery). Required when `edge_site_id` or `edge_connection_id` is set.",
+			},
 			"parent": schema.StringAttribute{
 				Required:            false,
 				Optional:            true,
@@ -109,16 +119,18 @@ func (d *DataSourceResource) Schema(_ context.Context, _ resource.SchemaRequest,
 				Optional:            true,
 				Computed:            false,
 				Sensitive:           false,
-				Description:         "The ID of the Edge Site associated with this data source",
-				MarkdownDescription: "The ID of the Edge Site associated with this data source",
+				Description:         "The ID of the Edge Site associated with this data source. Requires edge_connection_id and type to also be set.",
+				MarkdownDescription: "The ID of the Edge Site associated with this data source. Requires `edge_connection_id` and `type` to also be set.",
+				Validators:          []validator.String{stringvalidator.AlsoRequires(path.MatchRoot("type"), path.MatchRoot("edge_connection_id"))},
 			},
 			"edge_connection_id": schema.StringAttribute{
 				Required:            false,
 				Optional:            true,
 				Computed:            false,
 				Sensitive:           false,
-				Description:         "The ID of the Edge Connection associated with this data source",
-				MarkdownDescription: "The ID of the Edge Connection associated with this data source",
+				Description:         "The ID of the Edge Connection associated with this data source. Requires edge_site_id and type to also be set.",
+				MarkdownDescription: "The ID of the Edge Connection associated with this data source. Requires `edge_site_id` and `type` to also be set.",
+				Validators:          []validator.String{stringvalidator.AlsoRequires(path.MatchRoot("type"), path.MatchRoot("edge_site_id"))},
 			},
 			"sync_parameters": schema.MapAttribute{
 				ElementType:         types.StringType,
@@ -212,6 +224,11 @@ func (d *DataSourceResource) Read(ctx context.Context, request resource.ReadRequ
 		parentId = &ds.Parent.Id
 	}
 
+	var dsType *string
+	if ds.Type != "" {
+		dsType = &ds.Type
+	}
+
 	if response.Diagnostics.HasError() {
 		return
 	}
@@ -233,6 +250,7 @@ func (d *DataSourceResource) Read(ctx context.Context, request resource.ReadRequ
 		Id:               types.StringValue(ds.Id),
 		Name:             types.StringValue(ds.Name),
 		Description:      types.StringValue(ds.Description),
+		Type:             types.StringPointerValue(dsType),
 		Parent:           types.StringPointerValue(parentId),
 		EdgeSiteId:       types.StringPointerValue(edgeSiteId),
 		EdgeConnectionId: types.StringPointerValue(edgeConnectionId),
