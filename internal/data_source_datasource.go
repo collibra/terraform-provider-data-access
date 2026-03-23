@@ -17,6 +17,7 @@ type DataSourceDataSourceModel struct {
 	Id               types.String `tfsdk:"id"`
 	Name             types.String `tfsdk:"name"`
 	Description      types.String `tfsdk:"description"`
+	Type             types.String `tfsdk:"type"`
 	Parent           types.String `tfsdk:"parent"`
 	Owners           types.Set    `tfsdk:"owners"`
 	EdgeSiteId       types.String `tfsdk:"edge_site_id"`
@@ -62,6 +63,14 @@ func (d *DataSourceDataSource) Schema(_ context.Context, _ datasource.SchemaRequ
 				Sensitive:           false,
 				Description:         "The description of the data source",
 				MarkdownDescription: "The description of the data source",
+			},
+			"type": schema.StringAttribute{
+				Required:            false,
+				Optional:            false,
+				Computed:            true,
+				Sensitive:           false,
+				Description:         "The type of the data source (e.g. Snowflake, BigQuery)",
+				MarkdownDescription: "The type of the data source (e.g. Snowflake, BigQuery)",
 			},
 			"parent": schema.StringAttribute{
 				Required:            false,
@@ -143,6 +152,7 @@ func (d *DataSourceDataSource) Read(ctx context.Context, request datasource.Read
 
 			data.Id = types.StringValue(dsItem.Id)
 			data.Description = types.StringValue(dsItem.Description)
+			data.Type = types.StringValue(dsItem.Type)
 			data.Parent = types.StringPointerValue(parentId)
 			data.EdgeSiteId = types.StringPointerValue(edgeSiteId)
 			data.EdgeConnectionId = types.StringPointerValue(edgeConnectionId)

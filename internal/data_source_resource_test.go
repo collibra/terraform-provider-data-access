@@ -2,6 +2,7 @@ package internal
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -101,6 +102,81 @@ resource "collibra-data-access_datasource" "test" {
 						resource.TestCheckResourceAttr("collibra-data-access_datasource.test", "sync_parameters.%", "1"),
 						resource.TestCheckResourceAttr("collibra-data-access_datasource.test", "sync_parameters.global.page-size", "100"),
 					),
+				},
+			},
+			ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		})
+	})
+
+	t.Run("set type", func(t *testing.T) {
+		resource.Test(t, resource.TestCase{
+			IsUnitTest: false,
+			PreCheck: func() {
+				AccProviderPreCheck(t)
+			},
+			TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+				tfversion.SkipBelow(tfversion.Version1_0_0),
+			},
+			Steps: []resource.TestStep{
+				{
+					Config: providerConfig + fmt.Sprintf(`
+resource "collibra-data-access_datasource" "test" {
+	name = "tfTestDataSource-%s"
+	type = "Snowflake"
+}
+`, testId),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("collibra-data-access_datasource.test", "name", "tfTestDataSource-"+testId),
+						resource.TestCheckResourceAttr("collibra-data-access_datasource.test", "type", "Snowflake"),
+					),
+				},
+				{
+					ResourceName:      "collibra-data-access_datasource.test",
+					ImportState:       true,
+					ImportStateVerify: true,
+				},
+			},
+			ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		})
+	})
+
+	t.Run("edge fields validation", func(t *testing.T) {
+		resource.Test(t, resource.TestCase{
+			IsUnitTest: false,
+			PreCheck: func() {
+				AccProviderPreCheck(t)
+			},
+			TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+				tfversion.SkipBelow(tfversion.Version1_0_0),
+			},
+			Steps: []resource.TestStep{
+				{
+					Config: providerConfig + fmt.Sprintf(`
+resource "collibra-data-access_datasource" "test" {
+	name         = "tfTestDataSource-%s"
+	edge_site_id = "some-site-id"
+}
+`, testId),
+					ExpectError: regexp.MustCompile(`must be specified`),
+				},
+				{
+					Config: providerConfig + fmt.Sprintf(`
+resource "collibra-data-access_datasource" "test" {
+	name               = "tfTestDataSource-%s"
+	edge_connection_id = "some-connection-id"
+}
+`, testId),
+					ExpectError: regexp.MustCompile(`must be specified`),
+				},
+				{
+					Config: providerConfig + fmt.Sprintf(`
+resource "collibra-data-access_datasource" "test" {
+	name         = "tfTestDataSource-%s"
+	type         = "Snowflake"
+	edge_site_id = "some-site-id"
+}
+`, testId),
+					ExpectError: regexp.MustCompile(`must be specified`),
 				},
 			},
 			ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
