@@ -3,7 +3,7 @@ package internal
 import (
 	"fmt"
 	"regexp"
-"testing"
+	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/tfversion"
