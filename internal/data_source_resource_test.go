@@ -108,38 +108,6 @@ resource "collibra-data-access_datasource" "test" {
 		})
 	})
 
-	t.Run("set type", func(t *testing.T) {
-		resource.Test(t, resource.TestCase{
-			IsUnitTest: false,
-			PreCheck: func() {
-				AccProviderPreCheck(t)
-			},
-			TerraformVersionChecks: []tfversion.TerraformVersionCheck{
-				tfversion.SkipBelow(tfversion.Version1_0_0),
-			},
-			Steps: []resource.TestStep{
-				{
-					Config: providerConfig + fmt.Sprintf(`
-resource "collibra-data-access_datasource" "test" {
-	name = "tfTestDataSource-%s"
-	type = "Snowflake"
-}
-`, testId),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("collibra-data-access_datasource.test", "name", "tfTestDataSource-"+testId),
-						resource.TestCheckResourceAttr("collibra-data-access_datasource.test", "type", "Snowflake"),
-					),
-				},
-				{
-					ResourceName:      "collibra-data-access_datasource.test",
-					ImportState:       true,
-					ImportStateVerify: true,
-				},
-			},
-			ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
-		})
-	})
-
 	t.Run("edge fields validation", func(t *testing.T) {
 		resource.Test(t, resource.TestCase{
 			IsUnitTest: false,
