@@ -224,6 +224,11 @@ func (d *DataSourceResource) Read(ctx context.Context, request resource.ReadRequ
 		parentId = &ds.Parent.Id
 	}
 
+	var dsType *string
+	if ds.Type != "" {
+		dsType = &ds.Type
+	}
+
 	if response.Diagnostics.HasError() {
 		return
 	}
@@ -245,7 +250,7 @@ func (d *DataSourceResource) Read(ctx context.Context, request resource.ReadRequ
 		Id:               types.StringValue(ds.Id),
 		Name:             types.StringValue(ds.Name),
 		Description:      types.StringValue(ds.Description),
-		Type:             types.StringValue(ds.Type),
+		Type:             types.StringPointerValue(dsType),
 		Parent:           types.StringPointerValue(parentId),
 		EdgeSiteId:       types.StringPointerValue(edgeSiteId),
 		EdgeConnectionId: types.StringPointerValue(edgeConnectionId),
