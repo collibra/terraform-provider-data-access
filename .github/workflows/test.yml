@@ -55,6 +55,15 @@ jobs:
         with:
           version: v2.11.3
 
+      - name: SonarQube Scan
+        uses: sonarsource/sonarqube-scan-action@v5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONARQUBE_PUBLIC_API_KEY }}
+          SONAR_HOST_URL: https://sonarqube.collibra.dev
+        with:
+          args: >
+            -Dsonar.pullrequest.github.repository=collibra/go-set    
+
       - name: FOSSA Scan
         uses: fossas/fossa-action@v1
         with:
