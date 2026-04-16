@@ -17,9 +17,6 @@ on:
 permissions:
   contents: read
 
-env:
-  GOPRIVATE: github.com/collibra/data-access-go-sdk
-
 jobs:
   # Ensure project builds before running testing matrix
   build:

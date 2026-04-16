@@ -13,9 +13,6 @@ on:
 permissions:
   contents: write
 
-env:
-  GOPRIVATE: github.com/collibra/data-access-go-sdk
-
 jobs:
   goreleaser:
     runs-on: ubuntu-latest
