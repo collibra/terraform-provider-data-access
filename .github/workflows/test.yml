@@ -21,7 +21,12 @@ jobs:
   # Ensure project builds before running testing matrix
   build:
     name: Build
-    runs-on: ubuntu-latest
+    runs-on:
+      - runs-on
+      - runner=sm
+      - env=production-eu
+      - tag=terraform-provider-data-access
+      - tag=job-${{ github.job }}-${{ github.run_id }}
     timeout-minutes: 5
     steps:
       - name: Check out repository code
@@ -67,7 +72,12 @@ jobs:
           api-key: ${{ secrets.FOSSA_PUBLIC_API_KEY }}
 
   generate:
-    runs-on: ubuntu-latest
+    runs-on:
+      - runs-on
+      - runner=sm
+      - env=production-eu
+      - tag=terraform-provider-data-access
+      - tag=job-${{ github.job }}-${{ github.run_id }}
     steps:
       - name: Check out repository code
         uses: actions/checkout@v4

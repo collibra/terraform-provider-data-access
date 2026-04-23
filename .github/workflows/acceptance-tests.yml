@@ -1,13 +1,8 @@
-# Reusable workflow that runs the Terraform Provider acceptance tests.
-# Invoke from another workflow with:
-#   jobs:
-#     acceptance:
-#       uses: ./.github/workflows/acceptance-tests.yml
-#       secrets: inherit
 name: 🤖 Collibra Data Access Terraform Provider - Acceptance tests
 
 on:
   workflow_call:
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -19,7 +14,12 @@ concurrency:
 jobs:
   test:
     name: Terraform Provider Acceptance Tests
-    runs-on: ubuntu-latest
+    runs-on:
+      - runs-on
+      - runner=sm
+      - env=production-eu
+      - tag=terraform-provider-data-access
+      - tag=job-${{ github.job }}-${{ github.run_id }}
     timeout-minutes: 20
     strategy:
       max-parallel: 1
