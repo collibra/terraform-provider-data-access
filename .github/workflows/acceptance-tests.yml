@@ -1,0 +1,69 @@
+# Reusable workflow that runs the Terraform Provider acceptance tests.
+# Invoke from another workflow with:
+#   jobs:
+#     acceptance:
+#       uses: ./.github/workflows/acceptance-tests.yml
+#       secrets: inherit
+name: 🤖 Collibra Data Access Terraform Provider - Acceptance tests
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: "acceptance-${{ github.ref }}" # probably multiple runs will still fail
+  cancel-in-progress: false
+
+jobs:
+  test:
+    name: Terraform Provider Acceptance Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      max-parallel: 1
+      fail-fast: false
+      matrix:
+        # list whatever Terraform versions here you would like to support
+        terraform:
+          - '1.10.*'
+          - '1.11.*'
+          - '1.12.*'
+          - '1.13.*'
+          - '1.14.*'
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+
+      - name: Setup private repo access
+        run: |
+          git config --global url.https://${GH_ACCESS_TOKEN}@github.com/.insteadOf https://github.com/
+        env:
+          GH_ACCESS_TOKEN: ${{ secrets.COLLIBRA_GITHUB_TOKEN }}
+
+      - name: Install Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+          cache-dependency-path: "go.sum"
+          check-latest: true
+          cache: true
+
+      - name: Install Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ matrix.terraform }}
+          terraform_wrapper: false
+
+      - name: Download
+        run: go mod download
+
+      - name: Acceptance tests
+        env:
+          TF_ACC: "1"
+          TF_VAR_collibra_user: ${{ secrets.COLLIBRA_USER }}
+          TF_VAR_collibra_secret: ${{ secrets.COLLIBRA_SECRET }}
+          TF_VAR_collibra_url: ${{ secrets.COLLIBRA_URL }}
+        run: go test -v -cover ./internal/ -timeout 0
+        timeout-minutes: 15
