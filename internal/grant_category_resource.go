@@ -193,6 +193,15 @@ func (g *GrantCategoryResource) Schema(ctx context.Context, request resource.Sch
 						MarkdownDescription: "Whether the user is allowed as WHO item for the grants of this category",
 						Default:             booldefault.StaticBool(true),
 					},
+					"group": schema.BoolAttribute{
+						Required:            false,
+						Optional:            true,
+						Computed:            true,
+						Sensitive:           false,
+						Description:         "Whether a group is allowed as WHO item for the grants of this category",
+						MarkdownDescription: "Whether a group is allowed as WHO item for the grants of this category",
+						Default:             booldefault.StaticBool(true),
+					},
 					"inheritance": schema.BoolAttribute{
 						Required:            false,
 						Optional:            true,
@@ -230,11 +239,13 @@ func (g *GrantCategoryResource) Schema(ctx context.Context, request resource.Sch
 				MarkdownDescription: "The allowed WHO items for the grants of this category",
 				Default: objectdefault.StaticValue(types.ObjectValueMust(map[string]attr.Type{
 					"user":        types.BoolType,
+					"group":       types.BoolType,
 					"inheritance": types.BoolType,
 					"self":        types.BoolType,
 					"categories":  types.SetType{ElemType: types.StringType},
 				}, map[string]attr.Value{
 					"user":        types.BoolValue(true),
+					"group":       types.BoolValue(true),
 					"inheritance": types.BoolValue(true),
 					"self":        types.BoolValue(true),
 					"categories":  types.SetValueMust(types.StringType, []attr.Value{}),
@@ -311,6 +322,7 @@ func (m *GrantCategoryResourceModel) ToGrantCategoryInput() dataAccessType.Grant
 		DefaultTypePerDataSource: defaultTypePerDS,
 		AllowedWhoItems: &dataAccessType.GrantCategoryAllowedWhoItemsInput{
 			User:        m.AllowedWhoItems.Attributes()["user"].(types.Bool).ValueBool(),
+			Group:       m.AllowedWhoItems.Attributes()["group"].(types.Bool).ValueBool(),
 			Inheritance: m.AllowedWhoItems.Attributes()["inheritance"].(types.Bool).ValueBool(),
 			Self:        m.AllowedWhoItems.Attributes()["self"].(types.Bool).ValueBool(),
 			Categories:  allowedWhoCategories,
@@ -526,12 +538,14 @@ func setGrantCategoryResourceData(data *dataAccessType.GrantCategoryDetails, res
 	allowedWhoItems, diag := types.ObjectValue(
 		map[string]attr.Type{
 			"user":        types.BoolType,
+			"group":       types.BoolType,
 			"inheritance": types.BoolType,
 			"self":        types.BoolType,
 			"categories":  types.SetType{ElemType: types.StringType},
 		},
 		map[string]attr.Value{
 			"user":        types.BoolValue(data.AllowedWhoItems.User),
+			"group":       types.BoolValue(data.AllowedWhoItems.Group),
 			"inheritance": types.BoolValue(data.AllowedWhoItems.Inheritance),
 			"self":        types.BoolValue(data.AllowedWhoItems.Self),
 			"categories":  whoCategories,

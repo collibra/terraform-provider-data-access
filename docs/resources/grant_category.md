@@ -83,6 +83,7 @@ Optional:
 Optional:
 
 - `categories` (Set of String) The allowed WHO items for the grants of this category
+- `group` (Boolean) Whether a group is allowed as WHO item for the grants of this category
 - `inheritance` (Boolean) Whether the inheritance is allowed as WHO item for the grants of this category
 - `self` (Boolean) Whether the self is allowed as WHO item for the grants of this category
 - `user` (Boolean) Whether the user is allowed as WHO item for the grants of this category
