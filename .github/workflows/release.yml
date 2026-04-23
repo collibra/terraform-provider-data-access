@@ -15,7 +15,12 @@ permissions:
 
 jobs:
   goreleaser:
-    runs-on: ubuntu-latest
+    runs-on:
+      - runs-on
+      - runner=md
+      - env=production-eu
+      - tag=terraform-provider-data-access
+      - tag=job-${{ github.job }}-${{ github.run_id }}
     steps:
       - uses: actions/checkout@v4
         with:
