@@ -81,7 +81,12 @@ func (p *CollibraDataAccessProvider) Configure(ctx context.Context, req provider
 		sdk.WithPassword(data.Secret.ValueString()),
 	}
 
-	client := sdk.NewClient(data.Url.ValueString(), clientOptions...)
+	client, err := sdk.NewClient(data.Url.ValueString(), clientOptions...)
+	if err != nil {
+		resp.Diagnostics.AddError("Unable to create Collibra client", "Unable to create Collibra client: "+err.Error())
+
+		return
+	}
 
 	resp.DataSourceData = client
 	resp.ResourceData = client

@@ -358,7 +358,7 @@ resource "collibra-data-access_mask" "abac_mask" {
 		},
 		{
 			type: "column"
-			path: ["MASTER_DATA", "PERSON", "ADDRESS", "AddressLine1"]
+			path: ["MASTER_DATA", "PERSON", "STATEPROVINCE", "Name"]
 			data_source: data.collibra-data-access_datasource.ds.id
 		}]
 }
