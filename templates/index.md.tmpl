@@ -22,9 +22,12 @@ To learn more about Collibra Data Access, you can visit the Collibra documentati
 This provider requires a valid Collibra user to authenticate and interact with the platform.
 
 ### User Roles
-In addition to having a valid user account, specific roles are necessary to perform certain actions with the provider:
+In addition to having a valid user account, specific (global) permissions are necessary to perform certain actions with the provider:
 
-* `Admin`: Required for managing **DataSources** and **Users**. This role allows for creating, reading, updating, and deleting these resources.
-* `Access Manager, Access Creator, Integrator`: Required for managing **Grants**, **Masks**, **Filters**, and **Purposes**. These roles allow for creating, reading, updating, and deleting these resources.
+* `Data Access > Manage Settings`: Required for managing **DataSources** and **Users**. This global permission allows for creating, reading, updating, and deleting these resources.
+* To manage access controls, you have a few possibilities:
+  * `Data Access > Manage All Access`: this global permission allows you to created and update any access control.
+  * `Data Access > Create Access Controls`: this global permissions allows you to create new access controls, even if you are not the owner of any data objects.
+  * Owner: if you are an owner of data objects in Collibra Data Access, you will be able to create new access controls and update access controls which you own.
 
 Please consult the Collibra documentation for more information on user roles and permissions: [https://productresources.collibra.com/](https://productresources.collibra.com/)
