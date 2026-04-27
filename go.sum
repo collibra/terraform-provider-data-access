@@ -37,8 +37,8 @@ github.com/clipperhouse/uax29/v2 v2.7.0 h1:+gs4oBZ2gPfVrKPthwbMzWZDaAFPGYK72F0NJ
 github.com/clipperhouse/uax29/v2 v2.7.0/go.mod h1:EFJ2TJMRUaplDxHKj1qAEhCtQPW2tJSwu5BF98AuoVM=
 github.com/cloudflare/circl v1.6.3 h1:9GPOhQGF9MCYUeXyMYlqTR6a5gTrgR/fBLXvUgtVcg8=
 github.com/cloudflare/circl v1.6.3/go.mod h1:2eXP6Qfat4O/Yhh8BznvKnJ+uzEoTQ6jVKJRn81BiS4=
-github.com/collibra/data-access-go-sdk v0.0.59 h1:W/OFuBfR49KWVSN8iiVT9MrrWJeth4disAeHqI1Al0Y=
-github.com/collibra/data-access-go-sdk v0.0.59/go.mod h1:+6bI9FfSrcqEk6BzuK4O9eGCpT0/WGTrZYqCU3+FGng=
+github.com/collibra/data-access-go-sdk v0.0.60 h1:veCAGoTbhrqhJ6P6xLmvCKXTZcQXnI1x8vSKch+nC2E=
+github.com/collibra/data-access-go-sdk v0.0.60/go.mod h1:+6bI9FfSrcqEk6BzuK4O9eGCpT0/WGTrZYqCU3+FGng=
 github.com/collibra/go-set v0.1.0 h1:b/Ve7VpVnmrhW4Ow0FqHWVbSmZvJnys1bFNQDirMaG8=
 github.com/collibra/go-set v0.1.0/go.mod h1:M4Xk+y4vBCnx+jrC8NiCGLyCbiuHYzHU4Fw5DVz75WE=
 github.com/cyphar/filepath-securejoin v0.4.1 h1:JyxxyPEaktOD+GAnqIqTf9A8tHyAG22rowi7HkoSU1s=
