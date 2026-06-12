@@ -9,7 +9,7 @@
 	"dependencyDashboard": false,
 	"hashedBranchLength": 24,
 	"enabledManagers": [
-		"renovate-config-presets",
+		"renovate-config",
 		"gomod"
 	],
 	"packageRules": [
