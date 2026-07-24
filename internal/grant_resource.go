@@ -307,7 +307,7 @@ func (g *GrantResource) Schema(_ context.Context, _ resource.SchemaRequest, resp
 	response.Schema = schema.Schema{
 		Attributes:          attributes,
 		Description:         "The resource for representing a role in Collibra Data Access.",
-		MarkdownDescription: "The resource for representing a role in Collibra Data Access.\n-> **Note:** In Collibra Data Access, grants are called roles.",
+		MarkdownDescription: "The resource for representing a role in Collibra Data Access.\n\n**Note:** In Collibra Data Access, grants are called roles.",
 		Version:             1,
 	}
 }

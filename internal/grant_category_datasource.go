@@ -179,7 +179,7 @@ func (g *GrantCategoryDataSource) Schema(_ context.Context, _ datasource.SchemaR
 			},
 		},
 		Description:         "The data source to get a role category in Collibra Data Access by name.",
-		MarkdownDescription: "The data source to get a role category in Collibra Data Access by name.\n-> **Note:** In Collibra Data Access, grants are called roles, and grant categories are called role categories.",
+		MarkdownDescription: "The data source to get a role category in Collibra Data Access by name.\n\n**Note:** In Collibra Data Access, grants are called roles, and grant categories are called role categories.",
 	}
 }
 

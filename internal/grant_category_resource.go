@@ -249,7 +249,7 @@ func (g *GrantCategoryResource) Schema(ctx context.Context, request resource.Sch
 			},
 		},
 		Description:         "The resource for managing role categories in Collibra Data Access.",
-		MarkdownDescription: "The resource for managing role categories in Collibra Data Access.\n-> **Note:** In Collibra Data Access, grants are called roles, and grant categories are called role categories.",
+		MarkdownDescription: "The resource for managing role categories in Collibra Data Access.\n\n**Note:** In Collibra Data Access, grants are called roles, and grant categories are called role categories.",
 		Version:             1,
 	}
 }

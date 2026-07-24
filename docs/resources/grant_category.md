@@ -4,13 +4,14 @@ page_title: "collibra-data-access_grant_category Resource - collibra_data_access
 subcategory: ""
 description: |-
   The resource for managing role categories in Collibra Data Access.
-  -> Note: In Collibra Data Access, grants are called roles, and grant categories are called role categories.
+  Note: In Collibra Data Access, grants are called roles, and grant categories are called role categories.
 ---
 
 # collibra-data-access_grant_category (Resource)
 
 The resource for managing role categories in Collibra Data Access.
--> **Note:** In Collibra Data Access, grants are called roles, and grant categories are called role categories.
+
+**Note:** In Collibra Data Access, grants are called roles, and grant categories are called role categories.
 
 ## Example Usage
 
