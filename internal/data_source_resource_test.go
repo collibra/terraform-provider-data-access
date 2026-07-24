@@ -140,7 +140,7 @@ resource "collibra-data-access_datasource" "test" {
 					Config: providerConfig + fmt.Sprintf(`
 resource "collibra-data-access_datasource" "test" {
 	name         = "tfTestDataSource-%s"
-	type         = "Snowflake"
+	type         = "snowflake"
 	edge_site_id = "some-site-id"
 }
 `, testId),

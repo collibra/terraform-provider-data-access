@@ -35,7 +35,20 @@ resource "collibra-data-access_datasource" "example" {
 - `owners` (Set of String) The IDs of the owners of the data source.
 - `parent` (String) The ID of the parent data source, if applicable.
 - `sync_parameters` (Map of String) Sync configuration parameters as a map of dot-notation paths to JSON-encoded values.
-- `type` (String) The type of the data source (for example, Snowflake or BigQuery). This is required when the `edge_site_id` or `edge_connection_id` parameter is set.
+- `type` (String) The type of the data source. This is required when the `edge_site_id` or `edge_connection_id` parameter is set.
+
+Maintained values:
+
+| Value | Connector |
+|---|---|
+| `snowflake` | Snowflake |
+| `gcp-gcp` | GCP |
+| `gcp-bigquery` | BigQuery |
+| `databricks` | Databricks |
+| `okta` | Okta |
+| `entra-id` | Entra-ID |
+
+Custom plugin connector types are also accepted.
 
 ### Read-Only
 
