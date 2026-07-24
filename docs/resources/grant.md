@@ -4,13 +4,14 @@ page_title: "collibra-data-access_grant Resource - collibra_data_access"
 subcategory: ""
 description: |-
   The resource for representing a role in Collibra Data Access.
-  -> Note: In Collibra Data Access, grants are called roles.
+  Note: In Collibra Data Access, grants are called roles.
 ---
 
 # collibra-data-access_grant (Resource)
 
 The resource for representing a role in Collibra Data Access.
--> **Note:** In Collibra Data Access, grants are called roles.
+
+**Note:** In Collibra Data Access, grants are called roles.
 
 ## Example Usage
 
