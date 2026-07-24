@@ -55,7 +55,7 @@ jobs:
       - name: Lint
         uses: golangci/golangci-lint-action@4afd733a84b1f43292c63897423277bb7f4313a9  # v8
         with:
-          version: v2.11.3
+          version: v2.12.2
 
       - name: SonarQube Scan
         uses: sonarsource/sonarqube-scan-action@2f77a1ec69fb1d595b06f35ab27e97605bdef703  # v5

@@ -30,19 +30,18 @@ import (
 var _ resource.Resource = (*GrantCategoryResource)(nil)
 
 type GrantCategoryResourceModel struct {
-	Id                       types.String `tfsdk:"id"`
-	Name                     types.String `tfsdk:"name"`
-	NamePlural               types.String `tfsdk:"name_plural"`
-	Description              types.String `tfsdk:"description"`
-	Icon                     types.String `tfsdk:"icon"`
-	IsSystem                 types.Bool   `tfsdk:"is_system"`
-	IsDefault                types.Bool   `tfsdk:"is_default"`
-	CanCreate                types.Bool   `tfsdk:"can_create"`
-	AllowDuplicateNames      types.Bool   `tfsdk:"allow_duplicate_names"`
-	MultiDataSource          types.Bool   `tfsdk:"multi_data_source"`
-	DefaultTypePerDataSource types.Set    `tfsdk:"default_type_per_data_source"`
-	AllowedWhoItems          types.Object `tfsdk:"allowed_who_items"`
-	AllowedWhatItems         types.Object `tfsdk:"allowed_what_items"`
+	Id                  types.String `tfsdk:"id"`
+	Name                types.String `tfsdk:"name"`
+	NamePlural          types.String `tfsdk:"name_plural"`
+	Description         types.String `tfsdk:"description"`
+	Icon                types.String `tfsdk:"icon"`
+	IsSystem            types.Bool   `tfsdk:"is_system"`
+	IsDefault           types.Bool   `tfsdk:"is_default"`
+	CanCreate           types.Bool   `tfsdk:"can_create"`
+	AllowDuplicateNames types.Bool   `tfsdk:"allow_duplicate_names"`
+	MultiDataSource     types.Bool   `tfsdk:"multi_data_source"`
+	AllowedWhoItems     types.Object `tfsdk:"allowed_who_items"`
+	AllowedWhatItems    types.Object `tfsdk:"allowed_what_items"`
 }
 
 type GrantCategoryResource struct {
@@ -69,8 +68,8 @@ func (g *GrantCategoryResource) Schema(ctx context.Context, request resource.Sch
 				Optional:            false,
 				Computed:            true,
 				Sensitive:           false,
-				Description:         "The ID of the grant category",
-				MarkdownDescription: "The ID of the grant category",
+				Description:         "The ID of the role category.",
+				MarkdownDescription: "The ID of the role category.",
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
@@ -80,8 +79,8 @@ func (g *GrantCategoryResource) Schema(ctx context.Context, request resource.Sch
 				Optional:            false,
 				Computed:            false,
 				Sensitive:           false,
-				Description:         "The name of the grant category",
-				MarkdownDescription: "The name of the grant category",
+				Description:         "The display name of the role category.",
+				MarkdownDescription: "The display name of the role category.",
 				Validators:          []validator.String{stringvalidator.LengthAtLeast(3)},
 			},
 			"name_plural": schema.StringAttribute{
@@ -89,8 +88,8 @@ func (g *GrantCategoryResource) Schema(ctx context.Context, request resource.Sch
 				Optional:            false,
 				Computed:            false,
 				Sensitive:           false,
-				Description:         "The plural form of the display name for the grant category",
-				MarkdownDescription: "The plural form of the display name for the grant category",
+				Description:         "The plural form of the display name of the role category.",
+				MarkdownDescription: "The plural form of the display name of the role category.",
 				Validators:          []validator.String{stringvalidator.LengthAtLeast(3)},
 			},
 			"description": schema.StringAttribute{
@@ -98,8 +97,8 @@ func (g *GrantCategoryResource) Schema(ctx context.Context, request resource.Sch
 				Optional:            true,
 				Computed:            true,
 				Sensitive:           false,
-				Description:         "The description of the grant category",
-				MarkdownDescription: "The description of the grant category",
+				Description:         "The description of the role category.",
+				MarkdownDescription: "The description of the role category.",
 				Default:             stringdefault.StaticString(""),
 			},
 			"icon": schema.StringAttribute{
@@ -107,32 +106,32 @@ func (g *GrantCategoryResource) Schema(ctx context.Context, request resource.Sch
 				Optional:            false,
 				Computed:            false,
 				Sensitive:           false,
-				Description:         "The icon of the grant category",
-				MarkdownDescription: "The icon of the grant category",
+				Description:         "The icon of the role category.",
+				MarkdownDescription: "The icon of the role category.",
 			},
 			"is_system": schema.BoolAttribute{
 				Required:            false,
 				Optional:            false,
 				Computed:            true,
 				Sensitive:           false,
-				Description:         "Whether the grant category is a system category",
-				MarkdownDescription: "Whether the grant category is a system category",
+				Description:         "Indicates whether the role category is a system category.",
+				MarkdownDescription: "Indicates whether the role category is a system category.",
 			},
 			"is_default": schema.BoolAttribute{
 				Required:            false,
 				Optional:            false,
 				Computed:            true,
 				Sensitive:           false,
-				Description:         "Whether the grant category is a default category",
-				MarkdownDescription: "Whether the grant category is a default category",
+				Description:         "Indicates whether the role category is the default category.",
+				MarkdownDescription: "Indicates whether the role category is the default category.",
 			},
 			"can_create": schema.BoolAttribute{
 				Required:            false,
 				Optional:            true,
 				Computed:            true,
 				Sensitive:           false,
-				Description:         "Whether the user can create grants in this category",
-				MarkdownDescription: "Whether the user can create grants in this category",
+				Description:         "Indicates whether a role of this category can be created.",
+				MarkdownDescription: "Indicates whether a role of this category can be created.",
 				Default:             booldefault.StaticBool(true),
 			},
 			"allow_duplicate_names": schema.BoolAttribute{
@@ -140,8 +139,8 @@ func (g *GrantCategoryResource) Schema(ctx context.Context, request resource.Sch
 				Optional:            true,
 				Computed:            true,
 				Sensitive:           false,
-				Description:         "Whether the user can create grants with duplicate names in this category",
-				MarkdownDescription: "Whether the user can create grants with duplicate names in this category",
+				Description:         "Indicates whether duplicate names are allowed for the roles in this category.",
+				MarkdownDescription: "Indicates whether duplicate names are allowed for the roles in this category.",
 				Default:             booldefault.StaticBool(true),
 			},
 			"multi_data_source": schema.BoolAttribute{
@@ -149,38 +148,9 @@ func (g *GrantCategoryResource) Schema(ctx context.Context, request resource.Sch
 				Optional:            true,
 				Computed:            true,
 				Sensitive:           false,
-				Description:         "Whether the grant category supports multiple data sources",
-				MarkdownDescription: "Whether the grant category supports multiple data sources",
+				Description:         "Indicates whether roles of this category can have multiple data sources.",
+				MarkdownDescription: "Indicates whether roles of this category can have multiple data sources.",
 				Default:             booldefault.StaticBool(true),
-			},
-			"default_type_per_data_source": schema.SetNestedAttribute{
-				NestedObject: schema.NestedAttributeObject{
-					Attributes: map[string]schema.Attribute{
-						"data_source": schema.StringAttribute{
-							Required:            true,
-							Optional:            false,
-							Computed:            false,
-							Sensitive:           false,
-							Description:         "The data source for which the default type is set",
-							MarkdownDescription: "The data source for which the default type is set",
-						},
-						"type": schema.StringAttribute{
-							Required:            true,
-							Optional:            false,
-							Computed:            false,
-							Sensitive:           false,
-							Description:         "The default type for the data source",
-							MarkdownDescription: "The default type for the data source",
-						},
-					},
-				},
-				Required:            false,
-				Optional:            true,
-				Computed:            true,
-				Sensitive:           false,
-				Description:         "The default category for each data source, type pair",
-				MarkdownDescription: "The default category for each data source, type pair",
-				Default:             setdefault.StaticValue(types.SetValueMust(types.ObjectType{AttrTypes: map[string]attr.Type{"data_source": types.StringType, "type": types.StringType}}, []attr.Value{})),
 			},
 			"allowed_who_items": schema.SingleNestedAttribute{
 				Attributes: map[string]schema.Attribute{
@@ -189,8 +159,8 @@ func (g *GrantCategoryResource) Schema(ctx context.Context, request resource.Sch
 						Optional:            true,
 						Computed:            true,
 						Sensitive:           false,
-						Description:         "Whether the user is allowed as WHO item for the grants of this category",
-						MarkdownDescription: "Whether the user is allowed as WHO item for the grants of this category",
+						Description:         "Indicates whether a user is allowed in the Who components for the roles in this category.",
+						MarkdownDescription: "Indicates whether a user is allowed in the Who components for the roles in this category.",
 						Default:             booldefault.StaticBool(true),
 					},
 					"group": schema.BoolAttribute{
@@ -198,8 +168,8 @@ func (g *GrantCategoryResource) Schema(ctx context.Context, request resource.Sch
 						Optional:            true,
 						Computed:            true,
 						Sensitive:           false,
-						Description:         "Whether a group is allowed as WHO item for the grants of this category",
-						MarkdownDescription: "Whether a group is allowed as WHO item for the grants of this category",
+						Description:         "Indicates whether a group is allowed in the Who components for the roles in this category.",
+						MarkdownDescription: "Indicates whether a group is allowed in the Who components for the roles in this category.",
 						Default:             booldefault.StaticBool(true),
 					},
 					"inheritance": schema.BoolAttribute{
@@ -207,8 +177,8 @@ func (g *GrantCategoryResource) Schema(ctx context.Context, request resource.Sch
 						Optional:            true,
 						Computed:            true,
 						Sensitive:           false,
-						Description:         "Whether the inheritance is allowed as WHO item for the grants of this category",
-						MarkdownDescription: "Whether the inheritance is allowed as WHO item for the grants of this category",
+						Description:         "Indicates whether inheritance is allowed in the Who components for the roles in this category.",
+						MarkdownDescription: "Indicates whether inheritance is allowed in the Who components for the roles in this category.",
 						Default:             booldefault.StaticBool(true),
 					},
 					"self": schema.BoolAttribute{
@@ -216,8 +186,8 @@ func (g *GrantCategoryResource) Schema(ctx context.Context, request resource.Sch
 						Optional:            true,
 						Computed:            true,
 						Sensitive:           false,
-						Description:         "Whether the self is allowed as WHO item for the grants of this category",
-						MarkdownDescription: "Whether the self is allowed as WHO item for the grants of this category",
+						Description:         "Indicates whether self is allowed in the Who components for the roles in this category.",
+						MarkdownDescription: "Indicates whether self is allowed in the Who components for the roles in this category.",
 						Default:             booldefault.StaticBool(true),
 					},
 					"categories": schema.SetAttribute{
@@ -226,8 +196,8 @@ func (g *GrantCategoryResource) Schema(ctx context.Context, request resource.Sch
 						Optional:            true,
 						Computed:            true,
 						Sensitive:           false,
-						Description:         "The allowed WHO items for the grants of this category",
-						MarkdownDescription: "The allowed WHO items for the grants of this category",
+						Description:         "The list of role category IDs that are allowed in the Who components for the roles in this category.",
+						MarkdownDescription: "The list of role category IDs that are allowed in the Who components for the roles in this category. ",
 						Default:             setdefault.StaticValue(types.SetValueMust(types.StringType, []attr.Value{})),
 					},
 				},
@@ -235,8 +205,8 @@ func (g *GrantCategoryResource) Schema(ctx context.Context, request resource.Sch
 				Optional:            true,
 				Computed:            true,
 				Sensitive:           false,
-				Description:         "The allowed WHO items for the grants of this category",
-				MarkdownDescription: "The allowed WHO items for the grants of this category",
+				Description:         "The allowed items in the Who components for the roles in this category.",
+				MarkdownDescription: "The allowed items in the Who components for the roles in this category. See the nested schema below. ",
 				Default: objectdefault.StaticValue(types.ObjectValueMust(map[string]attr.Type{
 					"user":        types.BoolType,
 					"group":       types.BoolType,
@@ -258,8 +228,8 @@ func (g *GrantCategoryResource) Schema(ctx context.Context, request resource.Sch
 						Optional:            true,
 						Computed:            true,
 						Sensitive:           false,
-						Description:         "The allowed WHAT items for the grants of this category",
-						MarkdownDescription: "The allowed WHAT items for the grants of this category",
+						Description:         "Indicates whether a data object is allowed in the What components for the roles in this category.",
+						MarkdownDescription: "Indicates whether a data object is allowed in the What components for the roles in this category.",
 						Default:             booldefault.StaticBool(true),
 					},
 				},
@@ -267,8 +237,8 @@ func (g *GrantCategoryResource) Schema(ctx context.Context, request resource.Sch
 				Optional:            true,
 				Computed:            true,
 				Sensitive:           false,
-				Description:         "The allowed WHAT items for the grants of this category",
-				MarkdownDescription: "The allowed WHAT items for the grants of this category",
+				Description:         "The allowed items in the What components for the roles in this category.",
+				MarkdownDescription: "The allowed items in the What components for the roles in this category. See the nested schema below.",
 				Default: objectdefault.StaticValue(types.ObjectValueMust(map[string]attr.Type{
 					"data_object": types.BoolType,
 				},
@@ -278,8 +248,8 @@ func (g *GrantCategoryResource) Schema(ctx context.Context, request resource.Sch
 				)),
 			},
 		},
-		Description:         "The grant category resource allows you to manage grant categories in Collibra Data Access.",
-		MarkdownDescription: "The grant category resource allows you to manage grant categories in Collibra Data Access.",
+		Description:         "The resource for managing role categories in Collibra Data Access.",
+		MarkdownDescription: "The resource for managing role categories in Collibra Data Access.\n-> **Note:** In Collibra Data Access, grants are called roles, and grant categories are called role categories.",
 		Version:             1,
 	}
 }
@@ -289,21 +259,6 @@ func (g *GrantCategoryResource) Schema(ctx context.Context, request resource.Sch
 //
 
 func (m *GrantCategoryResourceModel) ToGrantCategoryInput() dataAccessType.GrantCategoryInput {
-	defaultTypePerDataSourceValues := m.DefaultTypePerDataSource.Elements()
-	defaultTypePerDS := make([]dataAccessType.GrantCategoryTypeForDataSourceInput, 0, len(defaultTypePerDataSourceValues))
-
-	for _, v := range defaultTypePerDataSourceValues {
-		vObject := v.(types.Object)
-		attributes := vObject.Attributes()
-
-		typeForDataSource := dataAccessType.GrantCategoryTypeForDataSourceInput{
-			DataSource: attributes["data_source"].(types.String).ValueString(),
-			Type:       attributes["type"].(types.String).ValueString(),
-		}
-
-		defaultTypePerDS = append(defaultTypePerDS, typeForDataSource)
-	}
-
 	allowedWhoCategoriesValues := m.AllowedWhoItems.Attributes()["categories"].(types.Set).Elements()
 	allowedWhoCategories := make([]string, 0, len(allowedWhoCategoriesValues))
 
@@ -312,14 +267,13 @@ func (m *GrantCategoryResourceModel) ToGrantCategoryInput() dataAccessType.Grant
 	}
 
 	input := dataAccessType.GrantCategoryInput{
-		Name:                     m.Name.ValueStringPointer(),
-		NamePlural:               m.NamePlural.ValueStringPointer(),
-		Description:              m.Description.ValueStringPointer(),
-		Icon:                     m.Icon.ValueStringPointer(),
-		CanCreate:                m.CanCreate.ValueBoolPointer(),
-		AllowDuplicateNames:      m.AllowDuplicateNames.ValueBoolPointer(),
-		MultiDataSource:          m.MultiDataSource.ValueBoolPointer(),
-		DefaultTypePerDataSource: defaultTypePerDS,
+		Name:                m.Name.ValueStringPointer(),
+		NamePlural:          m.NamePlural.ValueStringPointer(),
+		Description:         m.Description.ValueStringPointer(),
+		Icon:                m.Icon.ValueStringPointer(),
+		CanCreate:           m.CanCreate.ValueBoolPointer(),
+		AllowDuplicateNames: m.AllowDuplicateNames.ValueBoolPointer(),
+		MultiDataSource:     m.MultiDataSource.ValueBoolPointer(),
 		AllowedWhoItems: &dataAccessType.GrantCategoryAllowedWhoItemsInput{
 			User:        m.AllowedWhoItems.Attributes()["user"].(types.Bool).ValueBool(),
 			Group:       m.AllowedWhoItems.Attributes()["group"].(types.Bool).ValueBool(),
@@ -483,43 +437,6 @@ func setGrantCategoryResourceData(data *dataAccessType.GrantCategoryDetails, res
 	resp.CanCreate = types.BoolValue(data.CanCreate)
 	resp.AllowDuplicateNames = types.BoolValue(data.AllowDuplicateNames)
 	resp.MultiDataSource = types.BoolValue(data.MultiDataSource)
-
-	// Default types per DS
-	defaultTypesPerDs := make([]attr.Value, 0, len(data.DefaultTypePerDataSource))
-
-	for _, v := range data.DefaultTypePerDataSource {
-		objectValue, diag := types.ObjectValue(map[string]attr.Type{
-			"data_source": types.StringType,
-			"type":        types.StringType,
-		},
-			map[string]attr.Value{
-				"data_source": types.StringValue(v.GetDataSource()),
-				"type":        types.StringValue(v.GetType()),
-			})
-
-		diags.Append(diag...)
-
-		if diags.HasError() {
-			return diags
-		}
-
-		defaultTypesPerDs = append(defaultTypesPerDs, objectValue)
-	}
-
-	defaultTypesPerDsAttr, diag := types.SetValue(types.ObjectType{
-		AttrTypes: map[string]attr.Type{
-			"data_source": types.StringType,
-			"type":        types.StringType,
-		},
-	}, defaultTypesPerDs)
-
-	diags.Append(diag...)
-
-	if diags.HasError() {
-		return diags
-	}
-
-	resp.DefaultTypePerDataSource = defaultTypesPerDsAttr
 
 	// Allowed WHO items
 	whoCategoryValues := make([]attr.Value, 0, len(data.AllowedWhoItems.Categories))

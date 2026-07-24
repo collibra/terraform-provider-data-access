@@ -3,12 +3,12 @@
 page_title: "collibra-data-access_filter_rule Resource - collibra_data_access"
 subcategory: ""
 description: |-
-  The resource for representing a Row-level Filter Rule access control. This should be used in combination with a Filter.
+  The resource for representing a filter rule in Collibra Data Access. Use this resource in combination with a row filter.
 ---
 
 # collibra-data-access_filter_rule (Resource)
 
-The resource for representing a Row-level Filter Rule access control. This should be used in combination with a Filter.
+The resource for representing a filter rule in Collibra Data Access. Use this resource in combination with a row filter.
 
 ## Example Usage
 
@@ -79,29 +79,29 @@ resource "collibra-data-access_filter" "filter1" {
 ### Required
 
 - `filter_policy` (String) The filter policy that defines how the data is filtered. The policy syntax is defined by the data source.
-- `name` (String) The name of the filter_rule
+- `name` (String) The name of the filter rule.
 
 ### Optional
 
-- `description` (String) The description of the filter_rule
-- `inheritance_locked` (Boolean) Indicates if who should be locked. This should be true if who access providers are set.
-- `state` (String) The state of the filter_rule Possible values are: ["Active", "Inactive"]
-- `who` (Attributes Set) The who-items associated with the filter_rule. When this is not set (nil), the who-list will not be overridden. This is typically used when this should be managed from Collibra Data Access. (see [below for nested schema](#nestedatt--who))
-- `who_abac_rules` (Attributes Set) The abac rules for defining the dynamic who-items associated with the filter_rule (see [below for nested schema](#nestedatt--who_abac_rules))
-- `who_locked` (Boolean) Indicates if who should be locked. This should be true if who users or who_abac_rule is set.
+- `description` (String) The description of the filter rule.
+- `inheritance_locked` (Boolean) Indicates whether the inheritance of the Who component should be locked. This should be set to true if access controls are specified in the Who component.
+- `state` (String) The state of the filter rule. Possible values are "Active" and "Inactive".
+- `who` (Attributes Set) The Who component of the filter rule. If this isn't set (nil), the Who component isn’t overridden. This is typically used when the Who component should be managed in Collibra Data Access. See the nested schema below. (see [below for nested schema](#nestedatt--who))
+- `who_abac_rules` (Attributes Set) The dynamic rules for defining the Who component of the filter rule. See the nested schema below. (see [below for nested schema](#nestedatt--who_abac_rules))
+- `who_locked` (Boolean) Indicates whether the Who component should be locked. This should be set to true if the `who` or `who_abac_rules` parameter is set.
 
 ### Read-Only
 
-- `id` (String) The ID of the filter_rule
+- `id` (String) The ID of the filter rule
 
 <a id="nestedatt--who"></a>
 ### Nested Schema for `who`
 
 Optional:
 
-- `access_control` (String) The ID of the access control in Collibra Data Access. Cannot be set if `user` is set.
-- `promise_duration` (Number) Specify this to indicate that this who-item is a promise instead of a direct grant. This is specified as the number of seconds that access should be granted when requested.
-- `user` (String) The email address of the user. This cannot be set if `access_control` is set.
+- `access_control` (String) The ID of the access control in Collibra Data Access. This can’t be set if the `user` parameter is set.
+- `promise_duration` (Number) The duration, in seconds, for which access should be granted when requested. Specify this parameter to indicate that this item in the Who component is a promise instead of a direct grant.
+- `user` (String) The email address of the user. This can’t be set if the access_control parameter is set.
 
 
 <a id="nestedatt--who_abac_rules"></a>

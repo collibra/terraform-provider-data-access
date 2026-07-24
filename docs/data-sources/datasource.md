@@ -3,12 +3,12 @@
 page_title: "collibra-data-access_datasource Data Source - collibra_data_access"
 subcategory: ""
 description: |-
-  Find a Data Source based on the name
+  The resource for representing a data source in Collibra Data Access.
 ---
 
 # collibra-data-access_datasource (Data Source)
 
-Find a Data Source based on the name
+The resource for representing a data source in Collibra Data Access.
 
 ## Example Usage
 
@@ -23,14 +23,14 @@ data "collibra-data-access_datasource" "example" {
 
 ### Required
 
-- `name` (String) The name of the requested data source
+- `name` (String) The name of the requested data source.
 
 ### Read-Only
 
-- `description` (String) The description of the data source
-- `edge_connection_id` (String) The ID of the Edge Connection associated with this data source
-- `edge_site_id` (String) The ID of the Edge Site associated with this data source
-- `id` (String) The ID of the requested data source
-- `owners` (Set of String) The IDs of the owners of the data source
-- `parent` (String) The ID of the parent data source, if applicable
-- `type` (String) The type of the data source (e.g. Snowflake, BigQuery)
+- `description` (String) The description of the data source.
+- `edge_connection_id` (String) The ID of the Edge connection of the data source.
+- `edge_site_id` (String) The ID of the Edge site of the data source.
+- `id` (String) The ID of the data source.
+- `owners` (Set of String) The IDs of the owners of the data source.
+- `parent` (String) The ID of the parent data source, if applicable.
+- `type` (String) The type of the data source (for example, Snowflake or BigQuery).

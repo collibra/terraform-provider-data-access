@@ -25,17 +25,17 @@ resource "collibra-data-access_datasource" "example" {
 
 ### Required
 
-- `name` (String) The name of the data source
+- `name` (String) The name of the data source.
 
 ### Optional
 
-- `description` (String) The description of the data source
-- `edge_connection_id` (String) The ID of the Edge Connection associated with this data source. Requires `edge_site_id` and `type` to also be set.
-- `edge_site_id` (String) The ID of the Edge Site associated with this data source. Requires `edge_connection_id` and `type` to also be set.
-- `owners` (Set of String) The IDs of the owners of the data source
-- `parent` (String) The ID of the parent data source, if applicable
+- `description` (String) The description of the data source.
+- `edge_connection_id` (String) The ID of the Edge connection of the data source. This requires `edge_site_id` and `type` to also be set.
+- `edge_site_id` (String) The ID of the Edge site of the data source. This requires `edge_connection_id` and `type` to also be set.
+- `owners` (Set of String) The IDs of the owners of the data source.
+- `parent` (String) The ID of the parent data source, if applicable.
 - `sync_parameters` (Map of String) Sync configuration parameters as a map of dot-notation paths to JSON-encoded values.
-- `type` (String) The type of the data source. Required when `edge_site_id` or `edge_connection_id` is set.
+- `type` (String) The type of the data source. This is required when the `edge_site_id` or `edge_connection_id` parameter is set.
 
 Maintained values:
 
@@ -52,7 +52,7 @@ Custom plugin connector types are also accepted.
 
 ### Read-Only
 
-- `id` (String) The ID of the data source
+- `id` (String) The ID of the data source.
 
 ## Import
 

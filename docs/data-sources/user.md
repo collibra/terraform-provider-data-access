@@ -3,12 +3,12 @@
 page_title: "collibra-data-access_user Data Source - collibra_data_access"
 subcategory: ""
 description: |-
-  Find a Collibra User by email address
+  The data source to get a user in Collibra Data Access by email address.
 ---
 
 # collibra-data-access_user (Data Source)
 
-Find a Collibra User by email address
+The data source to get a user in Collibra Data Access by email address.
 
 ## Example Usage
 
@@ -23,11 +23,11 @@ data "collibra-data-access_user" "example" {
 
 ### Required
 
-- `email` (String) The email of the requested user
+- `email` (String) The email of the requested user.
 
 ### Read-Only
 
-- `collibra_user` (Boolean) Whether the requested user is a Collibra user
-- `id` (String) The ID of the requested user
-- `name` (String) The name of the requested user
-- `type` (String) The type of the requested user (Human or Machine)
+- `collibra_user` (Boolean) Indicates whether the user is a Collibra user.r
+- `id` (String) The ID of the user.r
+- `name` (String) The name of the user.
+- `type` (String) The type of the user (Human or Machine).

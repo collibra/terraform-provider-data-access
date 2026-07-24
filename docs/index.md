@@ -7,10 +7,10 @@ description: |-
 
 # Collibra Data Access Provider
 
-Use the Collibra Data Access provider to interact with the resources supported by [Collibra Data Access](https://www.collibra.com/).
-You must configure the provider with the proper credentials before you can use it.
+The Collibra Data Access provider allows you to interact with resources in [Collibra Data Access](https://www.collibra.com/).
+Before using the provider, you must configure it with your Collibra credentials.
 
-To learn more about Collibra Data Access, you can visit the Collibra documentation on [https://productresources.collibra.com/](https://productresources.collibra.com/).
+To learn more about Collibra Data Access, visit the [Collibra Documentation Center](https://productresources.collibra.com/docs/collibra/latest/Default.htm#cshid=data-access).
 
 ## Example Usage
 
@@ -28,22 +28,24 @@ provider "collibra-data-access" {
 
 ### Required
 
-- `secret` (String, Sensitive) The password to use to sign in to your Collibra instance
-- `url` (String) The base url of your Collibra instance (i.e. https://<your>.collibra.com)
-- `user` (String) The username to use to sign in to your Collibra instance
+- `secret` (String, Sensitive) The password to sign in to your Collibra environment.
+- `url` (String) The base URL of your Collibra environment (for example, https://example.collibra.com)
+- `user` (String) The username to sign in to your Collibra environment.
 
 
 
 ## Authorisation and Authentication
-This provider requires a valid Collibra user to authenticate and interact with the platform.
+The provider requires a valid Collibra user account to authenticate and interact with your Collibra environment.
 
-### User Roles
-In addition to having a valid user account, specific (global) permissions are necessary to perform certain actions with the provider:
+### User permissions
+In addition to a valid Collibra user account, you need specific global permissions to perform certain actions:
 
-* `Data Access > Manage Settings`: Required for managing **DataSources**.
-* To manage access controls, you have a few possibilities:
-  * `Data Access > Manage All Access`: this global permission allows you to created and update any access control.
-  * `Data Access > Create Access Controls`: this global permissions allows you to create new access controls, even if you are not the owner of any data objects.
-  * Owner: if you are an owner of data objects in Collibra Data Access, you will be able to create new access controls and update access controls which you own.
+* `Data Access > Manage Settings`: Manage data sources.
+* To manage access controls, you have the following options:
+  - `Data Access > Manage All Access`: Manage all access controls.
+  - `Data Access > Create Access Controls`: Create access controls, even if you don’t own any data object.
+  - `Owner`: Create or update your own access controls, if you own any data object in Collibra Data Access.
 
-Please consult the Collibra documentation for more information on user roles and permissions: [https://productresources.collibra.com/](https://productresources.collibra.com/)
+In addition to having a valid user account, specific roles are necessary to perform certain actions with the provider:
+
+For more information about permissions, visit the [Collibra Documentation Center](https://productresources.collibra.com/docs/collibra/latest/Default.htm#cshid=data-access).

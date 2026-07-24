@@ -3,12 +3,14 @@
 page_title: "collibra-data-access_grant_category Resource - collibra_data_access"
 subcategory: ""
 description: |-
-  The grant category resource allows you to manage grant categories in Collibra Data Access.
+  The resource for managing role categories in Collibra Data Access.
+  -> Note: In Collibra Data Access, grants are called roles, and grant categories are called role categories.
 ---
 
 # collibra-data-access_grant_category (Resource)
 
-The grant category resource allows you to manage grant categories in Collibra Data Access.
+The resource for managing role categories in Collibra Data Access.
+-> **Note:** In Collibra Data Access, grants are called roles, and grant categories are called role categories.
 
 ## Example Usage
 
@@ -49,32 +51,31 @@ resource "collibra-data-access_grant_category" "example_category" {
 
 ### Required
 
-- `icon` (String) The icon of the grant category
-- `name` (String) The name of the grant category
-- `name_plural` (String) The plural form of the display name for the grant category
+- `icon` (String) The icon of the role category.
+- `name` (String) The display name of the role category.
+- `name_plural` (String) The plural form of the display name of the role category.
 
 ### Optional
 
-- `allow_duplicate_names` (Boolean) Whether the user can create grants with duplicate names in this category
-- `allowed_what_items` (Attributes) The allowed WHAT items for the grants of this category (see [below for nested schema](#nestedatt--allowed_what_items))
-- `allowed_who_items` (Attributes) The allowed WHO items for the grants of this category (see [below for nested schema](#nestedatt--allowed_who_items))
-- `can_create` (Boolean) Whether the user can create grants in this category
-- `default_type_per_data_source` (Attributes Set) The default category for each data source, type pair (see [below for nested schema](#nestedatt--default_type_per_data_source))
-- `description` (String) The description of the grant category
-- `multi_data_source` (Boolean) Whether the grant category supports multiple data sources
+- `allow_duplicate_names` (Boolean) Indicates whether duplicate names are allowed for the roles in this category.
+- `allowed_what_items` (Attributes) The allowed items in the What components for the roles in this category. See the nested schema below. (see [below for nested schema](#nestedatt--allowed_what_items))
+- `allowed_who_items` (Attributes) The allowed items in the Who components for the roles in this category. See the nested schema below. (see [below for nested schema](#nestedatt--allowed_who_items))
+- `can_create` (Boolean) Indicates whether a role of this category can be created.
+- `description` (String) The description of the role category.
+- `multi_data_source` (Boolean) Indicates whether roles of this category can have multiple data sources.
 
 ### Read-Only
 
-- `id` (String) The ID of the grant category
-- `is_default` (Boolean) Whether the grant category is a default category
-- `is_system` (Boolean) Whether the grant category is a system category
+- `id` (String) The ID of the role category.
+- `is_default` (Boolean) Indicates whether the role category is the default category.
+- `is_system` (Boolean) Indicates whether the role category is a system category.
 
 <a id="nestedatt--allowed_what_items"></a>
 ### Nested Schema for `allowed_what_items`
 
 Optional:
 
-- `data_object` (Boolean) The allowed WHAT items for the grants of this category
+- `data_object` (Boolean) Indicates whether a data object is allowed in the What components for the roles in this category.
 
 
 <a id="nestedatt--allowed_who_items"></a>
@@ -82,20 +83,11 @@ Optional:
 
 Optional:
 
-- `categories` (Set of String) The allowed WHO items for the grants of this category
-- `group` (Boolean) Whether a group is allowed as WHO item for the grants of this category
-- `inheritance` (Boolean) Whether the inheritance is allowed as WHO item for the grants of this category
-- `self` (Boolean) Whether the self is allowed as WHO item for the grants of this category
-- `user` (Boolean) Whether the user is allowed as WHO item for the grants of this category
-
-
-<a id="nestedatt--default_type_per_data_source"></a>
-### Nested Schema for `default_type_per_data_source`
-
-Required:
-
-- `data_source` (String) The data source for which the default type is set
-- `type` (String) The default type for the data source
+- `categories` (Set of String) The list of role category IDs that are allowed in the Who components for the roles in this category.
+- `group` (Boolean) Indicates whether a group is allowed in the Who components for the roles in this category.
+- `inheritance` (Boolean) Indicates whether inheritance is allowed in the Who components for the roles in this category.
+- `self` (Boolean) Indicates whether self is allowed in the Who components for the roles in this category.
+- `user` (Boolean) Indicates whether a user is allowed in the Who components for the roles in this category.
 
 ## Import
 
