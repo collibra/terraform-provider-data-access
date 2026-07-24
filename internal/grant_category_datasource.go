@@ -16,17 +16,17 @@ import (
 var _ datasource.DataSource = (*GrantCategoryDataSource)(nil)
 
 type GrantCategoryDataSourceModel struct {
-	Id                       types.String `tfsdk:"id"`
-	Name                     types.String `tfsdk:"name"`
-	NamePlural               types.String `tfsdk:"name_plural"`
-	Description              types.String `tfsdk:"description"`
-	IsSystem                 types.Bool   `tfsdk:"is_system"`
-	IsDefault                types.Bool   `tfsdk:"is_default"`
-	CanCreate                types.Bool   `tfsdk:"can_create"`
-	AllowDuplicateNames      types.Bool   `tfsdk:"allow_duplicate_names"`
-	MultiDataSource          types.Bool   `tfsdk:"multi_data_source"`
-	AllowedWhoItems          types.Object `tfsdk:"allowed_who_items"`
-	AllowedWhatItems         types.Object `tfsdk:"allowed_what_items"`
+	Id                  types.String `tfsdk:"id"`
+	Name                types.String `tfsdk:"name"`
+	NamePlural          types.String `tfsdk:"name_plural"`
+	Description         types.String `tfsdk:"description"`
+	IsSystem            types.Bool   `tfsdk:"is_system"`
+	IsDefault           types.Bool   `tfsdk:"is_default"`
+	CanCreate           types.Bool   `tfsdk:"can_create"`
+	AllowDuplicateNames types.Bool   `tfsdk:"allow_duplicate_names"`
+	MultiDataSource     types.Bool   `tfsdk:"multi_data_source"`
+	AllowedWhoItems     types.Object `tfsdk:"allowed_who_items"`
+	AllowedWhatItems    types.Object `tfsdk:"allowed_what_items"`
 }
 
 type GrantCategoryDataSource struct {

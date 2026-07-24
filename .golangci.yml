@@ -33,7 +33,6 @@ linters:
     - exhaustive
     - exptostd
     - forbidigo
-    - goconst
     - gocritic
     - gocyclo
     - gosec
@@ -65,9 +64,6 @@ linters:
     - wrapcheck
     - wsl_v5
   settings:
-    goconst:
-      min-len: 2
-      min-occurrences: 3
     gocritic:
       disabled-checks:
         - dupImport

@@ -30,18 +30,18 @@ import (
 var _ resource.Resource = (*GrantCategoryResource)(nil)
 
 type GrantCategoryResourceModel struct {
-	Id                       types.String `tfsdk:"id"`
-	Name                     types.String `tfsdk:"name"`
-	NamePlural               types.String `tfsdk:"name_plural"`
-	Description              types.String `tfsdk:"description"`
-	Icon                     types.String `tfsdk:"icon"`
-	IsSystem                 types.Bool   `tfsdk:"is_system"`
-	IsDefault                types.Bool   `tfsdk:"is_default"`
-	CanCreate                types.Bool   `tfsdk:"can_create"`
-	AllowDuplicateNames      types.Bool   `tfsdk:"allow_duplicate_names"`
-	MultiDataSource          types.Bool   `tfsdk:"multi_data_source"`
-	AllowedWhoItems          types.Object `tfsdk:"allowed_who_items"`
-	AllowedWhatItems         types.Object `tfsdk:"allowed_what_items"`
+	Id                  types.String `tfsdk:"id"`
+	Name                types.String `tfsdk:"name"`
+	NamePlural          types.String `tfsdk:"name_plural"`
+	Description         types.String `tfsdk:"description"`
+	Icon                types.String `tfsdk:"icon"`
+	IsSystem            types.Bool   `tfsdk:"is_system"`
+	IsDefault           types.Bool   `tfsdk:"is_default"`
+	CanCreate           types.Bool   `tfsdk:"can_create"`
+	AllowDuplicateNames types.Bool   `tfsdk:"allow_duplicate_names"`
+	MultiDataSource     types.Bool   `tfsdk:"multi_data_source"`
+	AllowedWhoItems     types.Object `tfsdk:"allowed_who_items"`
+	AllowedWhatItems    types.Object `tfsdk:"allowed_what_items"`
 }
 
 type GrantCategoryResource struct {
@@ -267,13 +267,13 @@ func (m *GrantCategoryResourceModel) ToGrantCategoryInput() dataAccessType.Grant
 	}
 
 	input := dataAccessType.GrantCategoryInput{
-		Name:                     m.Name.ValueStringPointer(),
-		NamePlural:               m.NamePlural.ValueStringPointer(),
-		Description:              m.Description.ValueStringPointer(),
-		Icon:                     m.Icon.ValueStringPointer(),
-		CanCreate:                m.CanCreate.ValueBoolPointer(),
-		AllowDuplicateNames:      m.AllowDuplicateNames.ValueBoolPointer(),
-		MultiDataSource:          m.MultiDataSource.ValueBoolPointer(),
+		Name:                m.Name.ValueStringPointer(),
+		NamePlural:          m.NamePlural.ValueStringPointer(),
+		Description:         m.Description.ValueStringPointer(),
+		Icon:                m.Icon.ValueStringPointer(),
+		CanCreate:           m.CanCreate.ValueBoolPointer(),
+		AllowDuplicateNames: m.AllowDuplicateNames.ValueBoolPointer(),
+		MultiDataSource:     m.MultiDataSource.ValueBoolPointer(),
 		AllowedWhoItems: &dataAccessType.GrantCategoryAllowedWhoItemsInput{
 			User:        m.AllowedWhoItems.Attributes()["user"].(types.Bool).ValueBool(),
 			Group:       m.AllowedWhoItems.Attributes()["group"].(types.Bool).ValueBool(),
