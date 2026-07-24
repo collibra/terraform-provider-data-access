@@ -80,7 +80,7 @@ func (f *FilterRuleResource) Metadata(_ context.Context, request resource.Metada
 }
 
 func (f *FilterRuleResource) Schema(_ context.Context, _ resource.SchemaRequest, response *resource.SchemaResponse) {
-	attributes := f.schema("filter_rule")
+	attributes := f.schema("filter rule")
 	attributes["filter_policy"] = schema.StringAttribute{
 		Required:            true,
 		Optional:            false,
@@ -92,8 +92,8 @@ func (f *FilterRuleResource) Schema(_ context.Context, _ resource.SchemaRequest,
 
 	response.Schema = schema.Schema{
 		Attributes:          attributes,
-		Description:         "The filter rule access control resource",
-		MarkdownDescription: "The resource for representing a Row-level Filter Rule access control. This should be used in combination with a Filter.",
+		Description:         "The resource for representing a filter rule in Collibra Data Access. Use this resource in combination with a row filter.",
+		MarkdownDescription: "The resource for representing a filter rule in Collibra Data Access. Use this resource in combination with a row filter.",
 		Version:             1,
 	}
 }

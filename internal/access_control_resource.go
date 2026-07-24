@@ -86,8 +86,8 @@ var dataObjectReferenceTypeAttributes = map[string]schema.Attribute{
 		Optional:            false,
 		Computed:            false,
 		Sensitive:           false,
-		Description:         "The type of the data object",
-		MarkdownDescription: "The type of the data object",
+		Description:         "The type of the data object.",
+		MarkdownDescription: "The type of the data object.",
 		Default:             nil,
 	},
 	"path": schema.ListAttribute{
@@ -96,8 +96,8 @@ var dataObjectReferenceTypeAttributes = map[string]schema.Attribute{
 		Optional:            false,
 		Computed:            false,
 		Sensitive:           false,
-		Description:         "The path of the data object",
-		MarkdownDescription: "The path of the data object",
+		Description:         "The path of the data object.",
+		MarkdownDescription: "The path of the data object.",
 		Default:             nil,
 	},
 	"data_source": schema.StringAttribute{
@@ -105,8 +105,8 @@ var dataObjectReferenceTypeAttributes = map[string]schema.Attribute{
 		Optional:            false,
 		Computed:            false,
 		Sensitive:           false,
-		Description:         "The ID of the data source the data object belongs to",
-		MarkdownDescription: "The ID of the data source the data object belongs to",
+		Description:         "The ID of the data source the data object belongs to.",
+		MarkdownDescription: "The ID of the data source the data object belongs to.",
 		Default:             nil,
 	},
 }
@@ -125,8 +125,8 @@ var dataObjectReferenceType = schema.ObjectAttribute{
 	Optional:            false,
 	Computed:            false,
 	Sensitive:           false,
-	Description:         "The reference to the data object",
-	MarkdownDescription: "The reference to the data object",
+	Description:         "The reference to the data object.",
+	MarkdownDescription: "The reference to the data object. See the nested schema below.",
 }
 
 type accessControlSchemaOptions struct {
@@ -163,8 +163,8 @@ func (a *AccessControlResource[T, ApModel]) schema(typeName string, ops ...func(
 			Optional:            false,
 			Computed:            false,
 			Sensitive:           false,
-			Description:         fmt.Sprintf("The name of the %s", typeName),
-			MarkdownDescription: fmt.Sprintf("The name of the %s", typeName),
+			Description:         fmt.Sprintf("The name of the %s.", typeName),
+			MarkdownDescription: fmt.Sprintf("The name of the %s.", typeName),
 			Validators: []validator.String{
 				stringvalidator.LengthAtLeast(3),
 			},
@@ -174,8 +174,8 @@ func (a *AccessControlResource[T, ApModel]) schema(typeName string, ops ...func(
 			Optional:            true,
 			Computed:            true,
 			Sensitive:           false,
-			Description:         fmt.Sprintf("The description of the %s", typeName),
-			MarkdownDescription: fmt.Sprintf("The description of the %s", typeName),
+			Description:         fmt.Sprintf("The description of the %s.", typeName),
+			MarkdownDescription: fmt.Sprintf("The description of the %s.", typeName),
 			Default:             stringdefault.StaticString(""),
 		},
 		"state": schema.StringAttribute{
@@ -184,7 +184,7 @@ func (a *AccessControlResource[T, ApModel]) schema(typeName string, ops ...func(
 			Computed:            true,
 			Sensitive:           false,
 			Description:         fmt.Sprintf("The state of the %s", typeName),
-			MarkdownDescription: fmt.Sprintf("The state of the %s Possible values are: [%q, %q]", typeName, string(dataAccessType.AccessControlStateActive), string(dataAccessType.AccessControlStateInactive)),
+			MarkdownDescription: fmt.Sprintf("The state of the %s. Possible values are %q and %q.", typeName, string(dataAccessType.AccessControlStateActive), string(dataAccessType.AccessControlStateInactive)),
 			Validators: []validator.String{
 				stringvalidator.OneOf(string(dataAccessType.AccessControlStateActive), string(dataAccessType.AccessControlStateInactive)),
 			},
@@ -201,8 +201,8 @@ func (a *AccessControlResource[T, ApModel]) schema(typeName string, ops ...func(
 						Optional:            true,
 						Computed:            false,
 						Sensitive:           false,
-						Description:         "The email address of user",
-						MarkdownDescription: "The email address of the user. This cannot be set if `access_control` is set.",
+						Description:         "The email address of the user.",
+						MarkdownDescription: "The email address of the user. This can’t be set if the access_control parameter is set.\n",
 						Validators: []validator.String{
 							stringvalidator.RegexMatches(regexp.MustCompile(`.+@.+\..+`), "value must be a valid email address"),
 						},
@@ -212,8 +212,8 @@ func (a *AccessControlResource[T, ApModel]) schema(typeName string, ops ...func(
 						Optional:            true,
 						Computed:            false,
 						Sensitive:           false,
-						Description:         "The ID of the access control in Collibra Data Access",
-						MarkdownDescription: "The ID of the access control in Collibra Data Access. Cannot be set if `user` is set.",
+						Description:         "The ID of the access control in Collibra Data Access.",
+						MarkdownDescription: "The ID of the access control in Collibra Data Access. This can’t be set if the `user` parameter is set.",
 						Validators: []validator.String{
 							stringvalidator.LengthAtLeast(3),
 						},
@@ -223,8 +223,8 @@ func (a *AccessControlResource[T, ApModel]) schema(typeName string, ops ...func(
 						Optional:            true,
 						Computed:            false,
 						Sensitive:           false,
-						Description:         "Specify this to indicate that this who-item is a promise instead of a direct grant. This is specified as the number of seconds that access should be granted when requested.",
-						MarkdownDescription: "Specify this to indicate that this who-item is a promise instead of a direct grant. This is specified as the number of seconds that access should be granted when requested.",
+						Description:         "The duration, in seconds, for which access should be granted when requested. Specify this parameter to indicate that this item in the Who component is a promise instead of a direct grant.",
+						MarkdownDescription: "The duration, in seconds, for which access should be granted when requested. Specify this parameter to indicate that this item in the Who component is a promise instead of a direct grant.",
 						Validators: []validator.Int64{
 							int64validator.AtLeast(1),
 						},
@@ -238,8 +238,8 @@ func (a *AccessControlResource[T, ApModel]) schema(typeName string, ops ...func(
 			Optional:            true,
 			Computed:            false,
 			Sensitive:           false,
-			Description:         fmt.Sprintf("The who-items associated with the %s", typeName),
-			MarkdownDescription: fmt.Sprintf("The who-items associated with the %s. When this is not set (nil), the who-list will not be overridden. This is typically used when this should be managed from Collibra Data Access.", typeName),
+			Description:         fmt.Sprintf("The Who component of the %s.", typeName),
+			MarkdownDescription: fmt.Sprintf("The Who component of the %s. If this isn't set (nil), the Who component isn’t overridden. This is typically used when the Who component should be managed in Collibra Data Access. See the nested schema below.", typeName),
 		}
 
 		defaultSchema["who_abac_rules"] = schema.SetNestedAttribute{
@@ -271,8 +271,8 @@ func (a *AccessControlResource[T, ApModel]) schema(typeName string, ops ...func(
 			Required:            false,
 			Computed:            false,
 			Sensitive:           false,
-			Description:         fmt.Sprintf("The abac rules for defining the dynamic who-items associated with the %s", typeName),
-			MarkdownDescription: fmt.Sprintf("The abac rules for defining the dynamic who-items associated with the %s", typeName),
+			Description:         fmt.Sprintf("The dynamic rules for defining the Who component of the %s.", typeName),
+			MarkdownDescription: fmt.Sprintf("The dynamic rules for defining the Who component of the %s. See the nested schema below.", typeName),
 		}
 
 		defaultSchema["who_locked"] = schema.BoolAttribute{
@@ -280,8 +280,8 @@ func (a *AccessControlResource[T, ApModel]) schema(typeName string, ops ...func(
 			Optional:            true,
 			Computed:            true,
 			Sensitive:           false,
-			Description:         "Indicates if who should be locked. This should be true if who users or who_abac_rule is set.",
-			MarkdownDescription: "Indicates if who should be locked. This should be true if who users or who_abac_rule is set.",
+			Description:         "Indicates whether the Who component should be locked. This should be set to true if the who or who_abac_rules parameter is set.",
+			MarkdownDescription: "Indicates whether the Who component should be locked. This should be set to true if the `who` or `who_abac_rules` parameter is set.",
 			Validators:          nil,
 		}
 
@@ -290,8 +290,8 @@ func (a *AccessControlResource[T, ApModel]) schema(typeName string, ops ...func(
 			Optional:            true,
 			Computed:            true,
 			Sensitive:           false,
-			Description:         "Indicates if who should be locked. This should be true if who access providers are set.",
-			MarkdownDescription: "Indicates if who should be locked. This should be true if who access providers are set.",
+			Description:         "Indicates whether the inheritance of the Who component should be locked. This should be set to true if access controls are specified in the Who component.\n",
+			MarkdownDescription: "Indicates whether the inheritance of the Who component should be locked. This should be set to true if access controls are specified in the Who component.\n",
 			Validators:          nil,
 		}
 	}

@@ -2,57 +2,57 @@
 page_title: "Abac Rules in Collibra Data Access"
 ---
 
-# Abac Rules in the Collibra Data Access Provider
+# Abac Rules in the Collibra Data Access provider
 
-Access provider resources (grants, masks, filters, and purposes) can the define what- and/or who-items that are authorized based on Attribute-Based Access Control (ABAC) rules. These rules are specified in JSON format following the outlined structure below.
+Access provider resources (roles, column masks, and row filters) use dynamic rules to define who can access what. Specify these rules in JSON format using the following structure.
 
 ## JSON Structure
 
-The JSON structure for ABAC rules consists of nested objects and arrays that represent various logical expressions:
+Dynamic rules consist of nested objects and arrays that represent logical expressions.
 
-* **AbacRule:**
-    * `literal`: (Optional) A boolean value directly representing a truth condition.
-    * `comparison`: (Optional) A `Comparison` expression involving an operator, left operand, and right operand.
-    * `aggregator`: (Optional) An `Aggregator` expression combining multiple binary expressions using AND or OR operations.
-    * `unaryExpression`: (Optional) A single expression negated using a NOT operator.
+* **DynamicRule:**
+    Define exactly one of the following expressions:
 
-  Exactly one argument should be defined.
+    * `literal`: A Boolean value representing a truth condition.
+    * `comparison`: A `Comparison` expression with an operator, left operand, and right operand.
+    * `aggregator`: An `Aggregator` expression combining multiple binary expressions using AND or OR logic.
+    * `unaryExpression`: A single expression negated using a NOT operator.
 
 * **Comparison:**
-    * `operator`: Indicates the comparison type (e.g., `HasTag`, `ContainsTag`, `PropertyEquals`, `PropertyIn`).
+    * `operator`: The comparison type (for example, HasTag, ContainsTag, InheritsTag).
     * `leftOperand`: The tag key used in the comparison.
-    * `rightOperand`: The value to compare with as `Operand`.
+    * `rightOperand`: The value to compare against `Operand`.
 
 * **Operand:**
-    * `literal`: A `Literal` value, including booleans, strings, or string lists.
+    * `literal`: A `Literal` value, including Boolean, strings, or string lists.
 
 * **Literal:**
-    * `bool`: (Optional) A boolean value.
-    * `string`: (Optional) A string value.
-    * `stringList`: (Optional) A list of string values.
+    Define exactly one of the following expressions:
 
-  Exactly one argument should be defined.
+    * `bool`: A boolean value.
+    * `string`: A string value.
+    * `stringList`: A list of string values.
 
 * **Aggregator:**
-    * `operator`: Specifies the aggregation type (e.g., `And` or `Or`).
-    * `operands`: An array of `AbacRule` objects.
+    * `operator`: The aggregation type (for example, `And` or `Or`).
+    * `operands`: An array of `DynamicRule` objects.
 
 * **Unary:**
-    * `operator`: Specifies the unary type (e.g., `Not`)
-    * `operands`: An array of `AbacRule` objects.
+    * `operator`: The unary type (for example, `Not`).
+    * `operands`: An array of `DynamicRule` objects.
 
 ## Constraints
 
-The following constraints will be evaluated during the creation of the abac rule
+The following constraints are evaluated during the creation of a dynamic rule:
 
 * The first level should be an aggregation with operator `Or`.
 * The second level should be an aggregation with operator `And`.
-* The third level can be either an `Comparison`, `Literal` or `Unary` expression.
-* If an unary expression is used on the third level, the fourth level should be an `Comparison` or a `Literal`.
+* The third level can be `Comparison`, `Literal`, or `Unary`.
+* If a unary expression is used at the third level, the fourth level should be `Comparison` or `Literal`.
 
 ## Example Rule
 
-Here's an example JSON rule representing a condition that would evaluate true if a tag `department` has the value `Finance` and the tag `sensitivity` has the value `PII`.
+The following JSON rule represents a condition that evaluates to true if the tag `department` has the value `Finance` and the tag `sensitivity` has the value `PII`.
 
 ```json
 {

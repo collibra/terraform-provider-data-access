@@ -66,20 +66,20 @@ resource "collibra-data-access_filter" "filter1" {
 
 ### Required
 
-- `name` (String) The name of the filter
+- `name` (String) The name of the row filter.
 
 ### Optional
 
-- `description` (String) The description of the filter
-- `filter_rules` (Set of String) Set of filter rules ids that are applicable for this filter
-- `owners` (Set of String) User id of the owners of this filter
-- `state` (String) The state of the filter Possible values are: ["Active", "Inactive"]
-- `table` (Object) The table that should be filtered (see [below for nested schema](#nestedatt--table))
-- `what_locked` (Boolean) Indicates whether it should lock the what. Should be set to true if table is set.
+- `description` (String) The description of the row filter.
+- `filter_rules` (Set of String) The IDs of the filter rules for the row filter.
+- `owners` (Set of String) The user IDs of the owners of the row filter.
+- `state` (String) The state of the row filter. Possible values are "Active" and "Inactive".
+- `table` (Object) The table that should be filtered. See the nested schema below. (see [below for nested schema](#nestedatt--table))
+- `what_locked` (Boolean) Indicates whether the What component should be locked. This should be set to true if the table parameter is set.
 
 ### Read-Only
 
-- `id` (String) The ID of the filter
+- `id` (String) The ID of the row filter
 
 <a id="nestedatt--table"></a>
 ### Nested Schema for `table`

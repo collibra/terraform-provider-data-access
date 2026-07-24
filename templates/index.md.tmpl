@@ -7,10 +7,10 @@ description: |-
 
 # Collibra Data Access Provider
 
-Use the Collibra Data Access provider to interact with the resources supported by [Collibra Data Access](https://www.collibra.com/).
-You must configure the provider with the proper credentials before you can use it.
+The Collibra Data Access provider allows you to interact with resources in [Collibra Data Access](https://www.collibra.com/).
+Before using the provider, you must configure it with your Collibra credentials.
 
-To learn more about Collibra Data Access, you can visit the Collibra documentation on [https://productresources.collibra.com/](https://productresources.collibra.com/).
+To learn more about Collibra Data Access, visit the [Collibra Documentation Center](https://productresources.collibra.com/docs/collibra/latest/Default.htm#cshid=data-access).
 
 ## Example Usage
 
@@ -19,12 +19,17 @@ To learn more about Collibra Data Access, you can visit the Collibra documentati
 {{ .SchemaMarkdown }}
 
 ## Authorisation and Authentication
-This provider requires a valid Collibra user to authenticate and interact with the platform.
+The provider requires a valid Collibra user account to authenticate and interact with your Collibra environment.
 
-### User Roles
+### User permissions
+In addition to a valid Collibra user account, you need specific global permissions to perform certain actions:
+
+* `Data Access > Manage Settings`: Manage data sources.
+* To manage access controls, you have the following options:
+  - `Data Access > Manage All Access`: Manage all access controls.
+  - `Data Access > Create Access Controls`: Create access controls, even if you don’t own any data object.
+  - `Owner`: Create or update your own access controls, if you own any data object in Collibra Data Access.
+
 In addition to having a valid user account, specific roles are necessary to perform certain actions with the provider:
 
-* `Admin`: Required for managing **DataSources** and **Users**. This role allows for creating, reading, updating, and deleting these resources.
-* `Access Manager, Access Creator, Integrator`: Required for managing **Grants**, **Masks**, **Filters**, and **Purposes**. These roles allow for creating, reading, updating, and deleting these resources.
-
-Please consult the Collibra documentation for more information on user roles and permissions: [https://productresources.collibra.com/](https://productresources.collibra.com/)
+For more information about permissions, visit the [Collibra Documentation Center](https://productresources.collibra.com/docs/collibra/latest/Default.htm#cshid=data-access).

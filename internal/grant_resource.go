@@ -107,15 +107,15 @@ func (g *GrantResource) Metadata(_ context.Context, request resource.MetadataReq
 }
 
 func (g *GrantResource) Schema(_ context.Context, _ resource.SchemaRequest, response *resource.SchemaResponse) {
-	attributes := g.schema("grant")
+	attributes := g.schema("role")
 	attributes["owners"] = schema.SetAttribute{
 		ElementType:         types.StringType,
 		Required:            false,
 		Optional:            true,
 		Computed:            true,
 		Sensitive:           false,
-		Description:         "User id of the owners of this grant",
-		MarkdownDescription: "User id of the owners of this grant",
+		Description:         "The user IDs of the owners of the role.",
+		MarkdownDescription: "The user IDs of the owners of the role.",
 		Validators: []validator.Set{
 			setvalidator.ValueStringsAre(
 				stringvalidator.LengthAtLeast(3),
@@ -144,8 +144,8 @@ func (g *GrantResource) Schema(_ context.Context, _ resource.SchemaRequest, resp
 					Optional:            false,
 					Computed:            false,
 					Sensitive:           false,
-					Description:         "The ID of the data source of the grant",
-					MarkdownDescription: "The ID of the data source of the grant",
+					Description:         "The ID of the data source of the role.",
+					MarkdownDescription: "The ID of the data source of the role.",
 					Validators: []validator.String{
 						stringvalidator.LengthAtLeast(3),
 					},
@@ -155,8 +155,8 @@ func (g *GrantResource) Schema(_ context.Context, _ resource.SchemaRequest, resp
 					Optional:            true,
 					Computed:            true,
 					Sensitive:           false,
-					Description:         "The implementation type of the grant for this data source",
-					MarkdownDescription: "The implementation type of the grant for this data source",
+					Description:         "The implementation type of the role for this data source.",
+					MarkdownDescription: "The implementation type of the role for this data source.",
 					PlanModifiers: []planmodifier.String{
 						stringplanmodifier.UseStateForUnknown(),
 					},
@@ -167,8 +167,8 @@ func (g *GrantResource) Schema(_ context.Context, _ resource.SchemaRequest, resp
 		Optional:            false,
 		Computed:            false,
 		Sensitive:           false,
-		Description:         "The list of data sources that this grant is applicable to",
-		MarkdownDescription: "The list of data sources that this grant is applicable to",
+		Description:         "The data sources that the role applies to.",
+		MarkdownDescription: "The data sources that the role applies to. See the nested schema below.",
 		Validators:          []validator.Set{setvalidator.SizeAtLeast(1)},
 	}
 	attributes["what_data_objects"] = schema.SetNestedAttribute{
@@ -181,8 +181,8 @@ func (g *GrantResource) Schema(_ context.Context, _ resource.SchemaRequest, resp
 					Optional:            true,
 					Computed:            true,
 					Sensitive:           false,
-					Description:         "The set of permissions granted to the data object",
-					MarkdownDescription: "The set of permissions granted to the data object",
+					Description:         "The set of permissions granted to the data object.",
+					MarkdownDescription: "The set of permissions granted to the data object.",
 					Default:             setdefault.StaticValue(types.SetValueMust(types.StringType, []attr.Value{})),
 				},
 				"global_permissions": schema.SetAttribute{
@@ -191,8 +191,8 @@ func (g *GrantResource) Schema(_ context.Context, _ resource.SchemaRequest, resp
 					Optional:            true,
 					Computed:            true,
 					Sensitive:           false,
-					Description:         "The set of global permissions granted to the data object",
-					MarkdownDescription: fmt.Sprintf("The set of global permissions granted to the data object. Allowed values are %v", types2.AllGlobalPermissions),
+					Description:         "A set of global permissions that should be granted on the data object.",
+					MarkdownDescription: fmt.Sprintf("A set of global permissions that should be granted on the data object. Allowed values are %s.", utils.JoinWithAnd(types2.AllGlobalPermissions)),
 					Validators: []validator.Set{
 						setvalidator.ValueStringsAre(
 							stringvalidator.OneOf(types2.AllGlobalPermissions...),
@@ -208,8 +208,8 @@ func (g *GrantResource) Schema(_ context.Context, _ resource.SchemaRequest, resp
 		Optional:            true,
 		Computed:            false,
 		Sensitive:           false,
-		Description:         "The data object what items associated to the grant.",
-		MarkdownDescription: "The data object what items associated to the grant. When this is not set (nil), the what list will not be overridden. This is typically used when this should be managed from Collibra Data Access.",
+		Description:         "The What component of the role. If this isn't set (nil), the What component isn’t overridden. This is typically used when the What component should be managed in Collibra Data Access.",
+		MarkdownDescription: "The What component of the role. If this isn't set (nil), the What component isn’t overridden. This is typically used when the What component should be managed in Collibra Data Access. See the nested schema below.",
 	}
 	attributes["what_abac_rules"] = schema.SetNestedAttribute{
 		NestedObject: schema.NestedAttributeObject{
@@ -219,8 +219,8 @@ func (g *GrantResource) Schema(_ context.Context, _ resource.SchemaRequest, resp
 					Optional:            false,
 					Computed:            false,
 					Sensitive:           false,
-					Description:         "A unique ID of the abac rule within this access control",
-					MarkdownDescription: "A unique ID of the abac rule within this access control",
+					Description:         "A unique ID of the dynamic rule within this access control.",
+					MarkdownDescription: "A unique ID of the dynamic rule within this access control.",
 					Default:             nil,
 				},
 				"scope": schema.SetNestedAttribute{
@@ -231,8 +231,8 @@ func (g *GrantResource) Schema(_ context.Context, _ resource.SchemaRequest, resp
 					Optional:            false,
 					Computed:            false,
 					Sensitive:           false,
-					Description:         "Scope of the defined abac rule as a list of data objects",
-					MarkdownDescription: "Scope of the defined abac rule as a list of data objects",
+					Description:         "The scope of the defined dynamic rule as a list of data objects.",
+					MarkdownDescription: "The scope of the defined dynamic rule as a list of data objects. See the nested schema below.",
 					Validators: []validator.Set{
 						setvalidator.SizeAtLeast(1),
 					},
@@ -243,8 +243,8 @@ func (g *GrantResource) Schema(_ context.Context, _ resource.SchemaRequest, resp
 					Optional:            false,
 					Computed:            false,
 					Sensitive:           false,
-					Description:         "Set of data object types associated to the abac rule",
-					MarkdownDescription: "Set of data object types associated to the abac rule",
+					Description:         "A set of data object types associated with the dynamic rule.",
+					MarkdownDescription: "A set of data object types associated with the dynamic rule.",
 					Validators: []validator.Set{
 						setvalidator.SizeAtLeast(1),
 					},
@@ -255,8 +255,8 @@ func (g *GrantResource) Schema(_ context.Context, _ resource.SchemaRequest, resp
 					Optional:            true,
 					Computed:            true,
 					Sensitive:           false,
-					Description:         "Set of permissions that should be granted on the matching data object",
-					MarkdownDescription: "Set of permissions that should be granted on the matching data object",
+					Description:         "A set of permissions that should be granted on the matching data object.",
+					MarkdownDescription: "A set of permissions that should be granted on the matching data object.",
 					Default:             setdefault.StaticValue(types.SetValueMust(types.StringType, []attr.Value{})),
 				},
 				"global_permissions": schema.SetAttribute{
@@ -265,8 +265,8 @@ func (g *GrantResource) Schema(_ context.Context, _ resource.SchemaRequest, resp
 					Optional:            true,
 					Computed:            true,
 					Sensitive:           false,
-					Description:         "Set of global permissions that should be granted on the matching data object",
-					MarkdownDescription: fmt.Sprintf("Set of global permissions that should be granted on the matching data object. Allowed values are %v", types2.AllGlobalPermissions),
+					Description:         "A set of global permissions that should be granted on the matching data object.",
+					MarkdownDescription: fmt.Sprintf("A set of global permissions that should be granted on the matching data object. Allowed values are %s.", utils.JoinWithAnd(types2.AllGlobalPermissions)),
 					Validators: []validator.Set{
 						setvalidator.ValueStringsAre(
 							stringvalidator.OneOf(types2.AllGlobalPermissions...),
@@ -282,8 +282,8 @@ func (g *GrantResource) Schema(_ context.Context, _ resource.SchemaRequest, resp
 					Optional:            false,
 					Computed:            false,
 					Sensitive:           false,
-					Description:         "json representation of the abac rule",
-					MarkdownDescription: "json representation of the abac rule",
+					Description:         "The JSON representation of the dynamic rule.",
+					MarkdownDescription: "The JSON representation of the dynamic rule.",
 					Default:             nil,
 				},
 			},
@@ -292,22 +292,22 @@ func (g *GrantResource) Schema(_ context.Context, _ resource.SchemaRequest, resp
 		Optional:            true,
 		Computed:            false,
 		Sensitive:           false,
-		Description:         "The abac rules for defining the what of a grant.",
-		MarkdownDescription: "The abac rules for defining the what of a grant.",
+		Description:         "The dynamic rules for defining the What component of the role.",
+		MarkdownDescription: "The dynamic rules for defining the What component of the role. See the nested schema below.",
 	}
 	attributes["what_locked"] = schema.BoolAttribute{
 		Required:            false,
 		Optional:            true,
 		Computed:            true,
 		Sensitive:           false,
-		Description:         "Indicates whether it should lock the what. Should be set to true if what_data_objects or what_abac_rule is set.",
-		MarkdownDescription: "Indicates whether it should lock the what. Should be set to true if what_data_objects or what_abac_rule is set.",
+		Description:         "Indicates whether the What component should be locked. This should be set to true if the what_data_objects or what_abac_rules parameter is set.",
+		MarkdownDescription: "Indicates whether the What component should be locked. This should be set to true if the `what_data_objects` or `what_abac_rules` parameter is set.",
 	}
 
 	response.Schema = schema.Schema{
 		Attributes:          attributes,
-		Description:         "Grant access control resource",
-		MarkdownDescription: "The resource for representing a Collibra Data Access Grant access control.",
+		Description:         "The resource for representing a role in Collibra Data Access.",
+		MarkdownDescription: "The resource for representing a role in Collibra Data Access.\n-> **Note:** In Collibra Data Access, grants are called roles.",
 		Version:             1,
 	}
 }

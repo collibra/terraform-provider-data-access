@@ -106,15 +106,15 @@ func (f *FilterResource) Metadata(_ context.Context, request resource.MetadataRe
 }
 
 func (f *FilterResource) Schema(ctx context.Context, request resource.SchemaRequest, response *resource.SchemaResponse) {
-	attributes := f.schema("filter", withAccessControlSchemaExcludeWho())
+	attributes := f.schema("row filter", withAccessControlSchemaExcludeWho())
 	attributes["owners"] = schema.SetAttribute{
 		ElementType:         types.StringType,
 		Required:            false,
 		Optional:            true,
 		Computed:            true,
 		Sensitive:           false,
-		Description:         "User id of the owners of this filter",
-		MarkdownDescription: "User id of the owners of this filter",
+		Description:         "The user IDs of the owners of the row filter.",
+		MarkdownDescription: "The user IDs of the owners of the row filter.",
 		Validators: []validator.Set{
 			setvalidator.ValueStringsAre(
 				stringvalidator.LengthAtLeast(3),
@@ -129,16 +129,16 @@ func (f *FilterResource) Schema(ctx context.Context, request resource.SchemaRequ
 		Optional:            true,
 		Computed:            false,
 		Sensitive:           false,
-		Description:         "The table that should be filtered",
-		MarkdownDescription: "The table that should be filtered",
+		Description:         "The table that should be filtered.",
+		MarkdownDescription: "The table that should be filtered. See the nested schema below.",
 	}
 	attributes["what_locked"] = schema.BoolAttribute{
 		Required:            false,
 		Optional:            true,
 		Computed:            true,
 		Sensitive:           false,
-		Description:         "Indicates whether it should lock the what. Should be set to true if table is set.",
-		MarkdownDescription: "Indicates whether it should lock the what. Should be set to true if table is set.",
+		Description:         "Indicates whether the What component should be locked. This should be set to true if the table parameter is set.",
+		MarkdownDescription: "Indicates whether the What component should be locked. This should be set to true if the table parameter is set.",
 	}
 	attributes["filter_rules"] = schema.SetAttribute{
 		ElementType:         types.StringType,
@@ -146,8 +146,8 @@ func (f *FilterResource) Schema(ctx context.Context, request resource.SchemaRequ
 		Optional:            true,
 		Computed:            false,
 		Sensitive:           false,
-		Description:         "Set of filter rules ids that are applicable for this filter.",
-		MarkdownDescription: "Set of filter rules ids that are applicable for this filter",
+		Description:         "The IDs of the filter rules for the row filter.",
+		MarkdownDescription: "The IDs of the filter rules for the row filter.",
 		Validators:          nil,
 		PlanModifiers:       nil,
 		Default:             nil,

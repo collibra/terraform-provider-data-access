@@ -25,7 +25,6 @@ type GrantCategoryDataSourceModel struct {
 	CanCreate                types.Bool   `tfsdk:"can_create"`
 	AllowDuplicateNames      types.Bool   `tfsdk:"allow_duplicate_names"`
 	MultiDataSource          types.Bool   `tfsdk:"multi_data_source"`
-	DefaultTypePerDataSource types.Set    `tfsdk:"default_type_per_data_source"`
 	AllowedWhoItems          types.Object `tfsdk:"allowed_who_items"`
 	AllowedWhatItems         types.Object `tfsdk:"allowed_what_items"`
 }
@@ -50,100 +49,72 @@ func (g *GrantCategoryDataSource) Schema(_ context.Context, _ datasource.SchemaR
 				Optional:            false,
 				Computed:            true,
 				Sensitive:           false,
-				Description:         "The ID of the requested grant category",
-				MarkdownDescription: "The ID of the requested grant category",
+				Description:         "The ID of the role category.",
+				MarkdownDescription: "The ID of the role category.",
 			},
 			"name": schema.StringAttribute{
 				Required:            true,
 				Optional:            false,
 				Computed:            false,
 				Sensitive:           false,
-				Description:         "The name of the requested grant category",
-				MarkdownDescription: "The name of the requested grant category",
+				Description:         "The name of the requested role category.",
+				MarkdownDescription: "The name of the requested role category.",
 			},
 			"name_plural": schema.StringAttribute{
 				Required:            false,
 				Optional:            false,
 				Computed:            true,
 				Sensitive:           false,
-				Description:         "The plural form of the display name for the grant category",
-				MarkdownDescription: "The plural form of the display name for the grant category",
+				Description:         "The plural form of the display name of the role category.",
+				MarkdownDescription: "The plural form of the display name of the role category.",
 			},
 			"description": schema.StringAttribute{
 				Required:            false,
 				Optional:            false,
 				Computed:            true,
 				Sensitive:           false,
-				Description:         "The description of the grant category",
-				MarkdownDescription: "The description of the grant category",
+				Description:         "The description of the role category.",
+				MarkdownDescription: "The description of the role category.",
 			},
 			"is_system": schema.BoolAttribute{
 				Required:            false,
 				Optional:            false,
 				Computed:            true,
 				Sensitive:           false,
-				Description:         "Indicates if the grant category is a system category",
-				MarkdownDescription: "Indicates if the grant category is a system category",
+				Description:         "Indicates whether the role category is a system category.",
+				MarkdownDescription: "Indicates whether the role category is a system category.",
 			},
 			"is_default": schema.BoolAttribute{
 				Required:            false,
 				Optional:            false,
 				Computed:            true,
 				Sensitive:           false,
-				Description:         "Indicates if the grant category is the default category",
-				MarkdownDescription: "Indicates if the grant category is the default category",
+				Description:         "Indicates whether the role category is the default category.",
+				MarkdownDescription: "Indicates whether the role category is the default category.",
 			},
 			"can_create": schema.BoolAttribute{
 				Required:            false,
 				Optional:            false,
 				Computed:            true,
 				Sensitive:           false,
-				Description:         "Indicates if grants of this category can be created",
-				MarkdownDescription: "Indicates if grants of this category can be created",
+				Description:         "Indicates whether a role of this category can be created.",
+				MarkdownDescription: "Indicates whether a role of this category can be created.",
 			},
 			"allow_duplicate_names": schema.BoolAttribute{
 				Required:            false,
 				Optional:            false,
 				Computed:            true,
 				Sensitive:           false,
-				Description:         "Indicates if duplicate names are allowed for grants of this category",
-				MarkdownDescription: "Indicates if duplicate names are allowed for grants of this category",
+				Description:         "Indicates whether duplicate names are allowed for the roles in this category.",
+				MarkdownDescription: "Indicates whether duplicate names are allowed for the roles in this category.",
 			},
 			"multi_data_source": schema.BoolAttribute{
 				Required:            false,
 				Optional:            false,
 				Computed:            true,
 				Sensitive:           false,
-				Description:         "Indicates if APs of this category can have multiple data sources",
-				MarkdownDescription: "Indicates if APs of this category can have multiple data sources",
-			},
-			"default_type_per_data_source": schema.SetNestedAttribute{
-				NestedObject: schema.NestedAttributeObject{
-					Attributes: map[string]schema.Attribute{
-						"data_source": schema.StringAttribute{
-							Required:            false,
-							Optional:            false,
-							Computed:            true,
-							Sensitive:           false,
-							Description:         "Data source ID for which the default type is the defined grant category",
-							MarkdownDescription: "Data source ID for which the default type is the defined grant category",
-						},
-						"type": schema.StringAttribute{
-							Required:            false,
-							Optional:            false,
-							Computed:            true,
-							Sensitive:           false,
-							Description:         "Types for which this grant category is the default for the defined data source",
-							MarkdownDescription: "Types for which this grant category is the default for the defined data source",
-						},
-					},
-				},
-				Required:            false,
-				Optional:            false,
-				Computed:            true,
-				Sensitive:           false,
-				Description:         "List of data sources and types for which the grant category is the default",
-				MarkdownDescription: "List of data sources and types for which the grant category is the default",
+				Description:         "Indicates whether roles of this category can have multiple data sources.",
+				MarkdownDescription: "Indicates whether roles of this category can have multiple data sources.",
 			},
 			"allowed_who_items": schema.SingleNestedAttribute{
 				Attributes: map[string]schema.Attribute{
@@ -152,24 +123,24 @@ func (g *GrantCategoryDataSource) Schema(_ context.Context, _ datasource.SchemaR
 						Optional:            false,
 						Computed:            true,
 						Sensitive:           false,
-						Description:         "Indicates if a user is allowed as a WHO item",
-						MarkdownDescription: "Indicates if a user is allowed as a WHO item",
+						Description:         "Indicates whether a user is allowed in the Who components for the roles in this category.",
+						MarkdownDescription: "Indicates whether a user is allowed in the Who components for the roles in this category.",
 					},
 					"inheritance": schema.BoolAttribute{
 						Required:            false,
 						Optional:            false,
 						Computed:            true,
 						Sensitive:           false,
-						Description:         "Indicates if inheritance is allowed as a WHO item",
-						MarkdownDescription: "Indicates if inheritance is allowed as a WHO item",
+						Description:         "Indicates whether inheritance is allowed in the Who components for the roles in this category.",
+						MarkdownDescription: "Indicates whether inheritance is allowed in the Who components for the roles in this category.",
 					},
 					"self": schema.BoolAttribute{
 						Required:            false,
 						Optional:            false,
 						Computed:            true,
 						Sensitive:           false,
-						Description:         "Indicates if self is allowed as a WHO item",
-						MarkdownDescription: "Indicates if self is allowed as a WHO item",
+						Description:         "Indicates whether self is allowed in the Who components for the roles in this category.",
+						MarkdownDescription: "Indicates whether self is allowed in the Who components for the roles in this category.",
 					},
 					"categories": schema.SetAttribute{
 						ElementType:         types.StringType,
@@ -177,16 +148,16 @@ func (g *GrantCategoryDataSource) Schema(_ context.Context, _ datasource.SchemaR
 						Optional:            false,
 						Computed:            true,
 						Sensitive:           false,
-						Description:         "List of grant category IDs that are allowed as WHO items",
-						MarkdownDescription: "List of grant category IDs that are allowed as WHO items",
+						Description:         "The list of role category IDs that are allowed in the Who components for the roles in this category.",
+						MarkdownDescription: "The list of role category IDs that are allowed in the Who components for the roles in this category.",
 					},
 				},
 				Required:            false,
 				Optional:            false,
 				Computed:            true,
 				Sensitive:           false,
-				Description:         "Allowed WHO items for the grant category",
-				MarkdownDescription: "Allowed WHO items for the grant category",
+				Description:         "The allowed items in the Who components for the roles in this category.",
+				MarkdownDescription: "The allowed items in the Who components for the roles in this category. See the nested schema below.",
 			},
 			"allowed_what_items": schema.SingleNestedAttribute{
 				Attributes: map[string]schema.Attribute{
@@ -195,20 +166,20 @@ func (g *GrantCategoryDataSource) Schema(_ context.Context, _ datasource.SchemaR
 						Optional:            false,
 						Computed:            true,
 						Sensitive:           false,
-						Description:         "Indicates if a data object is allowed as a WHAT item",
-						MarkdownDescription: "Indicates if a data object is allowed as a WHAT item",
+						Description:         "Indicates whether a data object is allowed in the What components for the roles in this category.",
+						MarkdownDescription: "Indicates whether a data object is allowed in the What components for the roles in this category.",
 					},
 				},
 				Required:            false,
 				Optional:            false,
 				Computed:            true,
 				Sensitive:           false,
-				Description:         "Allowed WHAT items for the grant category",
-				MarkdownDescription: "Allowed WHAT items for the grant category",
+				Description:         "The allowed items in the What components for the roles in this category.",
+				MarkdownDescription: "The allowed items in the What components for the roles in this category. See the nested schema below.",
 			},
 		},
-		Description:         "Find a grant category by name",
-		MarkdownDescription: "Find a grant category by name",
+		Description:         "The data source to get a role category in Collibra Data Access by name.",
+		MarkdownDescription: "The data source to get a role category in Collibra Data Access by name.\n-> **Note:** In Collibra Data Access, grants are called roles, and grant categories are called role categories.",
 	}
 }
 
@@ -283,43 +254,6 @@ func setGrantCategoryData(data *types2.GrantCategoryDetails, resp *GrantCategory
 	resp.CanCreate = types.BoolValue(data.CanCreate)
 	resp.AllowDuplicateNames = types.BoolValue(data.AllowDuplicateNames)
 	resp.MultiDataSource = types.BoolValue(data.MultiDataSource)
-
-	// Default types per DS
-	defaultTypesPerDs := make([]attr.Value, 0, len(data.DefaultTypePerDataSource))
-
-	for _, v := range data.DefaultTypePerDataSource {
-		objectValue, diags := types.ObjectValue(map[string]attr.Type{
-			"data_source": types.StringType,
-			"type":        types.StringType,
-		},
-			map[string]attr.Value{
-				"data_source": types.StringValue(v.GetDataSource()),
-				"type":        types.StringValue(v.GetType()),
-			})
-
-		diagnostic.Append(diags...)
-
-		if diagnostic.HasError() {
-			return
-		}
-
-		defaultTypesPerDs = append(defaultTypesPerDs, objectValue)
-	}
-
-	defaultTypesPerDsAttr, diags := types.SetValue(types.ObjectType{
-		AttrTypes: map[string]attr.Type{
-			"data_source": types.StringType,
-			"type":        types.StringType,
-		},
-	}, defaultTypesPerDs)
-
-	diagnostic.Append(diags...)
-
-	if diagnostic.HasError() {
-		return
-	}
-
-	resp.DefaultTypePerDataSource = defaultTypesPerDsAttr
 
 	// Allowed WHO items
 	whoCategoryValues := make([]attr.Value, 0, len(data.AllowedWhoItems.Categories))

@@ -115,8 +115,8 @@ func (m *MaskResource) Schema(_ context.Context, _ resource.SchemaRequest, respo
 		Optional:            true,
 		Computed:            true,
 		Sensitive:           false,
-		Description:         "User id of the owners of this mask",
-		MarkdownDescription: "User id of the owners of this mask",
+		Description:         "The user IDs of the owners of the column mask.",
+		MarkdownDescription: "The user IDs of the owners of the column mask.",
 		Validators: []validator.Set{
 			setvalidator.ValueStringsAre(
 				stringvalidator.LengthAtLeast(3),
@@ -132,8 +132,8 @@ func (m *MaskResource) Schema(_ context.Context, _ resource.SchemaRequest, respo
 					Optional:            false,
 					Computed:            false,
 					Sensitive:           false,
-					Description:         "The ID of the data source that this mask is applicable to",
-					MarkdownDescription: "The ID of the data source that this mask is applicable to",
+					Description:         "The ID of the data source that the column mask applies to.",
+					MarkdownDescription: "The ID of the data source that the column mask applies to.",
 					Validators: []validator.String{
 						stringvalidator.LengthAtLeast(3),
 					},
@@ -143,8 +143,8 @@ func (m *MaskResource) Schema(_ context.Context, _ resource.SchemaRequest, respo
 					Optional:            false,
 					Computed:            false,
 					Sensitive:           false,
-					Description:         "The masking type to use for the mask in this data source",
-					MarkdownDescription: "The masking type to use for the mask in this data source. Available types are defined by the data source.",
+					Description:         "The masking method to use for the column mask in this data source.",
+					MarkdownDescription: "The masking method to use for the column mask in this data source. Available methods are defined by the data source.",
 					PlanModifiers: []planmodifier.String{
 						stringplanmodifier.UseStateForUnknown(),
 					},
@@ -155,8 +155,8 @@ func (m *MaskResource) Schema(_ context.Context, _ resource.SchemaRequest, respo
 		Optional:            false,
 		Computed:            false,
 		Sensitive:           false,
-		Description:         "The list of data sources that this mask is applicable to",
-		MarkdownDescription: "The list of data sources that this mask is applicable to",
+		Description:         "The data sources that the column mask applies to.",
+		MarkdownDescription: "The data sources that the column mask applies to. See the nested schema below.",
 		Validators:          []validator.Set{setvalidator.SizeAtLeast(1)},
 	}
 	attributes["columns"] = schema.SetNestedAttribute{
@@ -167,8 +167,8 @@ func (m *MaskResource) Schema(_ context.Context, _ resource.SchemaRequest, respo
 		Optional:            true,
 		Computed:            false,
 		Sensitive:           false,
-		Description:         "The list of columns that should be included in the mask",
-		MarkdownDescription: "The list of columns that should be included in the mask.",
+		Description:         "The columns that the column mask applies to.",
+		MarkdownDescription: "The columns that the column mask applies to. See the nested schema below.",
 	}
 
 	attributes["what_abac_rules"] = schema.SetNestedAttribute{
@@ -179,8 +179,8 @@ func (m *MaskResource) Schema(_ context.Context, _ resource.SchemaRequest, respo
 					Optional:            false,
 					Computed:            false,
 					Sensitive:           false,
-					Description:         "A unique ID of the abac rule within this access control",
-					MarkdownDescription: "A unique ID of the abac rule within this access control",
+					Description:         "A unique ID of the dynamic rule within the column mask.",
+					MarkdownDescription: "A unique ID of the dynamic rule within the column mask.",
 					Default:             nil,
 				},
 				"scope": schema.SetNestedAttribute{
@@ -191,8 +191,8 @@ func (m *MaskResource) Schema(_ context.Context, _ resource.SchemaRequest, respo
 					Optional:            false,
 					Computed:            false,
 					Sensitive:           false,
-					Description:         "Scope of the defined abac rule as a list of data objects",
-					MarkdownDescription: "Scope of the defined abac rule as a list of data objects",
+					Description:         "The scope of the defined dynamic rule as a list of data objects.",
+					MarkdownDescription: "The scope of the defined dynamic rule as a list of data objects. See the nested schema below.",
 					Validators: []validator.Set{
 						setvalidator.SizeAtLeast(1),
 					},
@@ -203,8 +203,8 @@ func (m *MaskResource) Schema(_ context.Context, _ resource.SchemaRequest, respo
 					Optional:            false,
 					Computed:            false,
 					Sensitive:           false,
-					Description:         "json representation of the abac rule",
-					MarkdownDescription: "json representation of the abac rule",
+					Description:         "The JSON representation of the dynamic rule.",
+					MarkdownDescription: "The JSON representation of the dynamic rule.",
 					Default:             nil,
 				},
 			},
@@ -213,22 +213,22 @@ func (m *MaskResource) Schema(_ context.Context, _ resource.SchemaRequest, respo
 		Optional:            true,
 		Computed:            false,
 		Sensitive:           false,
-		Description:         "The abac rules for defining the what of a make.",
-		MarkdownDescription: "The abac rules for defining the what of a make.",
+		Description:         "The dynamic rules for defining the What component of the column mask.",
+		MarkdownDescription: "The dynamic rules for defining the What component of the column mask. See the nested schema below.",
 	}
 	attributes["what_locked"] = schema.BoolAttribute{
 		Required:            false,
 		Optional:            true,
 		Computed:            true,
 		Sensitive:           false,
-		Description:         "Indicates whether it should lock the what. Should be set to true if columns or what_abac_rule is set.",
-		MarkdownDescription: "Indicates whether it should lock the what. Should be set to true if columns or what_abac_rule is set.",
+		Description:         "Indicates whether the What component should be locked. This should be set to true if the columns or what_abac_rules parameter is set.",
+		MarkdownDescription: "Indicates whether the What component should be locked. This should be set to true if the `columns` or `what_abac_rules` parameter is set.",
 	}
 
 	response.Schema = schema.Schema{
 		Attributes:          attributes,
-		Description:         "The mask access control resource",
-		MarkdownDescription: "The resource for representing a Column Mask access control.",
+		Description:         "The resource for representing a column mask in Collibra Data Access.",
+		MarkdownDescription: "The resource for representing a column mask in Collibra Data Access.",
 		Version:             1,
 	}
 }
