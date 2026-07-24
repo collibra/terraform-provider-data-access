@@ -1,8 +1,8 @@
 ---
-page_title: "Abac Rules in Collibra Data Access"
+page_title: "Dynamic Rules in the Collibra Data Access"
 ---
 
-# Abac Rules in the Collibra Data Access provider
+# Dynamic Rules in the Collibra Data Access Provider
 
 Access provider resources (roles, column masks, and row filters) use dynamic rules to define who can access what. Specify these rules in JSON format using the following structure.
 
@@ -13,33 +13,33 @@ Dynamic rules consist of nested objects and arrays that represent logical expres
 * **DynamicRule:**
     Define exactly one of the following expressions:
 
-    * `literal`: A Boolean value representing a truth condition.
-    * `comparison`: A `Comparison` expression with an operator, left operand, and right operand.
-    * `aggregator`: An `Aggregator` expression combining multiple binary expressions using AND or OR logic.
-    * `unaryExpression`: A single expression negated using a NOT operator.
+    * `literal` A Boolean value representing a truth condition.
+    * `comparison` A `Comparison` expression with an operator, left operand, and right operand.
+    * `aggregator` An `Aggregator` expression combining multiple binary expressions using AND or OR logic.
+    * `unaryExpression` A single expression negated using a NOT operator.
 
 * **Comparison:**
-    * `operator`: The comparison type (for example, HasTag, ContainsTag, InheritsTag).
-    * `leftOperand`: The tag key used in the comparison.
-    * `rightOperand`: The value to compare against `Operand`.
+    * `operator` The comparison type (for example, HasTag, ContainsTag, InheritsTag).
+    * `leftOperand` The tag key used in the comparison.
+    * `rightOperand` The value to compare against `Operand`.
 
 * **Operand:**
-    * `literal`: A `Literal` value, including Boolean, strings, or string lists.
+    * `literal` A `Literal` value, including Boolean, strings, or string lists.
 
 * **Literal:**
     Define exactly one of the following expressions:
 
-    * `bool`: A boolean value.
-    * `string`: A string value.
-    * `stringList`: A list of string values.
+    * `bool` A boolean value.
+    * `string` A string value.
+    * `stringList` A list of string values.
 
 * **Aggregator:**
-    * `operator`: The aggregation type (for example, `And` or `Or`).
-    * `operands`: An array of `DynamicRule` objects.
+    * `operator` The aggregation type (for example, `And` or `Or`).
+    * `operands` An array of `DynamicRule` objects.
 
 * **Unary:**
-    * `operator`: The unary type (for example, `Not`).
-    * `operands`: An array of `DynamicRule` objects.
+    * `operator` The unary type (for example, `Not`).
+    * `operands` An array of `DynamicRule` objects.
 
 ## Constraints
 
