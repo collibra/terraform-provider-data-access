@@ -1,8 +1,8 @@
 ---
-page_title: "Dynamic Rules in the Collibra Data Access"
+page_title: "Dynamic Rules in Collibra Data Access"
 ---
 
-# Dynamic Rules in the Collibra Data Access Provider
+# Dynamic Rules in Collibra Data Access Provider
 
 Access provider resources (roles, column masks, and row filters) use dynamic rules to define who can access what. Specify these rules in JSON format using the following structure.
 
