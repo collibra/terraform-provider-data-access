@@ -57,15 +57,6 @@ jobs:
         with:
           version: v2.12.2
 
-      - name: SonarQube Scan
-        uses: sonarsource/sonarqube-scan-action@2f77a1ec69fb1d595b06f35ab27e97605bdef703  # v5
-        env:
-          SONAR_TOKEN: ${{ secrets.SONARQUBE_PUBLIC_API_KEY }}
-          SONAR_HOST_URL: https://sonarqube.collibra.dev
-        with:
-          args: >
-            -Dsonar.pullrequest.github.repository=collibra/terraform-provider-data-access
-
       - name: FOSSA Scan
         uses: fossas/fossa-action@ff70fe9fe17cbd2040648f1c45e8ec4e4884dcf3  # v1
         with:
@@ -121,3 +112,59 @@ jobs:
       - generate
     uses: ./.github/workflows/acceptance-tests.yml
     secrets: inherit
+
+  # SonarQube needs the acceptance-test coverage report, so it must run after the test job.
+  sonarqube:
+    name: SonarQube Scan
+    needs:
+      - test
+    runs-on:
+      - runs-on
+      - runner=sm
+      - env=production-eu
+      - tag=terraform-provider-data-access
+      - tag=job-${{ github.job }}-${{ github.run_id }}
+    timeout-minutes: 5
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+
+      - name: Download coverage report
+        uses: actions/download-artifact@v4
+        with:
+          name: acceptance-test-coverage
+
+      - name: SonarQube Scan
+        uses: sonarsource/sonarqube-scan-action@2f77a1ec69fb1d595b06f35ab27e97605bdef703  # v5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONARQUBE_PUBLIC_API_KEY }}
+          SONAR_HOST_URL: https://sonarqube.collibra.dev
+        with:
+          args: >
+            -Dsonar.pullrequest.github.repository=collibra/terraform-provider-data-access
+
+  # Single required status check for branch protection. SonarQube is informational only,
+  # so it is deliberately left out of `needs` and does not gate this job.
+  validation_end:
+    name: Validation
+    if: always()
+    needs:
+      - build
+      - generate
+      - test
+    runs-on:
+      - runs-on
+      - runner=sm
+      - env=production-eu
+      - tag=terraform-provider-data-access
+      - tag=job-${{ github.job }}-${{ github.run_id }}
+    steps:
+      - name: Check required jobs
+        run: |
+          if [[ "${{ contains(needs.*.result, 'failure') }}" == "true" || "${{ contains(needs.*.result, 'cancelled') }}" == "true" ]]; then
+            echo "One or more required jobs did not succeed."
+            exit 1
+          fi
+          echo "All required jobs succeeded."
