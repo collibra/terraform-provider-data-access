@@ -32,6 +32,7 @@ jobs:
           - '1.12.*'
           - '1.13.*'
           - '1.14.*'
+          - '1.15.*'
     steps:
       - name: Check out repository code
         uses: actions/checkout@v4
@@ -65,5 +66,26 @@ jobs:
           TF_VAR_collibra_user: ${{ secrets.COLLIBRA_USER }}
           TF_VAR_collibra_secret: ${{ secrets.COLLIBRA_SECRET }}
           TF_VAR_collibra_url: ${{ secrets.COLLIBRA_URL }}
-        run: go test -v -cover ./internal/ -timeout 0
+        run: >
+          go run gotest.tools/gotestsum@latest --format github-actions
+          --junitfile acceptance-test-results.xml
+          -- -cover -coverprofile=coverage.txt ./internal/ -timeout 0
         timeout-minutes: 15
+
+      - name: Upload test results
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: acceptance-test-results-${{ strategy.job-index }}
+          retention-days: 5
+          if-no-files-found: error
+          path: acceptance-test-results.xml
+
+      - name: Upload coverage report
+        if: ${{ matrix.terraform == '1.15.*' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: acceptance-test-coverage
+          retention-days: 1
+          if-no-files-found: error
+          path: coverage.txt
