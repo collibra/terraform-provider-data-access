@@ -26,11 +26,7 @@ resource "collibra-data-access_group" "example" {
       user : "user1@company.com"
     },
   ]
-  data_sources = [
-    {
-      data_source = data.collibra-data-access_datasource.ds.id
-    }
-  ]
+  data_sources = [data.collibra-data-access_datasource.ds.id]
 }
 ```
 
@@ -39,14 +35,14 @@ resource "collibra-data-access_group" "example" {
 
 ### Required
 
-- `data_sources` (Attributes Set) The data sources that the role applies to. See the nested schema below. (see [below for nested schema](#nestedatt--data_sources))
 - `name` (String) The name of the group.
 
 ### Optional
 
+- `data_sources` (Set of String) The data sources that the group applies to.
 - `description` (String) The description of the group.
 - `inheritance_locked` (Boolean) Indicates whether the inheritance of the Who component should be locked. This should be set to true if access controls are specified in the Who component.
-- `owners` (Set of String) The user IDs of the owners of the role.
+- `owners` (Set of String) The user IDs of the owners of the group.
 - `state` (String) The state of the group. Possible values are "Active" and "Inactive".
 - `who` (Attributes Set) The Who component of the group. If this isn't set (nil), the Who component isn’t overridden. This is typically used when the Who component should be managed in Collibra Data Access. See the nested schema below. (see [below for nested schema](#nestedatt--who))
 - `who_abac_rules` (Attributes Set) The dynamic rules for defining the Who component of the group. See the nested schema below. (see [below for nested schema](#nestedatt--who_abac_rules))
@@ -55,18 +51,6 @@ resource "collibra-data-access_group" "example" {
 ### Read-Only
 
 - `id` (String) The ID of the group
-
-<a id="nestedatt--data_sources"></a>
-### Nested Schema for `data_sources`
-
-Required:
-
-- `data_source` (String) The ID of the data source of the role.
-
-Optional:
-
-- `type` (String) The implementation type of the role for this data source.
-
 
 <a id="nestedatt--who"></a>
 ### Nested Schema for `who`

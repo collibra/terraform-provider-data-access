@@ -37,11 +37,7 @@ data "collibra-data-access_datasource" "ds" {
 resource "collibra-data-access_group" "test" {
 	name        = "tfTestGroup"
     description = "test description"
-	data_sources = [
-		{
-			data_source = data.collibra-data-access_datasource.ds.id
-		}
-	]
+	data_sources = [ data.collibra-data-access_datasource.ds.id ]
 	who = [
 		{
 			"user": "%s"
@@ -52,7 +48,7 @@ resource "collibra-data-access_group" "test" {
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("collibra-data-access_group.test", "name", "tfTestGroup"),
 						resource.TestCheckResourceAttr("collibra-data-access_group.test", "description", "test description"),
-						resource.TestCheckResourceAttrPair("collibra-data-access_group.test", "data_sources.0.data_source", "data.collibra-data-access_datasource.ds", "id"),
+						resource.TestCheckResourceAttrPair("collibra-data-access_group.test", "data_sources.0", "data.collibra-data-access_datasource.ds", "id"),
 						resource.TestCheckResourceAttr("collibra-data-access_group.test", "who.#", "1"),
 						resource.TestCheckResourceAttr("collibra-data-access_group.test", "who.0.user", groupTestOktaUser1Email),
 						resource.TestCheckResourceAttr("collibra-data-access_group.test", "who_locked", "true"),
@@ -75,11 +71,7 @@ resource "collibra-data-access_group" "test" {
 	name        = "tfTestGroup"
     description = "test description updated"
 	state       = "Inactive"
-	data_sources = [
-		{
-			data_source = data.collibra-data-access_datasource.ds.id
-		}
-	]
+	data_sources = [ data.collibra-data-access_datasource.ds.id ]
 	who = [
 		{
 			"user": "%s"
@@ -92,7 +84,7 @@ resource "collibra-data-access_group" "test" {
 						resource.TestCheckResourceAttr("collibra-data-access_group.test", "name", "tfTestGroup"),
 						resource.TestCheckResourceAttr("collibra-data-access_group.test", "description", "test description updated"),
 						resource.TestCheckResourceAttr("collibra-data-access_group.test", "state", "Inactive"),
-						resource.TestCheckResourceAttrPair("collibra-data-access_group.test", "data_sources.0.data_source", "data.collibra-data-access_datasource.ds", "id"),
+						resource.TestCheckResourceAttrPair("collibra-data-access_group.test", "data_sources.0", "data.collibra-data-access_datasource.ds", "id"),
 						resource.TestCheckResourceAttr("collibra-data-access_group.test", "who.#", "1"),
 						resource.TestCheckResourceAttr("collibra-data-access_group.test", "who.0.user", groupTestOktaUser2Email),
 						resource.TestCheckResourceAttr("collibra-data-access_group.test", "who_locked", "true"),
@@ -109,12 +101,8 @@ resource "collibra-data-access_group" "test" {
 	name        = "tfTestGroup"
     description = "test description updated"
 	state       = "Inactive"
-	data_sources = [
-		{
-			data_source = data.collibra-data-access_datasource.ds.id
-		}
-	]
-	who_locked         = false
+	data_sources = [ data.collibra-data-access_datasource.ds.id ]
+	who_locked   = false
 	inheritance_locked = false
 }
 `,
@@ -152,11 +140,7 @@ data "collibra-data-access_user" "acc-user-1" {
 resource "collibra-data-access_group" "test" {
 	name        = "tfTestGroupOwners"
 	description = "test description"
-	data_sources = [
-		{
-			data_source = data.collibra-data-access_datasource.ds.id
-		}
-	]
+	data_sources = [ data.collibra-data-access_datasource.ds.id ]
 	owners = [ data.collibra-data-access_user.acc-user-1.id ]
 }
 `, TestUser1Email),
@@ -183,11 +167,7 @@ data "collibra-data-access_user" "acc-user-2" {
 resource "collibra-data-access_group" "test" {
 	name        = "tfTestGroupOwners"
 	description = "test description"
-	data_sources = [
-		{
-			data_source = data.collibra-data-access_datasource.ds.id
-		}
-	]
+	data_sources = [ data.collibra-data-access_datasource.ds.id ]
 	owners = [ data.collibra-data-access_user.acc-user-2.id ]
 }
 `, TestUser2Email),
@@ -221,11 +201,7 @@ data "collibra-data-access_datasource" "ds" {
 resource "collibra-data-access_group" "test" {
 	name        = "tfTestGroupUnsupported"
 	description = "test description"
-	data_sources = [
-		{
-			data_source = data.collibra-data-access_datasource.ds.id
-		}
-	]
+	data_sources = [ data.collibra-data-access_datasource.ds.id ]
 }
 `,
 					ExpectError: regexp.MustCompile(`Failed to create access provider`),

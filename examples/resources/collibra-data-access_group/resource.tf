@@ -11,9 +11,5 @@ resource "collibra-data-access_group" "example" {
       user : "user1@company.com"
     },
   ]
-  data_sources = [
-    {
-      data_source = data.collibra-data-access_datasource.ds.id
-    }
-  ]
+  data_sources = [data.collibra-data-access_datasource.ds.id]
 }
