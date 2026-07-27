@@ -326,7 +326,7 @@ func (m *GrantResourceModel) ToAccessControlInput(ctx context.Context, client *s
 
 	dataSourcesToAccessControlInput(m.DataSources, result)
 
-	result.Action = utils.Ptr(dataAccessType.AccessControlActionGrant)
+	result.Action = new(dataAccessType.AccessControlActionGrant)
 
 	if !m.WhatDataObjects.IsNull() && !m.WhatDataObjects.IsUnknown() {
 		m.whatDoToApInput(result)
@@ -344,7 +344,7 @@ func (m *GrantResourceModel) ToAccessControlInput(ctx context.Context, client *s
 		result.Locks = append(result.Locks, dataAccessType.AccessControlLockDataInput{
 			LockKey: dataAccessType.AccessControlLockWhatlock,
 			Details: &dataAccessType.AccessControlLockDetailsInput{
-				Reason: utils.Ptr(lockMsg),
+				Reason: new(lockMsg),
 			},
 		})
 	}
