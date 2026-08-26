@@ -55,7 +55,7 @@ jobs:
       - name: Lint
         uses: golangci/golangci-lint-action@4afd733a84b1f43292c63897423277bb7f4313a9  # v8
         with:
-          version: v2.12.2
+          version: v2.13.1
 
       - name: FOSSA Scan
         uses: fossas/fossa-action@ff70fe9fe17cbd2040648f1c45e8ec4e4884dcf3  # v1

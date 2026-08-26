@@ -1,7 +1,7 @@
 GO := go
 go_lint := golangci-lint
 
-make gotestsum := go run gotest.tools/gotestsum@latest
+gotestsum := go run gotest.tools/gotestsum@latest
 
 generate:
 	$(GO) generate ./...
