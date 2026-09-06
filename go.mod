@@ -1,6 +1,6 @@
 module github.com/collibra/terraform-provider-data-access
 
-go 1.27.0
+go 1.27.1
 
 tool (
 	github.com/dmarkham/enumer
