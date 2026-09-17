@@ -10,6 +10,7 @@
 	"hashedBranchLength": 24,
 	"enabledManagers": [
 		"renovate-config",
+		"github-actions",
 		"gomod"
 	],
 	"packageRules": [
