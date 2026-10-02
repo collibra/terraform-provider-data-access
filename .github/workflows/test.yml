@@ -24,7 +24,8 @@ jobs:
     runs-on:
       - runs-on
       - runner=sm
-      - env=production-eu
+      - env=production-eu-v3
+      - volume=40gb
       - tag=terraform-provider-data-access
       - tag=job-${{ github.job }}-${{ github.run_id }}
     timeout-minutes: 5
@@ -66,7 +67,8 @@ jobs:
     runs-on:
       - runs-on
       - runner=sm
-      - env=production-eu
+      - env=production-eu-v3
+      - volume=40gb
       - tag=terraform-provider-data-access
       - tag=job-${{ github.job }}-${{ github.run_id }}
     steps:
@@ -121,7 +123,8 @@ jobs:
     runs-on:
       - runs-on
       - runner=sm
-      - env=production-eu
+      - env=production-eu-v3
+      - volume=40gb
       - tag=terraform-provider-data-access
       - tag=job-${{ github.job }}-${{ github.run_id }}
     timeout-minutes: 5
@@ -157,7 +160,8 @@ jobs:
     runs-on:
       - runs-on
       - runner=sm
-      - env=production-eu
+      - env=production-eu-v3
+      - volume=40gb
       - tag=terraform-provider-data-access
       - tag=job-${{ github.job }}-${{ github.run_id }}
     steps:
