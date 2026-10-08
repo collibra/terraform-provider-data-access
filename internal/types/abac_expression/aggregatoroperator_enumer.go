@@ -38,9 +38,12 @@ func _AggregatorOperatorNoOp() {
 var _AggregatorOperatorValues = []AggregatorOperator{AggregatorOperatorAnd, AggregatorOperatorOr}
 
 var _AggregatorOperatorNameToValueMap = map[string]AggregatorOperator{
-	_AggregatorOperatorName[0:3]:      AggregatorOperatorAnd,
+	_AggregatorOperatorName[0:3]: AggregatorOperatorAnd,
+	_AggregatorOperatorName[3:5]: AggregatorOperatorOr,
+}
+
+var _AggregatorOperatorLowerNameToValueMap = map[string]AggregatorOperator{
 	_AggregatorOperatorLowerName[0:3]: AggregatorOperatorAnd,
-	_AggregatorOperatorName[3:5]:      AggregatorOperatorOr,
 	_AggregatorOperatorLowerName[3:5]: AggregatorOperatorOr,
 }
 
@@ -56,7 +59,7 @@ func AggregatorOperatorString(s string) (AggregatorOperator, error) {
 		return val, nil
 	}
 
-	if val, ok := _AggregatorOperatorNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _AggregatorOperatorLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to AggregatorOperator values", s)

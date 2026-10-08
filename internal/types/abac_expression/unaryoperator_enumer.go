@@ -37,7 +37,10 @@ func _UnaryOperatorNoOp() {
 var _UnaryOperatorValues = []UnaryOperator{UnaryOperatorNot}
 
 var _UnaryOperatorNameToValueMap = map[string]UnaryOperator{
-	_UnaryOperatorName[0:3]:      UnaryOperatorNot,
+	_UnaryOperatorName[0:3]: UnaryOperatorNot,
+}
+
+var _UnaryOperatorLowerNameToValueMap = map[string]UnaryOperator{
 	_UnaryOperatorLowerName[0:3]: UnaryOperatorNot,
 }
 
@@ -52,7 +55,7 @@ func UnaryOperatorString(s string) (UnaryOperator, error) {
 		return val, nil
 	}
 
-	if val, ok := _UnaryOperatorNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _UnaryOperatorLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to UnaryOperator values", s)
