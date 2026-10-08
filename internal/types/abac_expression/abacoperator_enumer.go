@@ -40,13 +40,16 @@ func _AbacOperatorNoOp() {
 var _AbacOperatorValues = []AbacOperator{AbacOperatorHasTag, AbacOperatorContainsTag, AbacOperatorPropertyEquals, AbacOperatorPropertyIn}
 
 var _AbacOperatorNameToValueMap = map[string]AbacOperator{
-	_AbacOperatorName[0:6]:        AbacOperatorHasTag,
+	_AbacOperatorName[0:6]:   AbacOperatorHasTag,
+	_AbacOperatorName[6:17]:  AbacOperatorContainsTag,
+	_AbacOperatorName[17:31]: AbacOperatorPropertyEquals,
+	_AbacOperatorName[31:41]: AbacOperatorPropertyIn,
+}
+
+var _AbacOperatorLowerNameToValueMap = map[string]AbacOperator{
 	_AbacOperatorLowerName[0:6]:   AbacOperatorHasTag,
-	_AbacOperatorName[6:17]:       AbacOperatorContainsTag,
 	_AbacOperatorLowerName[6:17]:  AbacOperatorContainsTag,
-	_AbacOperatorName[17:31]:      AbacOperatorPropertyEquals,
 	_AbacOperatorLowerName[17:31]: AbacOperatorPropertyEquals,
-	_AbacOperatorName[31:41]:      AbacOperatorPropertyIn,
 	_AbacOperatorLowerName[31:41]: AbacOperatorPropertyIn,
 }
 
@@ -64,7 +67,7 @@ func AbacOperatorString(s string) (AbacOperator, error) {
 		return val, nil
 	}
 
-	if val, ok := _AbacOperatorNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _AbacOperatorLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to AbacOperator values", s)
