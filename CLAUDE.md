@@ -5,7 +5,7 @@ Terraform provider (terraform-plugin-framework, protocol v6) for Collibra Data A
 ## Commands
 
 - `make generate` regenerates `docs/` and the `*_enumer.go` files. It needs the `terraform` CLI on PATH, and CI fails on any diff, so commit the result. Change `templates/`, `examples/` or the `//go:generate` line, never `docs/` or `*_enumer.go`.
-- Acceptance tests (`make testacc`, or `TF_ACC=1 go test ./internal/ -run TestAccGrantResource`) hit a live Collibra environment and need `TF_VAR_collibra_user`, `TF_VAR_collibra_secret` and `TF_VAR_collibra_url`. Every test is a `TestAcc*` case; there are no unit tests.
+- Acceptance tests (`make testacc`, or `TF_ACC=1 go test ./internal/ -run TestAccGrantResource`) hit a live Collibra environment and need `TF_VAR_collibra_user`, `TF_VAR_collibra_secret` and `TF_VAR_collibra_url`. There are no unit tests, only `TestAcc*` cases.
 
 ## Architecture
 
