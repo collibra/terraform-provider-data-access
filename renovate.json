@@ -6,7 +6,9 @@
 		"main"
 	],
 	"branchPrefix": "renovate-",
-	"dependencyDashboard": false,
+	"dependencyDashboard": {
+		"enabled": false
+	},
 	"hashedBranchLength": 24,
 	"enabledManagers": [
 		"renovate-config",
